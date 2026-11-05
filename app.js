@@ -680,18 +680,37 @@ $("q").oninput = e => {
 
 /* Wayfinding: Corridor-following A* algorithm on floor plan */
 const NB = 3, GW = Math.floor(W / NB), GH = Math.floor(H / NB);
-/* Only inner staircases are available for inter-floor routing (outer stairs are strictly closed) */
+/* Only the 5 designated inner staircases are available for inter-floor routing */
 const ST = {
-  G: { WN: [585, 358], EN: [1022, 358], WS: [583, 520], ES: [1023, 520] },
-  F: { WN: [587, 358], EN: [1020, 360], WS: [583, 520], ES: [1023, 518] },
-  S: { WN: [581, 360], EN: [1020, 352], WS: [583, 520], ES: [1023, 520] }
+  G: {
+    WN: [580, 371],
+    WS: [581, 528],
+    SW: [438, 680],
+    EN: [1030, 370],
+    SE: [1013, 682]
+  },
+  F: {
+    WN: [588, 370],
+    WS: [587, 530],
+    SW: [436, 676],
+    EN: [1027, 369],
+    SE: [1023, 679]
+  },
+  S: {
+    WN: [593, 370],
+    WS: [591, 529],
+    SW: [441, 685],
+    EN: [1041, 368],
+    SE: [1011, 698]
+  }
 };
 
 const SN = {
-  WN: "Auditorium West Inner Stairs",
-  EN: "Auditorium East Inner Stairs",
-  WS: "Central West Inner Stairs",
-  ES: "Central East Inner Stairs"
+  WN: "North-West Inner Stairs (Auditorium)",
+  WS: "Central-West Inner Stairs",
+  SW: "South-West Wing Stairs",
+  EN: "North-East Inner Stairs (Auditorium)",
+  SE: "South-East Wing Stairs"
 };
 const ORD = ["G", "F", "S"];
 const ENT = { code: "ENTRANCE", floor: "G", p: [836, 672] };
