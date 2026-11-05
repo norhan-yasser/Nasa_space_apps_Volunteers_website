@@ -96,6 +96,12 @@
           Overview
         </button>
         <span id="tabs"></span>
+        <button class="btn on" id="fv-dir-btn" aria-label="Path Search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+          </svg>
+          <span class="btn-text">Path Search</span>
+        </button>
         <span class="sp"></span>
         <select id="ft" aria-label="Filter by space type">
           <option value="">All Space Types</option>
@@ -148,13 +154,22 @@
       <button class="x" id="dx" aria-label="Close directions">×</button>
     </h3>
     <div id="dform">
-      <input id="df" list="dl" placeholder="From (Room code or ENTRANCE)" autocomplete="off">
-      <input id="dt" list="dl" placeholder="To (Room code)" autocomplete="off">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <label for="df" style="font-size:11.5px;font-weight:600;color:var(--ink-bright)">Origin:</label>
+        <button type="button" class="btn" id="d-use-ent" style="font-size:10.5px;padding:2px 7px">Use Entrance</button>
+      </div>
+      <input id="df" list="dl" placeholder="From (e.g. ENTRANCE, C026)" autocomplete="off">
+      <label for="dt" style="font-size:11.5px;font-weight:600;color:var(--ink-bright);display:block;margin:8px 0 3px">Destination:</label>
+      <input id="dt" list="dl" placeholder="To (e.g. S140, B133, H113)" autocomplete="off">
       <datalist id="dl"></datalist>
       <div style="display:flex;gap:6px;margin:8px 0 0">
-        <button class="btn on" id="dgo">Show Route</button>
+        <button class="btn on" id="dgo" style="flex:1">Show Route</button>
         <button class="btn" id="dsw">Swap</button>
         <button class="btn" id="dcl">Clear</button>
+      </div>
+      <div style="margin-top:10px;padding:6px 8px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:var(--radius-sm);font-size:11px;line-height:1.4">
+        <div style="color:var(--ok);font-weight:600">● 5 Authorized Green Stairs In Use</div>
+        <div style="color:#60a5fa">✕ 4 Outer Blue Emergency Stairs Closed</div>
       </div>
     </div>
     <div id="dout"></div>

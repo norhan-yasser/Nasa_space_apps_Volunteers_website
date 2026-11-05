@@ -320,7 +320,45 @@ function home() {
   $("fv").hidden = true;
   $("crumb").innerHTML = '<span class="crumb-active">Overview</span>';
 
-  // Render clean, professional floor cards grid without the 4 top boxes
+  const quickWayfindHtml = `
+    <div class="quick-wayfind-card">
+      <div class="qw-header">
+        <div class="qw-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+          </svg>
+        </div>
+        <div class="qw-text">
+          <h3 class="qw-title">Room-to-Room Path Search &amp; Directions</h3>
+          <p class="qw-desc">
+            Find the optimal walking route between any room and destination.
+            <span class="qw-badge-ok">● 5 Authorized Green Stairs In Use</span>
+            <span class="qw-badge-no">✕ Outer Blue Stairs Closed</span>
+          </p>
+        </div>
+      </div>
+      <div class="qw-controls">
+        <div class="qw-input-col">
+          <label for="qw-from">Origin:</label>
+          <div class="qw-input-wrap">
+            <input id="qw-from" list="dl" placeholder="ENTRANCE or Room (e.g. C026)" autocomplete="off">
+            <button type="button" class="qw-mini-btn" id="qw-ent-btn">Entrance</button>
+          </div>
+        </div>
+        <div class="qw-swap-col">
+          <button class="btn qw-swap-btn" id="qw-swap" title="Swap direction">⇄</button>
+        </div>
+        <div class="qw-input-col">
+          <label for="qw-to">Destination:</label>
+          <input id="qw-to" list="dl" placeholder="Room code (e.g. S140, B133, H113)" autocomplete="off">
+        </div>
+        <div class="qw-action-col">
+          <button class="btn on qw-btn" id="qw-go">Find Path →</button>
+        </div>
+      </div>
+    </div>
+  `;
+
   let cardsHtml = FLOORS.map(f => {
     const a = f.rooms.filter(r => access(r) == "ok").length;
     const p = f.rooms.filter(r => mode(r) == "Participants").length;
@@ -347,6 +385,7 @@ function home() {
   }).join("");
 
   $("home").innerHTML = `
+    ${quickWayfindHtml}
     <div class="grid">${cardsHtml}</div>
     <div class="note">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -355,6 +394,30 @@ function home() {
   `;
 
   $("home").querySelectorAll(".fc").forEach(e => e.onclick = () => open(e.dataset.f));
+  fillDL();
+  const qwGo = $("qw-go");
+  if (qwGo) {
+    qwGo.onclick = () => {
+      const from = $("qw-from").value.trim() || "ENTRANCE";
+      const to = $("qw-to").value.trim();
+      if (!to) {
+        openDir("t", "");
+        return;
+      }
+      $("df").value = from;
+      $("dt").value = to;
+      $("dir").style.display = "block";
+      go();
+    };
+  }
+  const qwEnt = $("qw-ent-btn");
+  if (qwEnt) qwEnt.onclick = () => { $("qw-from").value = "ENTRANCE"; };
+  const qwSwap = $("qw-swap");
+  if (qwSwap) qwSwap.onclick = () => {
+    const tmp = $("qw-from").value;
+    $("qw-from").value = $("qw-to").value;
+    $("qw-to").value = tmp;
+  };
 }
 
 const map = $("map"), stage = $("stage");
@@ -400,7 +463,7 @@ function draw() {
     const c = isSel ? COL.sel : color(r);
     const p = r.pts.map(q => q.join(",")).join(" ");
     return `<polygon class="rm ${isSel ? 'sel' : ''}" data-c="${r.code}" points="${p}" fill="${c}" fill-opacity="${isSel ? .55 : dim ? .03 : .22}" stroke="${c}" stroke-width="${isSel ? 3.5 : 2}" stroke-opacity="${dim ? .2 : 1}" tabindex="0" aria-label="Room ${r.code}"/>`;
-  }).join("") + routeSvg();
+  }).join("") + stairsSvg() + routeSvg();
 
   $("svg").querySelectorAll(".rm").forEach(e => {
     const r = ALL.find(x => x.code == e.dataset.c);
@@ -418,240 +481,42 @@ function draw() {
     e.onmouseleave = () => $("tip").style.display = "none";
   });
 
+  $("svg").querySelectorAll(".stair-active").forEach(e => {
+    const k = e.dataset.stair;
+    const name = e.dataset.name;
+    e.onmousemove = ev => {
+      const b = map.getBoundingClientRect(), t = $("tip");
+      t.style.display = "block";
+      t.innerHTML = `<div class="tip-head"><b>${esc(name)}</b> <span class="tip-tag tip-ok">Active Stairs</span></div><div class="tip-sub">Authorized inner staircase · Connects Ground, 1st &amp; 2nd Floors</div>`;
+      t.style.left = ev.clientX - b.left + 14 + "px";
+      t.style.top = ev.clientY - b.top + 14 + "px";
+    };
+    e.onmouseleave = () => $("tip").style.display = "none";
+    e.onclick = () => {
+      if (moved < 10) openDir("t", `STAIR-${k}`);
+    };
+  });
+
+  $("svg").querySelectorAll(".stair-closed").forEach(e => {
+    const name = e.dataset.name;
+    e.onmousemove = ev => {
+      const b = map.getBoundingClientRect(), t = $("tip");
+      t.style.display = "block";
+      t.innerHTML = `<div class="tip-head"><b>${esc(name)}</b> <span class="tip-tag tip-no" style="background:rgba(37,72,230,0.25);color:#93c5fd;border:1px solid #2548e6">Unavailable</span></div><div class="tip-sub">Emergency exit only · Closed for venue wayfinding</div>`;
+      t.style.left = ev.clientX - b.left + 14 + "px";
+      t.style.top = ev.clientY - b.top + 14 + "px";
+    };
+    e.onmouseleave = () => $("tip").style.display = "none";
+  });
+
   $("leg").innerHTML = [
     ["ok", "Accessible, assigned"],
     ["na", "Accessible, unassigned"],
     ["no", "Restricted"],
     ["sel", "Selected"]
-  ].map(([k, t]) => `<span><i style="background:${COL[k]}"></i>${t}</span>`).join("");
-}
-
-["ft", "fa", "fs"].forEach(i => $(i).onchange = draw);
-
-/* Zoom & Pan Handlers */
-let moved = 0, g0 = null;
-const P = new Map();
-
-const snap = () => {
-  const a = [...P.values()];
-  if (a.length == 1) g0 = { x: a[0].x, y: a[0].y, vx: V.x, vy: V.y };
-  else if (a.length >= 2) {
-    const [p, q] = a;
-    g0 = { d: Math.hypot(p.x - q.x, p.y - q.y) || 1, mx: (p.x + q.x) / 2, my: (p.y + q.y) / 2, V: { ...V } };
-  } else g0 = null;
-};
-
-map.onpointerdown = e => {
-  if (e.target.closest(".zc")) return;
-  P.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  moved = 0;
-  snap();
-  map.style.cursor = "grabbing";
-};
-
-addEventListener("pointermove", e => {
-  if (!P.has(e.pointerId)) return;
-  P.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  const a = [...P.values()], b = map.getBoundingClientRect();
-  if (a.length == 1 && g0 && g0.vx !== undefined) {
-    const dx = a[0].x - g0.x, dy = a[0].y - g0.y;
-    moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
-    V.x = g0.vx + dx;
-    V.y = g0.vy + dy;
-    apply();
-  } else if (a.length >= 2 && g0 && g0.d) {
-    const [p, q] = a, d = Math.hypot(p.x - q.x, p.y - q.y), mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
-    moved = 99;
-    const k = Math.max(.3, Math.min(8, g0.V.k * d / g0.d)), r = k / g0.V.k, cx = g0.mx - b.left, cy = g0.my - b.top;
-    V.k = k;
-    V.x = (mx - b.left) - (cx - g0.V.x) * r;
-    V.y = (my - b.top) - (cy - g0.V.y) * r;
-    apply();
-  }
-});
-
-const up = e => {
-  if (!P.has(e.pointerId)) return;
-  P.delete(e.pointerId);
-  snap();
-  if (!P.size) {
-    map.style.cursor = "grab";
-    setTimeout(() => moved = 0, 0);
-  }
-};
-
-addEventListener("pointerup", up);
-addEventListener("pointercancel", up);
-
-function zoom(f, cx, cy) {
-  const b = map.getBoundingClientRect();
-  cx = cx ?? b.width / 2;
-  cy = cy ?? b.height / 2;
-  const k = Math.max(.3, Math.min(8, V.k * f)), r = k / V.k;
-  V.x = cx - (cx - V.x) * r;
-  V.y = cy - (cy - V.y) * r;
-  V.k = k;
-  apply();
-}
-
-map.addEventListener("wheel", e => {
-  e.preventDefault();
-  const b = map.getBoundingClientRect();
-  zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - b.left, e.clientY - b.top);
-}, { passive: false });
-
-$("zi").onclick = () => zoom(1.3);
-$("zo").onclick = () => zoom(1 / 1.3);
-$("zr").onclick = reset;
-
-function zoomTo(r) {
-  const [w, h] = [r.bb[2] - r.bb[0], r.bb[3] - r.bb[1]];
-  const cw = map.clientWidth, ch = map.clientHeight;
-  const k = Math.min(cw / (w * 3), ch / (h * 3), 4);
-  V = { k, x: cw / 2 - (r.bb[0] + w / 2) * k, y: ch / 2 - (r.bb[1] + h / 2) * k };
-  stage.style.transition = "transform .4s cubic-bezier(0.16, 1, 0.3, 1)";
-  apply();
-  setTimeout(() => stage.style.transition = "", 450);
-}
-
-/* Room Modal Dialog */
-function row(k, v) {
-  return `<span>${k}</span><span class="${v ? "kv-val" : "na"}">${v ? esc(v) : "Not assigned"}</span>`;
-}
-
-function show(r) {
-  sel = r;
-  draw();
-  const d = D(r), a = access(r), m = $("modal");
-  const tag = `<span class="tag" style="background:${a == "no" ? COL.no : COL.ok}">${a == "no" ? "Restricted" : "Accessible"}</span>`;
-  
-  let h = `
-    <div class="mh">
-      <div>
-        <h2>${r.code}</h2>
-        <div class="pill">${r.name ? esc(r.name) + " · " : ""}${TYPES[r.type]} · ${FLOORS.find(f => f.id == r.floor).name}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        ${tag}
-        <button class="x" id="cl" aria-label="Close">×</button>
-      </div>
-    </div>
-  `;
-
-  if (!canView(r)) {
-    h += `
-      <div class="warn">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${COL.no}" stroke-width="2">
-          <rect x="4" y="11" width="16" height="10" rx="2"/>
-          <path d="M8 11V7a4 4 0 018 0v4"/>
-        </svg>
-        <b>Access Restricted</b>
-        <span class="pill">This room is restricted for operations staff and authorized personnel.</span>
-      </div>
-    `;
-  } else {
-    const t = teams(r);
-    h += `
-      <div class="sec">
-        <h4>Room Assignment Details</h4>
-        <div class="kv">
-          ${row("Lead Manager", d.resp)}
-          ${row("Space Capacity", d.cap != null && d.cap !== "" ? d.cap + " people" : "")}
-          ${row("Assignment Type", mode(r) == "Unassigned" ? "" : mode(r))}
-        </div>
-      </div>
-    `;
-
-    if (mode(r) == "Participants") {
-      h += `
-        <div class="sec">
-          <h4>Assigned Challenge &amp; Teams</h4>
-          <div class="kv">
-            ${row("Challenge Track", d.chal)}
-            ${row("Total Teams", t.length ? String(t.length) + " teams" : "")}
-          </div>
-          <div style="margin-top:10px">
-            ${t.length ? t.map(x => `<span class="chip">${esc(x)}</span>`).join("") : "<span class='na'>No teams assigned yet</span>"}
-          </div>
-        </div>
-      `;
-    }
-
-    if (mode(r) == "Volunteers") {
-      h += `
-        <div class="sec">
-          <h4>Volunteer Squad</h4>
-          <div class="kv">
-            ${row("Volunteer Team", d.vteam)}
-            ${row("Team Capacity", d.vcap != null && d.vcap !== "" ? d.vcap + " people" : "")}
-          </div>
-        </div>
-      `;
-    }
-
-    if (mode(r) == "Unassigned") {
-      h += `<div class="sec"><span class="na">No participants or volunteers assigned to this room.</span></div>`;
-    }
-  }
-
-  if (canView(r)) {
-    h += `
-      <div class="modal-actions">
-        <button class="btn" data-d="f">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 8 12 12 16"/><line x1="16" y1="12" x2="8" y2="12"/></svg>
-          Directions from here
-        </button>
-        <button class="btn" data-d="t">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 16 12 12 8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          Directions to here
-        </button>
-      </div>
-    `;
-  }
-
-  m.innerHTML = h;
-  m.querySelectorAll("[data-d]").forEach(b => b.onclick = () => {
-    close();
-    openDir(b.dataset.d, r.code);
-  });
-
-  const bd = $("bd");
-  bd.style.display = "flex";
-  requestAnimationFrame(() => bd.classList.add("show"));
-  $("cl").onclick = close;
-}
-
-function close() {
-  const bd = $("bd");
-  bd.classList.remove("show");
-  setTimeout(() => { bd.style.display = "none"; }, 200);
-  sel = null;
-  if (floor) draw();
-}
-
-$("bd").onclick = e => { if (e.target.id == "bd") close(); };
-addEventListener("keydown", e => { 
-  if (e.key == "Escape") {
-    close(); 
-    $("res").hidden = true;
-    $("dir").style.display = "none";
-    const gModal = $("gsheet-modal");
-    if (gModal) gModal.classList.remove("show");
-  }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() == "k") {
-    e.preventDefault();
-    $("q").focus();
-  }
-});
-
-/* Search System */
-function hits(q) {
-  q = q.toLowerCase();
-  return ALL.filter(r => {
-    const d = D(r);
-    if (!canView(r)) return r.code.toLowerCase().includes(q);
-    return [r.code, r.name, d.resp, d.chal, d.vteam, ...teams(r)].some(s => s && String(s).toLowerCase().includes(q));
-  });
+  ].map(([k, t]) => `<span><i style="background:${COL[k]}"></i>${t}</span>`).join("")
+  + `<span><i class="leg-stair-ok"></i>Authorized Stairs (Available)</span>`
+  + `<span><i class="leg-stair-no"></i>Emergency Stairs (Closed)</span>`;
 }
 
 $("q").oninput = e => {
@@ -666,11 +531,27 @@ $("q").oninput = e => {
     ? h.map(r => {
         const d = D(r), t = teams(r);
         const why = canView(r) ? (d.chal ? d.chal + " · " : "") + (t.length ? t.join(", ") : d.vteam || "") : "Restricted";
-        return `<div data-c="${r.code}"><b>${r.code}</b> <small>${FLOORS.find(f => f.id == r.floor).name}${why ? " · " + esc(why) : ""}</small></div>`;
+        const dirBtn = canView(r) ? `<button type="button" class="res-dir-btn" data-rc="${r.code}" title="Get directions to ${r.code}">Route →</button>` : "";
+        return `<div data-c="${r.code}">
+          <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">
+            <b>${r.code}</b> <small>${FLOORS.find(f => f.id == r.floor).name}${why ? " · " + esc(why) : ""}</small>
+          </div>
+          ${dirBtn}
+        </div>`;
       }).join("")
     : `<div><small>No matching rooms or teams found.</small></div>`;
 
-  res.querySelectorAll("[data-c]").forEach(e => e.onclick = () => {
+  res.querySelectorAll(".res-dir-btn").forEach(btn => {
+    btn.onclick = ev => {
+      ev.stopPropagation();
+      const code = btn.dataset.rc;
+      res.hidden = true;
+      openDir("t", code);
+    };
+  });
+
+  res.querySelectorAll("[data-c]").forEach(e => e.onclick = ev => {
+    if (ev.target.closest(".res-dir-btn")) return;
     const r = ALL.find(x => x.code == e.dataset.c);
     res.hidden = true;
     open(r.floor, r);
@@ -712,6 +593,12 @@ const SN = {
   EN: "North-East Inner Stairs (Auditorium)",
   SE: "South-East Wing Stairs"
 };
+const UNAVAILABLE_STAIRS = [
+  { id: "NW_OUT", name: "Far NW Outer Stairs (Closed)", p: [104, 215] },
+  { id: "SW_OUT", name: "Far SW Outer Stairs (Closed)", p: [110, 643] },
+  { id: "NE_OUT", name: "Far NE Outer Stairs (Closed)", p: [1552, 135] },
+  { id: "SE_OUT", name: "Far SE Outer Stairs (Closed)", p: [1635, 511] }
+];
 const ORD = ["G", "F", "S"];
 const ENT = { code: "ENTRANCE", floor: "G", p: [836, 672] };
 const grids = {};
@@ -827,7 +714,7 @@ async function grid(fid) {
 
   const cost = new Float32Array(GW * GH);
   for (let i = 0; i < cost.length; i++) {
-    cost[i] = out[i] ? 500 : blk[i] ? 23 : 1 + 5 * Math.max(0, 3 - dt[i]) / 3;
+    cost[i] = out[i] ? 1e6 : blk[i] ? 200 : 1 + 5 * Math.max(0, 3 - dt[i]) / 3;
   }
   return grids[fid] = cost;
 }
@@ -907,6 +794,12 @@ const fname = id => FLOORS.find(f => f.id == id).name;
 function loc(code) {
   code = code.trim().toUpperCase();
   if (code == "ENTRANCE") return ENT;
+  if (code.startsWith("STAIR-")) {
+    const k = code.replace("STAIR-", "");
+    if (SN[k] && floor) {
+      return { code: SN[k], floor: floor.id, p: ST[floor.id][k] };
+    }
+  }
   const r = ALL.find(x => x.code == code);
   return r ? { code: r.code, floor: r.floor, p: [(r.bb[0] + r.bb[2]) / 2 | 0, (r.bb[1] + r.bb[3]) / 2 | 0], room: r } : null;
 }
@@ -940,6 +833,42 @@ async function planRoute(a, b) {
     [1, `Leave the ${SN[best.k]} and follow the highlighted path to ${b.code}.`]
   );
   return { legs, steps };
+}
+
+function stairsSvg() {
+  if (!floor) return "";
+  let h = "";
+  const act = ST[floor.id];
+  if (act) {
+    for (const k in act) {
+      const [x, y] = act[k];
+      const name = SN[k];
+      h += `
+        <g class="stair-marker stair-active" data-stair="${k}" data-name="${esc(name)}" transform="translate(${x},${y})" tabindex="0">
+          <circle cx="0" cy="0" r="22" class="stair-halo" fill="rgba(16, 185, 129, 0.22)" stroke="#10b981" stroke-width="2"/>
+          <circle cx="0" cy="0" r="14" fill="#10b981" stroke="#ffffff" stroke-width="1.5"/>
+          <path d="M-6 4 L-6 1 L-2 1 L-2 -2 L2 -2 L2 -5 L6 -5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="-24" y="17" width="48" height="15" rx="3" fill="rgba(9, 13, 24, 0.9)" stroke="#10b981" stroke-width="1"/>
+          <text x="0" y="28" text-anchor="middle" font-size="9" font-weight="800" fill="#10b981" font-family="'Inter', system-ui, sans-serif">STAIRS</text>
+        </g>
+      `;
+    }
+  }
+
+  UNAVAILABLE_STAIRS.forEach(s => {
+    const [x, y] = s.p;
+    h += `
+      <g class="stair-marker stair-closed" data-closed="${s.id}" data-name="${esc(s.name)}" transform="translate(${x},${y})" tabindex="0">
+        <rect x="-18" y="-18" width="36" height="36" rx="6" fill="rgba(37, 72, 230, 0.16)" stroke="#2548e6" stroke-width="2.5" stroke-dasharray="4 2"/>
+        <line x1="-12" y1="-12" x2="12" y2="12" stroke="#2548e6" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="12" y1="-12" x2="-12" y2="12" stroke="#2548e6" stroke-width="3.5" stroke-linecap="round"/>
+        <rect x="-22" y="20" width="44" height="14" rx="3" fill="rgba(9, 13, 24, 0.9)" stroke="#2548e6" stroke-width="1"/>
+        <text x="0" y="30" text-anchor="middle" font-size="8.5" font-weight="900" fill="#60a5fa" font-family="'Inter', system-ui, sans-serif">CLOSED</text>
+      </g>
+    `;
+  });
+
+  return h;
 }
 
 function routeSvg() {
@@ -979,16 +908,31 @@ function goLeg(i) {
 }
 
 function fillDL() {
-  $("dl").innerHTML = ["ENTRANCE", ...ALL.filter(canView).map(r => r.code)].map(c => `<option value="${c}">`).join("");
+  const dl = $("dl");
+  if (!dl) return;
+  dl.innerHTML = [
+    '<option value="ENTRANCE">Main Entrance (Ground Floor)</option>',
+    ...ALL.filter(canView).map(r => {
+      const flName = FLOORS.find(f => f.id == r.floor).name;
+      const typeName = TYPES[r.type] || "Room";
+      return `<option value="${r.code}">${r.code} · ${typeName} (${flName})</option>`;
+    })
+  ].join("");
 }
 
 function openDir(w, code) {
   $("dir").style.display = "block";
+  $("dir").classList.remove("min");
   fillDL();
-  if (w) {
-    $(w == "f" ? "df" : "dt").value = code;
+  if (w == "t") {
+    $("dt").value = code;
+    if (!$("df").value) $("df").value = "ENTRANCE";
+  } else if (w == "f") {
+    $("df").value = code;
   }
-  if ($("df").value && $("dt").value) go();
+  if ($("df").value && $("dt").value) {
+    go();
+  }
 }
 
 async function go() {
@@ -1014,8 +958,45 @@ async function go() {
     out.innerHTML = "<p class='na'>Unable to find a viable path between these locations.</p>";
     return;
   }
-  out.innerHTML = "<ol>" + ROUTE.steps.map(([l, t]) => `<li data-l="${l}">${esc(t)}</li>`).join("") + "</ol>";
-  out.querySelectorAll("li").forEach(li => li.onclick = () => goLeg(+li.dataset.l));
+
+  let html = "";
+  if (ROUTE.legs.length > 1) {
+    html += `
+      <div class="route-floor-switch">
+        ${ROUTE.legs.map((l, idx) => `
+          <button type="button" class="btn ${idx == 0 ? 'on' : ''} r-floor-btn" data-leg="${idx}">
+            ${idx == 0 ? '1. ' : '2. '}${fname(l.floor)}
+          </button>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  html += "<ol class='route-steps'>" + ROUTE.steps.map(([l, t], idx) => `
+    <li data-l="${l}" class="route-step-item">
+      <span class="step-bullet">${idx + 1}</span>
+      <span class="step-text">${esc(t)}</span>
+    </li>
+  `).join("") + "</ol>";
+
+  out.innerHTML = html;
+
+  out.querySelectorAll(".r-floor-btn").forEach(btn => {
+    btn.onclick = () => {
+      out.querySelectorAll(".r-floor-btn").forEach(b => b.classList.remove("on"));
+      btn.classList.add("on");
+      goLeg(+btn.dataset.leg);
+    };
+  });
+
+  out.querySelectorAll(".route-step-item").forEach(li => {
+    li.onclick = () => {
+      const legIdx = +li.dataset.l;
+      out.querySelectorAll(".r-floor-btn").forEach((b, i) => b.classList.toggle("on", i == legIdx));
+      goLeg(legIdx);
+    };
+  });
+
   if (innerWidth < 700) $("dir").classList.add("min");
   goLeg(0);
 }
@@ -1025,6 +1006,23 @@ $("dirb").onclick = () => {
   d.style.display = d.style.display == "block" ? "none" : "block";
   fillDL();
 };
+
+const fvDirBtn = $("fv-dir-btn");
+if (fvDirBtn) {
+  fvDirBtn.onclick = () => {
+    const d = $("dir");
+    d.style.display = d.style.display == "block" ? "none" : "block";
+    fillDL();
+  };
+}
+
+const dUseEnt = $("d-use-ent");
+if (dUseEnt) {
+  dUseEnt.onclick = () => {
+    $("df").value = "ENTRANCE";
+    if ($("dt").value) go();
+  };
+}
 
 $("dx").onclick = () => $("dir").style.display = "none";
 $("ded").onclick = () => $("dir").classList.remove("min");
