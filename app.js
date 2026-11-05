@@ -682,11 +682,10 @@ const ST = {
   S: { WT: [80, 235],  WB: [67, 630],  ET: [1473, 120], E: [1631, 481] }
 };
 
+/* Only inner staircases are available for inter-floor routing (outer stairs are closed) */
 const SN = {
-  WT: "north-west stairs",
-  WB: "south-west stairs",
-  ET: "north-east stairs",
-  E:  "east stairs"
+  WT: "north-west inner stairs",
+  ET: "north-east inner stairs"
 };
 const ORD = ["G", "F", "S"];
 const ENT = { code: "ENTRANCE", floor: "G", p: [836, 672] };
