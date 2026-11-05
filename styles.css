@@ -126,17 +126,17 @@ body {
 
 .site-bg-image {
   position: absolute;
-  top: -40px;
-  left: -40px;
-  right: -40px;
-  bottom: -40px;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
   background-image: url('assets/images/hero.jpg');
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;
-  filter: blur(28px);
-  transform: scale(1.08);
-  opacity: 0.50;
+  filter: blur(4px);
+  transform: scale(1.02);
+  opacity: 0.72;
   transition: opacity 0.3s ease;
 }
 
@@ -148,8 +148,8 @@ body {
 }
 
 :root[data-theme="light"] .site-bg-image {
-  opacity: 0.22;
-  filter: blur(32px);
+  opacity: 0.30;
+  filter: blur(4px);
 }
 
 :root[data-theme="light"] .site-bg-overlay {
