@@ -32,33 +32,26 @@ const R=(a,b)=>a.map((c,i)=>[c,...b[i]]);
 
 const FLOORS=[
 {id:"G",name:"Ground Floor",rooms:[
-["S034",[167,195,270,281]],["S035",[167,312,270,396]],["C027",[610,235,661,310]],["C026",[662,235,712,310]],["C017",[1289,235,1336,304]],
-["S016",[1356,190,1436,155,1473,218,1390,258]],["S015",[1415,270,1488,236,1522,293,1448,335]],
-["X",[167,546,270,708]],["X",[1100,316,1339,391]],["X",[1100,546,1379,620]],["X",[1055,653,1285,735]]]},
+["S034",[165,160,269,250]],["S035",[166,276,269,362]],["C027",[611,201,660,285]],["C026",[661,201,711,285]],["C017",[1288,201,1335,284]],
+["S016",[1395,235,1355,167,1433,122,1473,189]],["S015",[1448,326,1407,258,1481,213,1523,280]],["X",[166,511,270,673]],["X",[1100,313,1332,358]],["X",[1100,513,1380,588]],
+["X",[1054,616,1284,700]]]},
 {id:"F",name:"First Floor",rooms:[
-["S140",[111,166,220,261]],["S141",[111,288,220,374]],
-["C139",[272,208,326,295]],["C138",[328,208,380,295]],["C137",[381,208,430,295]],["C136",[432,208,483,295]],
-["B135",[485,208,535,295]],["B134",[537,208,587,295]],["B133",[589,208,640,295]],["B132",[643,208,695,295]],
-["B131",[953,206,1003,297]],["B130",[1005,206,1053,297]],["B129",[1055,206,1105,297]],["B128",[1107,206,1155,297]],
-["C127",[1157,206,1203,297]],["C126",[1205,206,1254,297]],["C125",[1257,206,1304,297]],["C124",[1306,206,1355,297]],
-["S123",[1381,158,1458,126,1500,192,1424,234]],["S122",[1443,274,1521,229,1561,295,1481,337]],
-["H114",[1464,497,1578,454,1592,515,1492,566]],["H113",[1512,595,1622,563,1633,629,1544,661]],
-["C154",[377,532,427,618]],["C153",[429,532,478,618]],["C152",[480,532,532,618]],
-["X",[111,528,217,620]],["X",[271,528,375,620]],["X",[111,652,223,698]],["X",[274,654,372,732]],
-["X",[1106,526,1203,608]],["X",[1204,526,1304,608]],["X",[1306,526,1412,608]],["X",[1106,646,1203,732]],["X",[1204,646,1304,732]]]},
+["S140",[126,178,229,269]],["S141",[126,295,230,378]],["C139",[283,218,335,304]],["C138",[334,218,384,304]],["C137",[384,218,434,304]],
+["C136",[434,218,485,304]],["B135",[485,218,537,304]],["B134",[537,218,591,304]],["B133",[589,218,639,304]],["B132",[639,218,691,304]],
+["B131",[940,218,994,303]],["B130",[991,218,1040,303]],["B129",[1039,217,1089,303]],["B128",[1088,217,1138,303]],["C127",[1138,217,1185,303]],
+["C126",[1185,217,1235,303]],["C125",[1234,217,1283,303]],["C124",[1283,217,1333,303]],["S123",[1396,248,1355,178,1437,130,1478,201]],["S122",[1403,368,1362,298,1489,224,1530,294]],
+["H114",[1466,568,1432,510,1527,455,1561,513]],["H113",[1516,658,1477,591,1563,542,1602,608]],["C154",[381,530,430,617]],["C153",[431,530,481,618]],["C152",[480,530,534,618]],
+["X",[125,529,228,618]],["X",[280,529,381,617]],["X",[124,647,228,696]],["X",[279,647,379,728]],["X",[1088,526,1186,610]],
+["X",[1185,526,1286,610]],["X",[1286,526,1387,610]],["X",[1088,640,1186,724]],["X",[1185,640,1284,724]]]},
 {id:"S",name:"Second Floor",rooms:[
-["S241",[208,249,301,329]],["S242",[208,354,301,423]],["C240",[343,284,385,352]],
-["B236",[510,284,549,352]],["B235",[550,284,593,352]],["B234",[595,284,632,352]],["B233",[633,284,678,352]],
-["C231",[903,278,946,349]],["C230",[946,278,987,349]],["C229",[987,278,1028,349]],["C228",[1028,278,1069,349]],
-["C227",[1069,278,1110,349]],["C226",[1110,278,1153,349]],["C225",[1153,278,1195,349]],["C224",[1195,278,1237,349]],
-["H210",[1326,509,1424,452,1461,520,1366,569]],["H209",[1380,589,1469,528,1509,595,1418,652]],
-["C260",[208,534,254,614]],["C259",[255,534,300,614]],["C258",[340,534,380,614]],["C257",[381,534,421,614]],["C256",[422,534,463,614]],
-["C265",[552,640,640,712]],
-["X",[387,284,428,352]],["X",[429,284,468,352]],["X",[469,284,509,352]],["X",[452,383,528,421]],
-["X",[684,269,898,435]],["X",[700,457,880,583]],["X",[1261,194,1363,292]],["X",[1309,280,1395,372]],
-["X",[1021,547,1103,606]],["X",[1103,547,1193,606]],["X",[1193,547,1275,606]],
-["X",[981,640,1103,718]],["X",[1103,640,1187,718]],["X",[338,646,420,715]],["X",[208,640,295,683]],
-["X",[465,535,509,612]],["X",[509,535,555,612]]]}];
+["S241",[119,165,224,257]],["S242",[120,282,225,363]],["C240",[274,203,324,286]],["B236",[465,203,512,286]],["B235",[511,203,559,286]],
+["B234",[559,203,607,286]],["B233",[607,203,661,286]],["C231",[916,199,963,279]],["C230",[962,199,1011,280]],["C229",[1010,198,1058,280]],
+["C228",[1058,197,1105,280]],["C227",[1106,198,1153,280]],["C226",[1152,198,1200,280]],["C225",[1201,198,1249,280]],["C224",[1249,198,1300,280]],
+["H210",[1448,534,1403,462,1512,394,1557,465]],["H209",[1506,629,1460,555,1573,486,1618,559]],["C260",[119,492,173,585]],["C259",[172,492,223,585]],["C258",[268,492,317,585]],
+["C257",[316,492,364,584]],["C256",[363,492,412,584]],["C265",[617,698,512,698,512,612,617,612]],["X",[322,203,370,286]],["X",[371,203,417,286]],
+["X",[417,203,464,286]],["X",[397,315,489,364]],["X",[907,242,917,282,914,376,665,375,662,246,717,192,862,191]],["X",[894,405,870,552,714,552,685,406]],["X",[1364,220,1324,154,1409,103,1449,168]],
+["X",[1420,312,1377,243,1462,190,1505,259]],["X",[1053,504,1146,575]],["X",[1146,504,1249,575]],["X",[1249,504,1346,575]],["X",[1008,612,1147,703]],
+["X",[1247,619,1243,698,1148,699,1146,624,1153,615,1237,612]],["X",[268,618,364,698]],["X",[162,611,223,660]],["X",[413,493,463,584]],["X",[464,493,518,584]]]}];
 
 /* Normalise room geometry & data structures */
 FLOORS.forEach(f => {
@@ -67,9 +60,7 @@ FLOORS.forEach(f => {
     const pts0 = g.length == 4 
       ? [[g[0], g[1]], [g[2], g[1]], [g[2], g[3]], [g[0], g[3]]] 
       : g.reduce((a, v, i) => (i % 2 ? a[a.length - 1].push(v) : a.push([v]), a), []);
-    const pts = f.id == "S" 
-      ? pts0.map(p => [Math.round(1.152 * p[0] - 121.6), Math.round(1.155 * p[1] - 125.6)]) 
-      : pts0;
+    const pts = pts0;   /* geometry is now measured directly on the floor images */
     const x = c == "X";
     if (x) n++;
     const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
@@ -332,8 +323,6 @@ function home() {
           <h3 class="qw-title">Room-to-Room Path Search &amp; Directions</h3>
           <p class="qw-desc">
             Find the optimal walking route between any room and destination.
-            <span class="qw-badge-ok">● 5 Authorized Green Stairs In Use</span>
-            <span class="qw-badge-no">✕ Outer Blue Stairs Closed</span>
           </p>
         </div>
       </div>
@@ -463,7 +452,7 @@ function draw() {
     const c = isSel ? COL.sel : color(r);
     const p = r.pts.map(q => q.join(",")).join(" ");
     return `<polygon class="rm ${isSel ? 'sel' : ''}" data-c="${r.code}" points="${p}" fill="${c}" fill-opacity="${isSel ? .55 : dim ? .03 : .22}" stroke="${c}" stroke-width="${isSel ? 3.5 : 2}" stroke-opacity="${dim ? .2 : 1}" tabindex="0" aria-label="Room ${r.code}"/>`;
-  }).join("") + stairsSvg() + routeSvg();
+  }).join("") + bathsSvg() + stairsSvg() + routeSvg();
 
   $("svg").querySelectorAll(".rm").forEach(e => {
     const r = ALL.find(x => x.code == e.dataset.c);
@@ -509,6 +498,19 @@ function draw() {
     e.onmouseleave = () => $("tip").style.display = "none";
   });
 
+  $("svg").querySelectorAll(".wc").forEach(e => {
+    const b = BATH_ALL.find(x => x.id == e.dataset.wc);
+    e.onmousemove = ev => {
+      const bb = map.getBoundingClientRect(), t = $("tip");
+      t.style.display = "block";
+      t.innerHTML = `<div class="tip-head"><b>${esc(b.label)}</b> <span class="tip-tag" style="background:rgba(236,72,153,.25);color:#f9a8d4;border:1px solid #ec4899">Bathroom</span></div><div class="tip-sub">Click for directions</div>`;
+      t.style.left = ev.clientX - bb.left + 14 + "px";
+      t.style.top = ev.clientY - bb.top + 14 + "px";
+    };
+    e.onmouseleave = () => $("tip").style.display = "none";
+    e.onclick = () => { if (moved < 10) openDir("t", b.id); };
+  });
+
   $("leg").innerHTML = [
     ["ok", "Accessible, assigned"],
     ["na", "Accessible, unassigned"],
@@ -516,7 +518,240 @@ function draw() {
     ["sel", "Selected"]
   ].map(([k, t]) => `<span><i style="background:${COL[k]}"></i>${t}</span>`).join("")
   + `<span><i class="leg-stair-ok"></i>Authorized Stairs (Available)</span>`
-  + `<span><i class="leg-stair-no"></i>Emergency Stairs (Closed)</span>`;
+  + `<span><i class="leg-stair-no"></i>Emergency Stairs (Closed)</span>`
+  + `<span><i class="leg-wc"></i>Bathrooms</span>`;
+}
+
+["ft", "fa", "fs"].forEach(i => $(i).onchange = draw);
+
+/* Zoom & Pan Handlers */
+let moved = 0, g0 = null;
+const P = new Map();
+
+const snap = () => {
+  const a = [...P.values()];
+  if (a.length == 1) g0 = { x: a[0].x, y: a[0].y, vx: V.x, vy: V.y };
+  else if (a.length >= 2) {
+    const [p, q] = a;
+    g0 = { d: Math.hypot(p.x - q.x, p.y - q.y) || 1, mx: (p.x + q.x) / 2, my: (p.y + q.y) / 2, V: { ...V } };
+  } else g0 = null;
+};
+
+map.onpointerdown = e => {
+  if (e.target.closest(".zc")) return;
+  P.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  moved = 0;
+  snap();
+  map.style.cursor = "grabbing";
+};
+
+addEventListener("pointermove", e => {
+  if (!P.has(e.pointerId)) return;
+  P.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  const a = [...P.values()], b = map.getBoundingClientRect();
+  if (a.length == 1 && g0 && g0.vx !== undefined) {
+    const dx = a[0].x - g0.x, dy = a[0].y - g0.y;
+    moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
+    V.x = g0.vx + dx;
+    V.y = g0.vy + dy;
+    apply();
+  } else if (a.length >= 2 && g0 && g0.d) {
+    const [p, q] = a, d = Math.hypot(p.x - q.x, p.y - q.y), mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+    moved = 99;
+    const k = Math.max(.3, Math.min(8, g0.V.k * d / g0.d)), r = k / g0.V.k, cx = g0.mx - b.left, cy = g0.my - b.top;
+    V.k = k;
+    V.x = (mx - b.left) - (cx - g0.V.x) * r;
+    V.y = (my - b.top) - (cy - g0.V.y) * r;
+    apply();
+  }
+});
+
+const up = e => {
+  if (!P.has(e.pointerId)) return;
+  P.delete(e.pointerId);
+  snap();
+  if (!P.size) {
+    map.style.cursor = "grab";
+    setTimeout(() => moved = 0, 0);
+  }
+};
+
+addEventListener("pointerup", up);
+addEventListener("pointercancel", up);
+
+function zoom(f, cx, cy) {
+  const b = map.getBoundingClientRect();
+  cx = cx ?? b.width / 2;
+  cy = cy ?? b.height / 2;
+  const k = Math.max(.3, Math.min(8, V.k * f)), r = k / V.k;
+  V.x = cx - (cx - V.x) * r;
+  V.y = cy - (cy - V.y) * r;
+  V.k = k;
+  apply();
+}
+
+map.addEventListener("wheel", e => {
+  e.preventDefault();
+  const b = map.getBoundingClientRect();
+  zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - b.left, e.clientY - b.top);
+}, { passive: false });
+
+$("zi").onclick = () => zoom(1.3);
+$("zo").onclick = () => zoom(1 / 1.3);
+$("zr").onclick = reset;
+
+function zoomTo(r) {
+  const [w, h] = [r.bb[2] - r.bb[0], r.bb[3] - r.bb[1]];
+  const cw = map.clientWidth, ch = map.clientHeight;
+  const k = Math.min(cw / (w * 3), ch / (h * 3), 4);
+  V = { k, x: cw / 2 - (r.bb[0] + w / 2) * k, y: ch / 2 - (r.bb[1] + h / 2) * k };
+  stage.style.transition = "transform .4s cubic-bezier(0.16, 1, 0.3, 1)";
+  apply();
+  setTimeout(() => stage.style.transition = "", 450);
+}
+
+/* Room Modal Dialog */
+function row(k, v) {
+  return `<span>${k}</span><span class="${v ? "kv-val" : "na"}">${v ? esc(v) : "Not assigned"}</span>`;
+}
+
+function show(r) {
+  sel = r;
+  draw();
+  const d = D(r), a = access(r), m = $("modal");
+  const tag = `<span class="tag" style="background:${a == "no" ? COL.no : COL.ok}">${a == "no" ? "Restricted" : "Accessible"}</span>`;
+  
+  let h = `
+    <div class="mh">
+      <div>
+        <h2>${r.code}</h2>
+        <div class="pill">${r.name ? esc(r.name) + " · " : ""}${TYPES[r.type]} · ${FLOORS.find(f => f.id == r.floor).name}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        ${tag}
+        <button class="x" id="cl" aria-label="Close">×</button>
+      </div>
+    </div>
+  `;
+
+  if (!canView(r)) {
+    h += `
+      <div class="warn">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${COL.no}" stroke-width="2">
+          <rect x="4" y="11" width="16" height="10" rx="2"/>
+          <path d="M8 11V7a4 4 0 018 0v4"/>
+        </svg>
+        <b>Access Restricted</b>
+        <span class="pill">This room is restricted for operations staff and authorized personnel.</span>
+      </div>
+    `;
+  } else {
+    const t = teams(r);
+    h += `
+      <div class="sec">
+        <h4>Room Assignment Details</h4>
+        <div class="kv">
+          ${row("Lead Manager", d.resp)}
+          ${row("Space Capacity", d.cap != null && d.cap !== "" ? d.cap + " people" : "")}
+          ${row("Assignment Type", mode(r) == "Unassigned" ? "" : mode(r))}
+        </div>
+      </div>
+    `;
+
+    if (mode(r) == "Participants") {
+      h += `
+        <div class="sec">
+          <h4>Assigned Challenge &amp; Teams</h4>
+          <div class="kv">
+            ${row("Challenge Track", d.chal)}
+            ${row("Total Teams", t.length ? String(t.length) + " teams" : "")}
+          </div>
+          <div style="margin-top:10px">
+            ${t.length ? t.map(x => `<span class="chip">${esc(x)}</span>`).join("") : "<span class='na'>No teams assigned yet</span>"}
+          </div>
+        </div>
+      `;
+    }
+
+    if (mode(r) == "Volunteers") {
+      h += `
+        <div class="sec">
+          <h4>Volunteer Squad</h4>
+          <div class="kv">
+            ${row("Volunteer Team", d.vteam)}
+            ${row("Team Capacity", d.vcap != null && d.vcap !== "" ? d.vcap + " people" : "")}
+          </div>
+        </div>
+      `;
+    }
+
+    if (mode(r) == "Unassigned") {
+      h += `<div class="sec"><span class="na">No participants or volunteers assigned to this room.</span></div>`;
+    }
+  }
+
+  if (canView(r)) {
+    h += `
+      <div class="modal-actions">
+        <button class="btn" data-d="f">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 8 12 12 16"/><line x1="16" y1="12" x2="8" y2="12"/></svg>
+          Directions from here
+        </button>
+        <button class="btn" data-d="t">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 16 16 12 12 8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Directions to here
+        </button>
+        <button class="btn btn-wc" data-d="wc">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 8h6M12 8v8M9 16h6"/></svg>
+          Nearest bathroom
+        </button>
+      </div>
+    `;
+  }
+
+  m.innerHTML = h;
+  m.querySelectorAll("[data-d]").forEach(b => b.onclick = () => {
+    close();
+    openDir(b.dataset.d, r.code);
+  });
+
+  const bd = $("bd");
+  bd.style.display = "flex";
+  requestAnimationFrame(() => bd.classList.add("show"));
+  $("cl").onclick = close;
+}
+
+function close() {
+  const bd = $("bd");
+  bd.classList.remove("show");
+  setTimeout(() => { bd.style.display = "none"; }, 200);
+  sel = null;
+  if (floor) draw();
+}
+
+$("bd").onclick = e => { if (e.target.id == "bd") close(); };
+addEventListener("keydown", e => { 
+  if (e.key == "Escape") {
+    close(); 
+    $("res").hidden = true;
+    $("dir").style.display = "none";
+    const gModal = $("gsheet-modal");
+    if (gModal) gModal.classList.remove("show");
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() == "k") {
+    e.preventDefault();
+    $("q").focus();
+  }
+});
+
+/* Search System */
+function hits(q) {
+  q = q.toLowerCase();
+  return ALL.filter(r => {
+    const d = D(r);
+    if (!canView(r)) return r.code.toLowerCase().includes(q);
+    return [r.code, r.name, d.resp, d.chal, d.vteam, ...teams(r)].some(s => s && String(s).toLowerCase().includes(q));
+  });
 }
 
 $("q").oninput = e => {
@@ -541,6 +776,19 @@ $("q").oninput = e => {
       }).join("")
     : `<div><small>No matching rooms or teams found.</small></div>`;
 
+  /* bathrooms: typing "bath", "wc", "toilet" or "restroom" lists them */
+  if (/^(bath|wc|rest|toil|lav)/i.test(q)) {
+    const wcHtml = BATH_ALL.map(b => `<div data-wc="${b.id}"><div style="flex:1;min-width:0"><b>${esc(b.label)}</b> <small>${esc(FLOORS.find(f => f.id == b.floor).name)}</small></div><button type="button" class="res-dir-btn" data-rc="${b.id}" title="Get directions">Route →</button></div>`).join("");
+    res.innerHTML = wcHtml + (h.length ? res.innerHTML : "");
+    res.hidden = false;
+    res.querySelectorAll("[data-wc]").forEach(e => e.onclick = ev => {
+      if (ev.target.closest(".res-dir-btn")) return;
+      const b = BATH_ALL.find(x => x.id == e.dataset.wc);
+      res.hidden = true;
+      open(b.floor, b);
+    });
+  }
+
   res.querySelectorAll(".res-dir-btn").forEach(btn => {
     btn.onclick = ev => {
       ev.stopPropagation();
@@ -559,30 +807,34 @@ $("q").oninput = e => {
   });
 };
 
-/* Wayfinding: Corridor-following A* algorithm on floor plan */
-const NB = 3, GW = Math.floor(W / NB), GH = Math.floor(H / NB);
+/* ============================================================
+   WAYFINDING — simple corridor map
+   Each floor has a few hand-placed corridor lines. Every room has a
+   door point that snaps onto the nearest corridor, and the 5 inner
+   stairs are the only way between floors. Shortest walk = Dijkstra.
+   ============================================================ */
 /* Only the 5 designated inner staircases are available for inter-floor routing */
 const ST = {
   G: {
-    WN: [580, 371],
-    WS: [581, 528],
-    SW: [438, 680],
-    EN: [1030, 370],
-    SE: [1013, 682]
+    WN: [608, 390],
+    WS: [591, 556],
+    SW: [444, 676],
+    EN: [1065, 388],
+    SE: [1030, 673]
   },
   F: {
-    WN: [588, 370],
-    WS: [587, 530],
-    SW: [436, 676],
-    EN: [1027, 369],
-    SE: [1023, 679]
+    WN: [573, 407],
+    WS: [552, 580],
+    SW: [403, 700],
+    EN: [1053, 403],
+    SE: [1013, 699]
   },
   S: {
-    WN: [593, 370],
-    WS: [591, 529],
-    SW: [441, 685],
-    EN: [1041, 368],
-    SE: [1011, 698]
+    WN: [551, 382],
+    WS: [537, 548],
+    SW: [388, 671],
+    EN: [1019, 385],
+    SE: [985, 671]
   }
 };
 
@@ -594,237 +846,245 @@ const SN = {
   SE: "South-East Wing Stairs"
 };
 const UNAVAILABLE_STAIRS = [
-  { id: "NW_OUT", name: "Far NW Outer Stairs (Closed)", p: [104, 215] },
-  { id: "SW_OUT", name: "Far SW Outer Stairs (Closed)", p: [110, 643] },
-  { id: "NE_OUT", name: "Far NE Outer Stairs (Closed)", p: [1552, 135] },
-  { id: "SE_OUT", name: "Far SE Outer Stairs (Closed)", p: [1635, 511] }
+  { id: "NW_OUT", name: "Far NW Outer Stairs (Closed)", p: [77, 245], pf: { G: [114, 228], F: [77, 250], S: [75, 238] } },
+  { id: "SW_OUT", name: "Far SW Outer Stairs (Closed)", p: [77, 645], pf: { G: [116, 640], F: [77, 660], S: [66, 634] } },
+  { id: "NE_OUT", name: "Far NE Outer Stairs (Closed)", p: [1490, 150], pf: { G: [1495, 160], F: [1495, 166], S: [1476, 135] } },
+  { id: "SE_OUT", name: "Far SE Outer Stairs (Closed)", p: [1595, 515], pf: { G: [1585, 513], F: [1596, 535], S: [1617, 477] } }
 ];
 const ORD = ["G", "F", "S"];
 const ENT = { code: "ENTRANCE", floor: "G", p: [836, 672] };
-const grids = {};
+
+/* ============================================================
+   BATHROOMS (pink)
+   Ground floor: positions taken from the highlighted ground-floor plan.
+   1st & 2nd floor: located on the plan drawings (same stall blocks) - please
+   confirm with a highlighted plan and adjust the boxes [x1, y1, x2, y2] if needed.
+   ============================================================ */
+const BATHS = {
+  G: [
+    { id: "WC-G1", bb: [570, 310, 638, 358] },
+    { id: "WC-G2", bb: [1032, 310, 1108, 358] },
+    { id: "WC-G3", bb: [468, 607, 538, 701] },
+    { id: "WC-G4", bb: [1283, 604, 1356, 699] }
+  ],
+  F: [
+    { id: "WC-F1", bb: [553, 343, 612, 395] },
+    { id: "WC-F2", bb: [1027, 341, 1086, 389] },
+    { id: "WC-F3", bb: [434, 646, 497, 715] },
+    { id: "WC-F4", bb: [1298, 640, 1349, 715] }
+  ],
+  S: [
+    { id: "WC-S1", bb: [517, 311, 583, 389] },
+    { id: "WC-S2", bb: [983, 303, 1046, 395] },
+    { id: "WC-S3", bb: [425, 608, 478, 698] },
+    { id: "WC-S4", bb: [1246, 608, 1298, 698] }
+  ]
+};
+const BATH_ALL = Object.keys(BATHS).flatMap(f => BATHS[f].map(b => {
+  const cy = (b.bb[1] + b.bb[3]) / 2, cx = (b.bb[0] + b.bb[2]) / 2;
+  const side = (cy < 450 ? "North" : "South") + "-" + (cx < 836 ? "West" : "East");
+  const fl = FLOORS.find(x => x.id == f).name.replace(" Floor", "");
+  return { ...b, floor: f, side, label: `${side} Bathroom (${fl})`, door: [Math.round(cx), b.bb[1] + 4], pts: [[b.bb[0], b.bb[1]], [b.bb[2], b.bb[1]], [b.bb[2], b.bb[3]], [b.bb[0], b.bb[3]]] };
+}));
 let ROUTE = null;
 
-function dil(a, n) {
-  for (let t = 0; t < n; t++) {
-    const b = a.slice();
-    for (let y = 0; y < GH; y++) {
-      for (let x = 0; x < GW; x++) {
-        const i = y * GW + x;
-        if (a[i]) {
-          if (x > 0) b[i - 1] = 1;
-          if (x < GW - 1) b[i + 1] = 1;
-          if (y > 0) b[i - GW] = 1;
-          if (y < GH - 1) b[i + GW] = 1;
-        }
-      }
-    }
-    a = b;
-  }
-  return a;
+/* Corridor centre-lines (pixels of the floor image). Lines that touch
+   each other are joined automatically. Outer (closed) stairs are never
+   part of this map, so they can never be used. */
+const CORRIDORS = {
+  G: [
+    [[262, 300], [710, 300]],                    // north-west corridor
+    [[590, 300], [590, 603]],                    // west inner hall (stairs WN, WS)
+    [[960, 300], [1340, 300], [1375, 290]],      // north-east corridor
+    [[1030, 300], [1030, 603]],                  // east inner hall (stairs EN)
+    [[285, 603], [1435, 603]]                    // main east-west spine through the lobby
+  ],
+  F: [
+    [[243, 330], [694, 330]],                    // north-west corridor
+    [[243, 262], [243, 633]],                    // far-west vertical corridor
+    [[588, 330], [588, 612]],                    // west inner hall
+    [[940, 330], [1335, 330]],                   // north-east corridor
+    [[1335, 330], [1370, 305]],                  // to S122 / S123
+    [[1335, 330], [1452, 603], [1452, 633]],     // diagonal wing to H113 / H114
+    [[1030, 330], [1030, 628]],                  // east inner hall
+    [[243, 633], [520, 633], [588, 612], [720, 605], [890, 600], [980, 620], [1030, 628], [1060, 633], [1452, 633]]
+  ],
+  S: [
+    [[243, 303], [667, 303]],                    // north-west corridor
+    [[243, 250], [243, 596]],                    // far-west vertical corridor
+    [[598, 303], [598, 596]],                    // west inner hall
+    [[920, 303], [1300, 303]],                   // north-east corridor
+    [[1300, 303], [1398, 527], [1419, 596]],     // diagonal wing to H209 / H210
+    [[1040, 303], [1040, 596]],                  // east inner hall
+    [[130, 596], [1419, 596]]                    // main east-west spine
+  ]
+};
+
+/* Door points. A "row" is a line of rooms along one corridor: the door
+   x comes from each room's centre, y is the room's corridor-side wall. */
+const DOOR_ROWS = [
+  { f: "G", y: 288, dx: 0,   codes: ["C027", "C026", "C017"] },
+  { f: "F", y: 305, dx: 0,   codes: ["C139", "C138", "C137", "C136", "B135", "B134", "B133", "B132"] },
+  { f: "F", y: 305, dx: 0,  codes: ["B131", "B130", "B129", "B128", "C127", "C126", "C125", "C124"] },
+  { f: "F", y: 622, dx: 0,   codes: ["C154", "C153", "C152"] },
+  { f: "S", y: 287, dx: 0,   codes: ["C240", "B236", "B235", "B234", "B233"] },
+  { f: "S", y: 287, dx: 0,   codes: ["C231", "C230", "C229", "C228", "C227", "C226", "C225", "C224"] },
+  { f: "S", y: 588, dx: 0,   codes: ["C260", "C259", "C258", "C257", "C256"] },
+  { f: "S", y: 616, dx: 0,   codes: ["C265"] }
+];
+const DOOR_PTS = {
+  S034: [262, 262], S035: [268, 306], S016: [1393, 235], S015: [1412, 287],
+  S140: [232, 265], S141: [232, 338], S123: [1383, 238], S122: [1392, 284],
+  H114: [1438, 520], H113: [1482, 612],
+  S241: [232, 250], S242: [232, 322], H210: [1408, 468], H209: [1466, 560]
+};
+
+function doorOf(r) {
+  if (DOOR_PTS[r.code]) return DOOR_PTS[r.code];
+  const row = DOOR_ROWS.find(w => w.f == r.floor && w.codes.includes(r.code));
+  if (row) return [Math.round((r.bb[0] + r.bb[2]) / 2) + row.dx, row.y];
+  return [(r.bb[0] + r.bb[2]) / 2 | 0, (r.bb[1] + r.bb[3]) / 2 | 0];   // fallback: room centre
 }
 
-const loadImg = src => new Promise(r => {
-  const i = new Image();
-  i.onload = () => r(i);
-  i.src = src;
-});
+const nvDist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+function nvNearest(p, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+  let t = l2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return { t, pt: [a[0] + t * dx, a[1] + t * dy] };
+}
 
-async function grid(fid) {
-  if (grids[fid]) return grids[fid];
-  const im = await loadImg(IMG[fid]), c = document.createElement("canvas");
-  c.width = W; c.height = H;
-  const cx = c.getContext("2d", { willReadFrequently: true });
-  cx.drawImage(im, 0, 0, W, H);
-  const px = cx.getImageData(0, 0, W, H).data;
-  let blk = new Uint8Array(GW * GH);
+const NAV = {};
+function buildNav(fid) {
+  if (NAV[fid]) return NAV[fid];
+  const lines = CORRIDORS[fid].map(l => l.map(p => p.slice()));
 
-  for (let y = 0; y < GH * NB; y++) {
-    for (let x = 0; x < GW * NB; x++) {
-      const p = (y * W + x) * 4;
-      if (px[p] + px[p + 1] + px[p + 2] < 330) blk[(y / NB | 0) * GW + (x / NB | 0)] = 1;
-    }
-  }
+  /* 1. join corridor ends that touch (or nearly touch) another corridor */
+  lines.forEach((ln, li) => {
+    [0, ln.length - 1].forEach(ei => {
+      const e = ln[ei];
+      let best = null;
+      lines.forEach((o, oi) => {
+        if (oi == li) return;
+        for (let i = 0; i < o.length - 1; i++) {
+          const r = nvNearest(e, o[i], o[i + 1]), d = nvDist(e, r.pt);
+          if (d <= 6 && (!best || d < best.d)) best = { d, oi, i, pt: r.pt };
+        }
+      });
+      if (!best) return;
+      const o = lines[best.oi], v = o.find(q => nvDist(q, best.pt) < 0.5);
+      if (v) ln[ei] = v.slice();
+      else { o.splice(best.i + 1, 0, best.pt); ln[ei] = best.pt.slice(); }
+    });
+  });
 
-  const thick = dil(blk, 4);
-  let out = new Uint8Array(GW * GH);
-  const stk = [0];
-  out[0] = 1;
+  const segs = [];
+  lines.forEach(l => { for (let i = 0; i < l.length - 1; i++) segs.push([l[i], l[i + 1]]); });
 
-  while (stk.length) {
-    const i = stk.pop(), x = i % GW, y = i / GW | 0;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const nx = x + dx, ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
-      const n = ny * GW + nx;
-      if (!out[n] && !thick[n]) {
-        out[n] = 1;
-        stk.push(n);
-      }
-    }
-  }
-
-  out = dil(out, 5);
-
+  /* 2. things that must be reachable: stairs, entrance, every room door */
+  const targets = {};
+  for (const k in ST[fid]) targets["STAIR:" + k] = ST[fid][k];
+  if (fid == "G") targets["ENTRANCE"] = ENT.p;
+  (BATHS[fid] || []).forEach(b => { targets["B:" + b.id] = BATH_ALL.find(x => x.id == b.id).door; });
   FLOORS.find(f => f.id == fid).rooms.forEach(r => {
-    for (let y = Math.floor((r.bb[1] + 7) / NB); y < Math.floor((r.bb[3] - 7) / NB); y++) {
-      for (let x = Math.floor((r.bb[0] + 7) / NB); x < Math.floor((r.bb[2] - 7) / NB); x++) {
-        blk[y * GW + x] = 0;
-        out[y * GW + x] = 0;
-      }
-    }
+    if (r.type != "X") targets["R:" + r.code] = doorOf(r);
   });
 
-  // Strictly block outer / unavailable emergency stairs from all routing
-  const OUTER_STAIRS_ZONES = [
-    [0, 160, 165, 310],     // Far West Top outer stairs (outside S034 / S140 / S241)
-    [0, 580, 165, 780],     // Far West Bottom outer stairs (outside red rooms)
-    [1440, 90, 1673, 250],  // Far East Top outer stairs (outside S016)
-    [1520, 470, 1673, 630]  // Far East Bottom outer stairs
-  ];
-  OUTER_STAIRS_ZONES.forEach(([bx1, by1, bx2, by2]) => {
-    for (let y = Math.floor(by1 / NB); y <= Math.ceil(by2 / NB); y++) {
-      for (let x = Math.floor(bx1 / NB); x <= Math.ceil(bx2 / NB); x++) {
-        if (x >= 0 && x < GW && y >= 0 && y < GH) {
-          blk[y * GW + x] = 1;
-          out[y * GW + x] = 1;
-        }
-      }
-    }
+  const att = {}, ins = {};
+  for (const id in targets) {
+    const p = targets[id];
+    let best = null;
+    segs.forEach((s, si) => {
+      const r = nvNearest(p, s[0], s[1]), d = nvDist(p, r.pt);
+      if (!best || d < best.d) best = { d, si, t: r.t, pt: r.pt };
+    });
+    att[id] = { p, pt: best.pt, d: best.d };
+    (ins[best.si] = ins[best.si] || []).push({ t: best.t, pt: best.pt });
+  }
+
+  /* 3. build the graph (corridor pieces + short door/stair stubs) */
+  const nodes = [], idx = {}, adj = [];
+  const nid = p => {
+    const k = Math.round(p[0] * 2) + "," + Math.round(p[1] * 2);
+    if (idx[k] === undefined) { idx[k] = nodes.length; nodes.push([p[0], p[1]]); adj.push([]); }
+    return idx[k];
+  };
+  const link = (a, b) => {
+    if (a == b) return;
+    const w = nvDist(nodes[a], nodes[b]);
+    adj[a].push([b, w]); adj[b].push([a, w]);
+  };
+  segs.forEach((s, si) => {
+    const pts = [s[0], ...(ins[si] || []).sort((x, y) => x.t - y.t).map(i => i.pt), s[1]];
+    for (let i = 0; i < pts.length - 1; i++) link(nid(pts[i]), nid(pts[i + 1]));
   });
-
-  const dt = new Uint8Array(GW * GH).fill(9), q = [];
-  for (let i = 0; i < blk.length; i++) if (blk[i]) { dt[i] = 0; q.push(i); }
-
-  for (let h = 0; h < q.length; h++) {
-    const i = q[h];
-    if (dt[i] >= 3) continue;
-    const x = i % GW, y = i / GW | 0;
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const nx = x + dx, ny = y + dy;
-        if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
-        const n = ny * GW + nx;
-        if (dt[n] == 9) {
-          dt[n] = dt[i] + 1;
-          q.push(n);
-        }
-      }
-    }
+  const at = {};
+  for (const id in att) {
+    const a = att[id], n = nodes.length;
+    nodes.push([a.p[0], a.p[1]]); adj.push([]);       // the door / stair itself
+    link(n, nid(a.pt));
+    at[id] = n;
   }
-
-  const cost = new Float32Array(GW * GH);
-  for (let i = 0; i < cost.length; i++) {
-    cost[i] = out[i] ? 1e6 : blk[i] ? 200 : 1 + 5 * Math.max(0, 3 - dt[i]) / 3;
-  }
-  return grids[fid] = cost;
+  return NAV[fid] = { nodes, adj, at };
 }
 
-function astar(cost, s, t) {
-  const S = (s[1] / NB | 0) * GW + (s[0] / NB | 0);
-  const T = (t[1] / NB | 0) * GW + (t[0] / NB | 0);
-  const tx = T % GW, ty = T / GW | 0;
-
-  const g = new Float32Array(GW * GH).fill(1e9);
-  const par = new Int32Array(GW * GH).fill(-1);
-  const done = new Uint8Array(GW * GH);
-  const h = [];
-
-  const push = (f, i) => {
-    h.push([f, i]);
-    let k = h.length - 1;
-    while (k) {
-      const p = (k - 1) >> 1;
-      if (h[p][0] <= h[k][0]) break;
-      [h[p], h[k]] = [h[k], h[p]];
-      k = p;
-    }
-  };
-
-  const pop = () => {
-    const top = h[0], last = h.pop();
-    if (h.length) {
-      h[0] = last;
-      let k = 0;
-      for (;;) {
-        const l = 2 * k + 1, r = l + 1;
-        let m = k;
-        if (l < h.length && h[l][0] < h[m][0]) m = l;
-        if (r < h.length && h[r][0] < h[m][0]) m = r;
-        if (m == k) break;
-        [h[m], h[k]] = [h[k], h[m]];
-        k = m;
-      }
-    }
-    return top;
-  };
-
-  g[S] = 0;
-  push(0, S);
-
-  while (h.length) {
-    const c = pop()[1];
-    if (done[c]) continue;
-    done[c] = 1;
-    if (c == T) break;
-    const cx = c % GW, cy = c / GW | 0;
-
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        if (!dx && !dy) continue;
-        const nx = cx + dx, ny = cy + dy;
-        if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
-        const n = ny * GW + nx;
-        const nc = g[c] + cost[n] * (dx && dy ? 1.414 : 1);
-        if (nc < g[n]) {
-          g[n] = nc;
-          par[n] = c;
-          push(nc + Math.hypot(nx - tx, ny - ty), n);
-        }
-      }
-    }
+function walk(fid, fromId, toId) {
+  const g = buildNav(fid), s = g.at[fromId], t = g.at[toId];
+  if (s === undefined || t === undefined) throw new Error("no anchor");
+  const n = g.nodes.length, d = new Array(n).fill(Infinity), prev = new Array(n).fill(-1), done = new Array(n).fill(false);
+  d[s] = 0;
+  for (;;) {
+    let u = -1;
+    for (let i = 0; i < n; i++) if (!done[i] && (u < 0 || d[i] < d[u])) u = i;
+    if (u < 0 || d[u] == Infinity || u == t) break;
+    done[u] = true;
+    for (const [v, w] of g.adj[u]) if (d[u] + w < d[v]) { d[v] = d[u] + w; prev[v] = u; }
   }
-
+  if (d[t] == Infinity) throw new Error("not connected");
   const pts = [];
-  for (let c = T; c != -1; c = par[c]) pts.push([c % GW * NB + 1, (c / GW | 0) * NB + 1]);
-  return { pts: pts.reverse(), cost: g[T] };
+  for (let c = t; c != -1; c = prev[c]) pts.push(g.nodes[c].slice());
+  return { cost: d[t], pts: pts.reverse() };
 }
 
 const fname = id => FLOORS.find(f => f.id == id).name;
 
 function loc(code) {
   code = code.trim().toUpperCase();
-  if (code == "ENTRANCE") return ENT;
+  if (code == "ENTRANCE") return { ...ENT, id: "ENTRANCE" };
   if (code.startsWith("STAIR-")) {
     const k = code.replace("STAIR-", "");
     if (SN[k] && floor) {
-      return { code: SN[k], floor: floor.id, p: ST[floor.id][k] };
+      return { code: SN[k], floor: floor.id, p: ST[floor.id][k], id: "STAIR:" + k };
     }
   }
+  const wc = BATH_ALL.find(x => x.id == code);
+  if (wc) return { code: wc.label, floor: wc.floor, p: wc.door, id: "B:" + wc.id, bath: wc };
   const r = ALL.find(x => x.code == code);
-  return r ? { code: r.code, floor: r.floor, p: [(r.bb[0] + r.bb[2]) / 2 | 0, (r.bb[1] + r.bb[3]) / 2 | 0], room: r } : null;
+  return r ? { code: r.code, floor: r.floor, p: [(r.bb[0] + r.bb[2]) / 2 | 0, (r.bb[1] + r.bb[3]) / 2 | 0], room: r, id: "R:" + r.code } : null;
 }
 
 async function planRoute(a, b) {
   const legs = [], steps = [];
   if (a.floor == b.floor) {
-    const r = astar(await grid(a.floor), a.p, b.p);
-    legs.push({ floor: a.floor, pts: r.pts, m: [[a.p, "s"], [b.p, "e"]] });
+    const r = walk(a.floor, a.id, b.id);
+    legs.push({ floor: a.floor, pts: [a.p, ...r.pts, b.p], m: [[a.p, "s"], [b.p, "e"]] });
     steps.push([0, `Start at ${a.code} (${fname(a.floor)}) and follow the highlighted path to ${b.code}.`]);
     return { legs, steps };
   }
 
+  /* different floors: try each of the 5 inner stairs, keep the shortest */
   let best = null;
-  const Ga = await grid(a.floor), Gb = await grid(b.floor);
   for (const k in SN) {
-    const r1 = astar(Ga, a.p, ST[a.floor][k]), r2 = astar(Gb, ST[b.floor][k], b.p);
+    const r1 = walk(a.floor, a.id, "STAIR:" + k), r2 = walk(b.floor, "STAIR:" + k, b.id);
     const c = r1.cost + r2.cost;
     if (!best || c < best.c) best = { c, k, r1, r2 };
   }
 
   const up = ORD.indexOf(b.floor) > ORD.indexOf(a.floor);
+  const sa = ST[a.floor][best.k], sb = ST[b.floor][best.k];
   legs.push(
-    { floor: a.floor, pts: best.r1.pts, m: [[a.p, "s"], [ST[a.floor][best.k], "t"]] },
-    { floor: b.floor, pts: best.r2.pts, m: [[ST[b.floor][best.k], "t"], [b.p, "e"]] }
+    { floor: a.floor, pts: [a.p, ...best.r1.pts], m: [[a.p, "s"], [sa, "t"]] },
+    { floor: b.floor, pts: [...best.r2.pts, b.p], m: [[sb, "t"], [b.p, "e"]] }
   );
 
   steps.push(
@@ -833,6 +1093,14 @@ async function planRoute(a, b) {
     [1, `Leave the ${SN[best.k]} and follow the highlighted path to ${b.code}.`]
   );
   return { legs, steps };
+}
+
+function bathsSvg() {
+  if (!floor) return "";
+  return BATH_ALL.filter(b => b.floor == floor.id).map(b => {
+    const [x1, y1, x2, y2] = b.bb, cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+    return `<g class="wc" data-wc="${b.id}" tabindex="0" aria-label="${esc(b.label)}"><rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="4" fill="#ec4899" fill-opacity=".34" stroke="#ec4899" stroke-width="2.5"/><g transform="translate(${cx},${cy})"><circle r="13" fill="#ec4899" stroke="#ffffff" stroke-width="2"/><text y="4" text-anchor="middle" font-size="10" font-weight="800" fill="#ffffff" font-family="'Inter', system-ui, sans-serif">WC</text></g></g>`;
+  }).join("");
 }
 
 function stairsSvg() {
@@ -844,27 +1112,27 @@ function stairsSvg() {
       const [x, y] = act[k];
       const name = SN[k];
       h += `
-        <g class="stair-marker stair-active" data-stair="${k}" data-name="${esc(name)}" transform="translate(${x},${y})" tabindex="0">
+        <g class="stair-marker stair-active" data-stair="${k}" data-name="${esc(name)}" transform="translate(${x},${y})" tabindex="0"><g class="stair-inner">
           <circle cx="0" cy="0" r="22" class="stair-halo" fill="rgba(16, 185, 129, 0.22)" stroke="#10b981" stroke-width="2"/>
           <circle cx="0" cy="0" r="14" fill="#10b981" stroke="#ffffff" stroke-width="1.5"/>
           <path d="M-6 4 L-6 1 L-2 1 L-2 -2 L2 -2 L2 -5 L6 -5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <rect x="-24" y="17" width="48" height="15" rx="3" fill="rgba(9, 13, 24, 0.9)" stroke="#10b981" stroke-width="1"/>
           <text x="0" y="28" text-anchor="middle" font-size="9" font-weight="800" fill="#10b981" font-family="'Inter', system-ui, sans-serif">STAIRS</text>
-        </g>
+        </g></g>
       `;
     }
   }
 
   UNAVAILABLE_STAIRS.forEach(s => {
-    const [x, y] = s.p;
+    const [x, y] = (s.pf && s.pf[floor.id]) || s.p;
     h += `
-      <g class="stair-marker stair-closed" data-closed="${s.id}" data-name="${esc(s.name)}" transform="translate(${x},${y})" tabindex="0">
+      <g class="stair-marker stair-closed" data-closed="${s.id}" data-name="${esc(s.name)}" transform="translate(${x},${y})" tabindex="0"><g class="stair-inner">
         <rect x="-18" y="-18" width="36" height="36" rx="6" fill="rgba(37, 72, 230, 0.16)" stroke="#2548e6" stroke-width="2.5" stroke-dasharray="4 2"/>
         <line x1="-12" y1="-12" x2="12" y2="12" stroke="#2548e6" stroke-width="3.5" stroke-linecap="round"/>
         <line x1="12" y1="-12" x2="-12" y2="12" stroke="#2548e6" stroke-width="3.5" stroke-linecap="round"/>
         <rect x="-22" y="20" width="44" height="14" rx="3" fill="rgba(9, 13, 24, 0.9)" stroke="#2548e6" stroke-width="1"/>
         <text x="0" y="30" text-anchor="middle" font-size="8.5" font-weight="900" fill="#60a5fa" font-family="'Inter', system-ui, sans-serif">CLOSED</text>
-      </g>
+      </g></g>
     `;
   });
 
@@ -874,7 +1142,7 @@ function stairsSvg() {
 function routeSvg() {
   if (!ROUTE || !floor) return "";
   return ROUTE.legs.filter(l => l.floor == floor.id).map(l => {
-    const p = l.pts.filter((_, i) => i % 2 == 0 || i == l.pts.length - 1).map(q => q.join(",")).join(" ");
+    const p = l.pts.map(q => q.map(v => Math.round(v)).join(",")).join(" ");
     return `
       <g pointer-events="none" class="route-group">
         <polyline points="${p}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
@@ -888,23 +1156,36 @@ function routeSvg() {
   }).join("");
 }
 
-function fit(bb) {
-  const w = bb[2] - bb[0] + 120, h = bb[3] - bb[1] + 120;
+/* Pan to a route WITHOUT changing the zoom level the user is already at.
+   If the whole leg fits on screen at this zoom it is centred, otherwise the view
+   is centred on the start of the leg so the user can follow it from the beginning. */
+function panTo(bb, start, k, animate) {
   const cw = map.clientWidth;
-  const dr = $("dir").style.display == "block" ? Math.max(0, map.getBoundingClientRect().bottom - $("dir").getBoundingClientRect().top) : 0;
+  const dirEl = $("dir");
+  const dr = (innerWidth < 700 && dirEl.style.display == "block")
+    ? Math.max(0, map.getBoundingClientRect().bottom - dirEl.getBoundingClientRect().top) : 0;
   const ch = Math.max(120, map.clientHeight - dr);
-  const k = Math.min(cw / w, ch / h, 3);
-  V = { k, x: cw / 2 - (bb[0] + bb[2]) / 2 * k, y: ch / 2 - (bb[1] + bb[3]) / 2 * k };
-  stage.style.transition = "transform .35s ease-out";
+  /* Whole floor already fits on screen at this zoom: keep the normal centred view, nothing to pan. */
+  if (k <= Math.min(cw / W, map.clientHeight / H) * 1.05) { reset(); return; }
+  const pad = 60;
+  const fits = (bb[2] - bb[0]) * k + pad * 2 <= cw && (bb[3] - bb[1]) * k + pad * 2 <= ch;
+  const cx = fits ? (bb[0] + bb[2]) / 2 : start[0];
+  const cy = fits ? (bb[1] + bb[3]) / 2 : start[1];
+  V = { k, x: cw / 2 - cx * k, y: ch / 2 - cy * k };
+  if (animate) stage.style.transition = "transform .35s ease-out";
   apply();
-  setTimeout(() => stage.style.transition = "", 400);
+  if (animate) setTimeout(() => stage.style.transition = "", 400);
 }
 
 function goLeg(i) {
   const l = ROUTE.legs[i];
-  open(l.floor);
+  const inFloorView = !$("fv").hidden && !!floor;
+  const keepK = inFloorView ? V.k : null;           /* the zoom the user is currently at */
+  const sameFloor = inFloorView && floor.id == l.floor;
+  if (sameFloor) draw();                            /* just redraw the route, don't reset the view */
+  else open(l.floor);                               /* switching floor: open() resets the view */
   const xs = l.pts.map(p => p[0]), ys = l.pts.map(p => p[1]);
-  fit([Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]);
+  panTo([Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], l.pts[0], keepK ?? V.k, sameFloor);
 }
 
 function fillDL() {
@@ -912,6 +1193,7 @@ function fillDL() {
   if (!dl) return;
   dl.innerHTML = [
     '<option value="ENTRANCE">Main Entrance (Ground Floor)</option>',
+    ...BATH_ALL.map(b => `<option value="${b.id}">${b.label}</option>`),
     ...ALL.filter(canView).map(r => {
       const flName = FLOORS.find(f => f.id == r.floor).name;
       const typeName = TYPES[r.type] || "Room";
@@ -924,6 +1206,7 @@ function openDir(w, code) {
   $("dir").style.display = "block";
   $("dir").classList.remove("min");
   fillDL();
+  if (w == "wc") { $("df").value = code; nearestWC(); return; }
   if (w == "t") {
     $("dt").value = code;
     if (!$("df").value) $("df").value = "ENTRANCE";
@@ -935,7 +1218,33 @@ function openDir(w, code) {
   }
 }
 
-async function go() {
+/* Nearest bathroom (shortest walking distance on the origin's floor) */
+function nearestBath(a) {
+  let best = null;
+  BATH_ALL.filter(b => b.floor == a.floor && "B:" + b.id != a.id).forEach(b => {
+    try {
+      const r = walk(a.floor, a.id, "B:" + b.id);
+      if (!best || r.cost < best.cost) best = { b, cost: r.cost };
+    } catch (e) { /* unreachable from here */ }
+  });
+  return best && best.b;
+}
+
+function nearestWC() {
+  const out = $("dout");
+  $("dir").style.display = "block";
+  $("dir").classList.remove("min");
+  fillDL();
+  const a = loc($("df").value);
+  if (!a) { out.innerHTML = "<p class='na'>Choose where you are (Origin), then press Nearest bathroom.</p>"; return; }
+  if (a.room && !canView(a.room)) { out.innerHTML = `<p class="na">${esc(a.code)} is restricted, so a route cannot be shown from it.</p>`; return; }
+  const b = nearestBath(a);
+  if (!b) { out.innerHTML = "<p class='na'>No bathroom is reachable from that location.</p>"; return; }
+  $("dt").value = b.id;
+  go(true);
+}
+
+async function go(near) {
   const out = $("dout"), a = loc($("df").value), b = loc($("dt").value);
   if (!a || !b) {
     out.innerHTML = "<p class='na'>Please select two valid room codes or ENTRANCE.</p>";
@@ -959,6 +1268,7 @@ async function go() {
     return;
   }
 
+  if (near === true) ROUTE.steps.unshift([0, `Nearest bathroom from ${a.code}: ${b.code}.`]);
   let html = "";
   if (ROUTE.legs.length > 1) {
     html += `
@@ -1007,15 +1317,6 @@ $("dirb").onclick = () => {
   fillDL();
 };
 
-const fvDirBtn = $("fv-dir-btn");
-if (fvDirBtn) {
-  fvDirBtn.onclick = () => {
-    const d = $("dir");
-    d.style.display = d.style.display == "block" ? "none" : "block";
-    fillDL();
-  };
-}
-
 const dUseEnt = $("d-use-ent");
 if (dUseEnt) {
   dUseEnt.onclick = () => {
@@ -1026,7 +1327,8 @@ if (dUseEnt) {
 
 $("dx").onclick = () => $("dir").style.display = "none";
 $("ded").onclick = () => $("dir").classList.remove("min");
-$("dgo").onclick = go;
+$("dgo").onclick = () => go();
+$("dwc").onclick = nearestWC;
 $("dsw").onclick = () => {
   const t = $("df").value;
   $("df").value = $("dt").value;

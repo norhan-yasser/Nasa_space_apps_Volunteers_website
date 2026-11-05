@@ -1235,10 +1235,17 @@ main {
 .stair-marker {
   cursor: pointer;
   outline: none;
+}
+
+/* Hover scale lives on an inner group: the outer <g> keeps its SVG translate(x,y),
+   a CSS transform on it would override that and make the icon jump to the corner. */
+.stair-marker .stair-inner {
+  transform-origin: 0 0;
   transition: transform 0.15s ease;
 }
 
-.stair-marker:hover {
+.stair-marker:hover .stair-inner,
+.stair-marker:focus-visible .stair-inner {
   transform: scale(1.15);
 }
 
@@ -1344,3 +1351,10 @@ main {
   line-height: 1.4;
   color: var(--ink);
 }
+/* Bathrooms */
+.leg-wc { background: #ec4899 !important; border-radius: 3px !important; }
+.wc { cursor: pointer; }
+.wc rect { transition: fill-opacity .15s; }
+.wc:hover rect { fill-opacity: .55; }
+.btn-wc { border-color: #ec4899; color: #f9a8d4; }
+.btn-wc:hover { background: rgba(236, 72, 153, .15); }
