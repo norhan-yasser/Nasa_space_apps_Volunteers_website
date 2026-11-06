@@ -42,17 +42,31 @@
 
   /* Render Issue options */
   $("issues").innerHTML = D.ISSUES.map(function (i) {
-    var icon = i.id === "net" ? "📶 " : i.id === "power" ? "⚡ " : i.id === "help" ? "🛠️ " : "💬 ";
-    return '<label class="issue-opt">' +
+    var icon = i.id === "net" ? "📶" : i.id === "power" ? "⚡" : i.id === "help" ? "🛠️" : "💬";
+    return '<label class="issue-opt" data-opt="' + i.id + '">' +
       '<input type="radio" name="issue" value="' + i.id + '">' +
-      '<span>' +
-      '<span class="t">' + icon + esc(i.label) + '</span><br>' +
-      '<span class="h">' + esc(i.hint) + '</span>' +
-      '</span></label>';
+      '<div class="issue-opt-body">' +
+      '<div class="t"><span class="opt-icon">' + icon + '</span><span>' + esc(i.label) + '</span></div>' +
+      '<div class="h">' + esc(i.hint) + '</div>' +
+      '</div>' +
+      '<div class="issue-opt-radio" aria-hidden="true"><span class="radio-dot"></span></div>' +
+      '</label>';
   }).join("");
+
+  function syncSelectedOpt() {
+    document.querySelectorAll(".issue-opt").forEach(function (lbl) {
+      var inp = lbl.querySelector("input[name=issue]");
+      if (inp && inp.checked) {
+        lbl.classList.add("is-selected");
+      } else {
+        lbl.classList.remove("is-selected");
+      }
+    });
+  }
 
   document.querySelectorAll("input[name=issue]").forEach(function (r) {
     r.onchange = function () {
+      syncSelectedOpt();
       $("other-wrap").hidden = r.value !== "other" || !r.checked;
       if (r.value === "other") $("other").focus();
     };
