@@ -1358,3 +1358,16 @@ main {
 .wc:hover rect { fill-opacity: .55; }
 .btn-wc { border-color: #ec4899; color: #f9a8d4; }
 .btn-wc:hover { background: rgba(236, 72, 153, .15); }
+
+/* Exits & Outer Stage */
+.leg-exit { background: #22c55e !important; border-radius: 50% !important; }
+.leg-stage { background: #14b8a6 !important; border-radius: 2px !important; }
+.exit-mk { cursor: pointer; }
+.exit-mk circle { transition: r .15s; }
+.exit-mk:hover circle { r: 18; }
+
+/* Outer Stage highlight: bright outline so it stands out from the dark-teal drawing */
+.rm.stage { fill: #22d3ee !important; fill-opacity: .16 !important; stroke: #22d3ee !important; stroke-width: 4 !important; stroke-dasharray: 10 6; filter: drop-shadow(0 0 7px rgba(34, 211, 238, .9)); }
+.rm.stage:hover { fill-opacity: .32 !important; }
+.rm.stage.sel { stroke: #fb9746 !important; fill: #fb9746 !important; fill-opacity: .3 !important; stroke-dasharray: none; filter: drop-shadow(0 0 8px rgba(251, 151, 70, .9)); }
+.leg-stage { background: #22d3ee !important; }

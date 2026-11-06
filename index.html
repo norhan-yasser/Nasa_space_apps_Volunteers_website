@@ -3,241 +3,49 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>NASA Space Apps Challenge · Venue &amp; Floor Operations</title>
-  <meta name="description" content="Official NASA Space Apps Challenge Floor Management and Navigation System with Realtime Google Sheets Sync.">
+  <title>Operations · NASA Space Apps Challenge Cairo</title>
+  <meta name="description" content="Operations hub for NASA Space Apps Challenge Cairo volunteers: choose the Logistics team dashboard or the Tech Ops team dashboard.">
   <link rel="icon" type="image/png" href="assets/favicon.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="landing.css">
+  <script>
+    // Keep the same light/dark choice the dashboard uses
+    try { document.documentElement.setAttribute('data-theme', localStorage.getItem('nasa_theme') || 'dark'); } catch (e) {}
+  </script>
 </head>
 <body>
-  <!-- Ambient Blurred Space Background -->
-  <div class="site-bg" aria-hidden="true">
-    <div class="site-bg-image"></div>
-    <div class="site-bg-overlay"></div>
+  <div class="bg" aria-hidden="true">
+    <div class="bg-image"></div>
+    <div class="bg-shade"></div>
   </div>
 
-  <!-- =======================================================================
-       Header / Navigation Bar
-       ======================================================================= -->
-  <header>
-    <div class="brand" id="brand-home" title="Return to Overview">
-      <img src="assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge" class="brand-logo-img logo-dark">
-      <img src="assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge" class="brand-logo-img logo-light">
-      <div class="brand-text">
-        <span class="brand-title">VENUE &amp; FLOOR OPS</span>
-        <span class="brand-sub">
-          <span class="live-beacon"></span>
-          MISSION CONTROL · CAIRO
-        </span>
-      </div>
-    </div>
+  <div class="page">
+    <main class="intro">
+      <h1>Operations</h1>
+      <p class="sub">NASA Space Apps Challenge Cairo</p>
 
-    <!-- Search Input -->
-    <div class="search">
-      <span class="search-icon">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </span>
-      <input id="q" placeholder="Search room, team, challenge, manager…" autocomplete="off" aria-label="Search rooms, teams, or managers">
-      <span class="search-kbd">Ctrl K</span>
-      <div class="res" id="res" hidden></div>
-    </div>
+      <p class="desc">
+        The working hub for the volunteers who run the event. Each team has its own dashboard, so you only see the tools you need on the day.
+      </p>
+      <p class="desc">
+        Logistics covers the venue: floor maps, room assignments, managers, and walking routes between rooms. Pick your team to continue.
+      </p>
 
-    <div class="sp"></div>
-
-    <!-- Clean Action Toolbar -->
-    <button class="btn" id="dirb" aria-label="Toggle Directions">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-      </svg>
-      <span class="btn-text">Directions</span>
-    </button>
-
-    <!-- Google Sheet Realtime Database Button -->
-    <button class="btn btn-sheet" id="gsheet-btn" aria-label="Configure Google Sheet Database">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="8" y1="13" x2="16" y2="13"/>
-        <line x1="8" y1="17" x2="16" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
-      </svg>
-      <span class="btn-text">Google Sheet</span>
-    </button>
-
-    <!-- Theme Toggle Button -->
-    <button class="btn" id="theme-toggle" aria-label="Toggle Theme">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="5"/>
-        <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-      </svg>
-      <span class="btn-text">Light</span>
-    </button>
-  </header>
-
-  <!-- =======================================================================
-       Main Viewport
-       ======================================================================= -->
-  <main>
-    <div class="crumb" id="crumb"></div>
-
-    <!-- Floor Cards Overview (Direct Clean Grid, 4 top boxes removed) -->
-    <div id="home"></div>
-
-    <!-- Floor Blueprint Map View -->
-    <div id="fv" hidden>
-      <div class="tools">
-        <button class="btn" id="back">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="19" y1="12" x2="5" y2="12"/>
-            <polyline points="12 19 5 12 12 5"/>
-          </svg>
-          Overview
+      <div class="choices">
+        <a class="choice" href="logistics.html">
+          <span class="choice-name">Logistics team dashboard</span>
+          <span class="choice-note">Venue map, rooms, and wayfinding</span>
+        </a>
+        <button class="choice" type="button" aria-disabled="true" aria-describedby="techops-note">
+          <span class="choice-name">Tech Ops team dashboard</span>
+          <span class="choice-note" id="techops-note">Coming soon</span>
         </button>
-        <span id="tabs"></span>
-        <span class="sp"></span>
-        <select id="ft" aria-label="Filter by space type">
-          <option value="">All Space Types</option>
-          <option value="B">Bring Your Own Device</option>
-          <option value="H">Lecture Hall</option>
-          <option value="S">Small Lecture Hall</option>
-          <option value="C">Classroom</option>
-          <option value="X">Inaccessible</option>
-        </select>
-        <select id="fa" aria-label="Filter by access level">
-          <option value="">All Access Levels</option>
-          <option value="ok">Accessible</option>
-          <option value="no">Restricted</option>
-        </select>
-        <select id="fs" aria-label="Filter by team assignment">
-          <option value="">Any Assignment</option>
-          <option value="Participants">Participants</option>
-          <option value="Volunteers">Volunteers</option>
-          <option value="Unassigned">Unassigned</option>
-        </select>
       </div>
-
-      <!-- Map Canvas & SVG Overlay -->
-      <div class="map" id="map">
-        <div class="stage" id="stage">
-          <img id="img" alt="Floor blueprint map">
-          <svg id="svg" viewBox="0 0 1673 940" width="1673" height="940"></svg>
-        </div>
-        <div class="zc">
-          <button class="btn" id="zi" aria-label="Zoom in" title="Zoom in">+</button>
-          <button class="btn" id="zo" aria-label="Zoom out" title="Zoom out">−</button>
-          <button class="btn" id="zr" aria-label="Reset zoom" title="Reset view">⟲</button>
-        </div>
-        <div class="tip" id="tip"></div>
-      </div>
-
-      <div class="leg" id="leg"></div>
-    </div>
-  </main>
-
-  <!-- =======================================================================
-       Wayfinding & Directions Panel
-       ======================================================================= -->
-  <div class="dir" id="dir">
-    <h3>
-      <span>
-        Tactical Wayfinding
-        <button class="btn ed" id="ded" style="padding:2px 8px;margin-left:6px;font-size:11px">Edit</button>
-      </span>
-      <button class="x" id="dx" aria-label="Close directions">×</button>
-    </h3>
-    <div id="dform">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-        <label for="df" style="font-size:11.5px;font-weight:600;color:var(--ink-bright)">Origin:</label>
-        <button type="button" class="btn" id="d-use-ent" style="font-size:10.5px;padding:2px 7px">Use Entrance</button>
-      </div>
-      <input id="df" list="dl" placeholder="From (e.g. ENTRANCE, C026)" autocomplete="off">
-      <label for="dt" style="font-size:11.5px;font-weight:600;color:var(--ink-bright);display:block;margin:8px 0 3px">Destination:</label>
-      <input id="dt" list="dl" placeholder="To (e.g. S140, B133, H113)" autocomplete="off">
-      <datalist id="dl"></datalist>
-      <div style="display:flex;gap:6px;margin:8px 0 0">
-        <button class="btn on" id="dgo" style="flex:1">Show Route</button>
-        <button class="btn" id="dsw">Swap</button>
-        <button class="btn" id="dcl">Clear</button>
-      </div>
-      <button type="button" class="btn btn-wc" id="dwc" style="width:100%;margin-top:6px">Nearest bathroom from Origin</button>
-    </div>
-    <div id="dout"></div>
-    <div class="note">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-      <span>Routes follow building corridors and multi-level stairways.</span>
-    </div>
+    </main>
   </div>
 
-  <!-- =======================================================================
-       Google Sheets Database Configuration Modal
-       ======================================================================= -->
-  <div class="bd" id="gsheet-modal">
-    <div class="modal gsheet-modal-box" role="dialog" aria-modal="true">
-      <div class="mh">
-        <div>
-          <h2>Google Sheets Database</h2>
-          <div class="pill">Live Event Configuration · All 85 Rooms</div>
-        </div>
-        <button class="x" id="gsheet-close" aria-label="Close">×</button>
-      </div>
-
-      <div class="gsheet-content">
-        <p class="gsheet-desc">
-          Manage room allocations, lead managers, capacities, challenge tracks, and team names directly inside a Google Sheet. Any update made in Google Sheets syncs instantly to this website.
-        </p>
-
-        <label for="gsheet-url-input">Google Sheet Link or ID</label>
-        <div class="gsheet-input-row">
-          <input id="gsheet-url-input" value="https://docs.google.com/spreadsheets/d/1E4-_JjPiIhed005w43jl1s-FfmRiAzNaISEfJZihAbQ/edit" placeholder="https://docs.google.com/spreadsheets/d/.../edit" autocomplete="off">
-          <button class="btn on" id="gsheet-save-btn">Connect &amp; Sync</button>
-        </div>
-
-        <div id="gsheet-status" class="sheet-status-badge">
-          Status: Ready to sync
-        </div>
-
-        <div class="gsheet-actions">
-          <button class="btn" id="gsheet-sync-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-            Sync Now
-          </button>
-          <button class="btn" id="gsheet-open-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Open in Google Sheets
-          </button>
-          <a class="btn" href="rooms_database_template.csv" download="NASA_Space_Apps_Cairo_Rooms_Template.csv">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download CSV Template
-          </a>
-        </div>
-
-        <div class="sec" style="margin-top:16px">
-          <h4>How to Set Up in 2 Minutes:</h4>
-          <ol class="gsheet-steps">
-            <li>Download the CSV template or open your Google Sheet.</li>
-            <li>In Google Sheets, click <b>File &gt; Import &gt; Upload</b> and choose the CSV template (all 85 rooms are already filled in).</li>
-            <li>Click the green <b>Share</b> button in Google Sheets, choose <b>"Anyone with the link can view"</b>, copy the link, and paste it above.</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- =======================================================================
-       Room Details Dialog
-       ======================================================================= -->
-  <div class="bd" id="bd">
-    <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
-  </div>
-
-  <script src="app.js"></script>
   <script>
-    const brandHome = document.getElementById("brand-home");
-    if (brandHome) brandHome.onclick = () => { if (typeof home === "function") home(); };
-    const backBtn = document.getElementById("back");
-    if (backBtn) backBtn.onclick = () => { if (typeof home === "function") home(); };
+    // Tech Ops is not built yet: the button is visible but does nothing
+    document.querySelector('button.choice[aria-disabled="true"]').addEventListener('click', function (e) { e.preventDefault(); });
   </script>
 </body>
 </html>
