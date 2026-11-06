@@ -242,8 +242,17 @@
     try { qCode = new URLSearchParams(location.search).get("auth") || ""; } catch (e) {}
     var code = qCode ? normalizeCode(qCode) : lget(SESSION_KEY);
     if (!code) return Promise.resolve(null);
-    var check = LIVE ? fb.authUser().then(function (au) { return au ? fb.getVolunteer(code) : null; }) : loc.getVolunteer(code);
-    return check.then(function (v) { user = toUser(v); if (!user) lset(SESSION_KEY, ""); else if (qCode) lset(SESSION_KEY, code); return user; }, function () { return null; });
+    var check = LIVE ? fb.getVolunteer(code) : loc.getVolunteer(code);
+    return check.then(function (v) {
+      user = toUser(v);
+      if (!user) {
+        lset(SESSION_KEY, "");
+      } else {
+        lset(SESSION_KEY, code);
+        if (LIVE) fb.bindSession(code).catch(function () {});
+      }
+      return user;
+    }, function () { return null; });
   }
   function logout() {
     user = null; lset(SESSION_KEY, "");

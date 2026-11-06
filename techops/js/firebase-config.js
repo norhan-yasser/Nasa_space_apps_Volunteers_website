@@ -12,10 +12,12 @@
  * (js/seed-data.js) so the UI can still be tried without a Firebase project.
  */
 window.TECHOPS_FIREBASE = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyC3n40dR-t-Y89RaxWz1EgL6Wia1MB0zDg",
+  authDomain: "space-apps-cairo-volunteer.firebaseapp.com",
+  databaseURL: "https://space-apps-cairo-volunteer-default-rtdb.firebaseio.com",
+  projectId: "space-apps-cairo-volunteer",
+  storageBucket: "space-apps-cairo-volunteer.firebasestorage.app",
+  messagingSenderId: "243584848652",
+  appId: "1:243584848652:web:b4c6c08ac2b1a96d696f29",
+  measurementId: "G-Z63C9QRWEJ"
 };
