@@ -4,12 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Operations · NASA Space Apps Challenge Cairo</title>
-  <meta name="description" content="Operations hub for NASA Space Apps Challenge Cairo volunteers: choose the Logistics team dashboard or the Tech Ops team dashboard.">
+  <meta name="description" content="Operations hub for NASA Space Apps Challenge Cairo volunteers and organizers: sign in with your volunteer code to access your team dashboard or admin command center.">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="stylesheet" href="landing.css">
   <script>
-    // Keep the same light/dark choice the dashboard uses
-    try { document.documentElement.setAttribute('data-theme', localStorage.getItem('nasa_theme') || 'dark'); } catch (e) {}
+    try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || localStorage.getItem('nasa_theme') || 'dark'); } catch (e) {}
   </script>
 </head>
 <body>
@@ -19,28 +18,152 @@
   </div>
 
   <div class="page">
-    <main class="intro">
+    <header class="portal-top">
+      <div class="portal-brand">
+        <img class="logo-dark" src="assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
+        <img class="logo-light" src="assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
+        <span class="portal-brand-text">OPERATIONS · CAIRO</span>
+      </div>
+      <div class="sp"></div>
+      <div id="portal-user-chip" class="portal-user-chip" hidden>
+        <span class="portal-avatar" id="portal-avatar"></span>
+        <span class="portal-meta"><b id="portal-name"></b><small id="portal-role"></small></span>
+        <button class="portal-btn-sm" id="portal-logout-btn">Sign out</button>
+      </div>
+      <button class="portal-theme-btn" id="theme-toggle" aria-label="Toggle theme">
+        <span id="theme-text">🌓 Theme</span>
+      </button>
+    </header>
+
+    <main class="intro" id="intro-wrap">
       <h1>Operations</h1>
       <p class="sub">NASA Space Apps Challenge Cairo</p>
 
       <p class="desc">
-        The working hub for the volunteers who run the event. Each team has its own dashboard, so you only see the tools you need on the day.
-      </p>
-      <p class="desc">
-        Logistics covers the venue: floor maps, room assignments, managers, and walking routes between rooms. Pick your team to continue.
+        The unified working hub for the volunteers and organizers who run the event. Enter your volunteer or admin code below to open your team workspace.
       </p>
 
-      <div class="choices">
-        <a class="choice" href="logistics.html">
-          <span class="choice-name">Logistics team dashboard</span>
-          <span class="choice-note">Venue map, rooms, and wayfinding</span>
-        </a>
-        <a class="choice" href="techops/index.html">
-          <span class="choice-name">Tech Ops team dashboard</span>
-          <span class="choice-note">Wi-Fi heatmaps, issue alerts, &amp; routing</span>
-        </a>
-      </div>
+      <!-- 1. LOGIN FORM (Default when unauthenticated) -->
+      <section class="portal-card" id="login-box">
+        <div class="portal-badge">VOLUNTEER &amp; ADMIN ACCESS</div>
+        <form id="portal-login-form" autocomplete="off" novalidate>
+          <label class="portal-lbl" for="portal-code">Volunteer Code</label>
+          <div class="portal-input-row">
+            <input id="portal-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="e.g. TO-001, LG-001, ADM-001" aria-describedby="portal-err">
+            <button class="portal-btn primary" id="portal-submit-btn" type="submit">Sign in →</button>
+          </div>
+          <p class="portal-err" id="portal-err" role="alert" hidden></p>
+        </form>
+
+        <div class="portal-demo-section">
+          <span class="demo-lbl">Quick-test demo access:</span>
+          <div class="portal-chips">
+            <button type="button" class="portal-chip" data-code="TO-001">🚀 TechOps (TO-001)</button>
+            <button type="button" class="portal-chip" data-code="LG-001">📍 Logistics (LG-001)</button>
+            <button type="button" class="portal-chip admin-chip" data-code="ADM-001">🛡️ Admin (ADM-001)</button>
+          </div>
+        </div>
+
+        <div class="portal-manual-links">
+          <span>Or browse directly:</span>
+          <a href="techops/index.html">TechOps team dashboard &rarr;</a>
+          <span class="sep">&middot;</span>
+          <a href="logistics.html">Logistics team dashboard &rarr;</a>
+        </div>
+      </section>
+
+      <!-- 2. VOLUNTEER WELCOME CARD (Shown if already logged in as TechOps or Logistics) -->
+      <section class="portal-card" id="user-box" hidden>
+        <div class="portal-badge" id="welcome-badge">AUTHENTICATED</div>
+        <h2 id="welcome-heading">Welcome, Volunteer</h2>
+        <p class="portal-user-sub" id="welcome-sub"></p>
+        <div class="portal-actions">
+          <a class="portal-btn primary" id="launch-btn" href="#">Launch Workspace &rarr;</a>
+          <button class="portal-btn secondary" id="switch-btn">Switch Account / Sign Out</button>
+        </div>
+      </section>
+
+      <!-- 3. ADMIN MASTER CONTROL HUB (Shown when logged in as Admin) -->
+      <section class="portal-card admin-hub" id="admin-box" hidden>
+        <div class="admin-header">
+          <div class="portal-badge admin-badge">🛡️ MISSION CONTROL · ADMIN MODE</div>
+          <h2>Operations Command Center</h2>
+          <p class="admin-desc" id="admin-greeting">Welcome, Administrator. You have full oversight across venue logistics, technical operations, and volunteer communications.</p>
+        </div>
+
+        <!-- Master Launchers -->
+        <div class="admin-launchers">
+          <a class="admin-launcher tech" href="techops/index.html?auth=ADM-001">
+            <div class="launcher-icon">🚀</div>
+            <div class="launcher-body">
+              <b>TechOps Operations Dashboard</b>
+              <span>Task queue, 1-click claim, Wi-Fi speed heatmap, location pings &amp; equipment inventory</span>
+            </div>
+            <div class="launcher-arrow">&rarr;</div>
+          </a>
+          <a class="admin-launcher log" href="logistics.html?auth=ADM-001">
+            <div class="launcher-icon">📍</div>
+            <div class="launcher-body">
+              <b>Logistics &amp; Venue Dashboard</b>
+              <span>Venue floor maps, room assignments, manager contacts, and corridor wayfinding</span>
+            </div>
+            <div class="launcher-arrow">&rarr;</div>
+          </a>
+        </div>
+
+        <!-- Live Operations Pulse Grid -->
+        <div class="admin-stats-grid">
+          <div class="stat-card">
+            <span class="stat-lbl">TechOps Tasks</span>
+            <b class="stat-val" id="stat-issues">—</b>
+            <span class="stat-sub" id="stat-issues-sub">Loading live queue…</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">Venue Wi-Fi Health</span>
+            <b class="stat-val ok" id="stat-wifi">—</b>
+            <span class="stat-sub" id="stat-wifi-sub">Monitored inside room walls</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">Venue Rooms</span>
+            <b class="stat-val" id="stat-rooms">60</b>
+            <span class="stat-sub">Ground, 1st, 2nd Floors</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">Volunteers Registered</span>
+            <b class="stat-val" id="stat-volunteers">12</b>
+            <span class="stat-sub">TechOps, Logistics, Admin</span>
+          </div>
+        </div>
+
+        <!-- Volunteer Directory Accordion / Viewer -->
+        <div class="admin-roster-wrap">
+          <div class="roster-header">
+            <b>Volunteer Directory &amp; Codes</b>
+            <input id="roster-search" type="search" placeholder="Search volunteer or code…">
+          </div>
+          <div class="roster-table-wrap">
+            <table class="roster-table">
+              <thead>
+                <tr><th>Code</th><th>Name</th><th>Team</th><th>Quick Login</th></tr>
+              </thead>
+              <tbody id="roster-rows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="admin-footer-actions">
+          <button class="portal-btn secondary" id="admin-logout-btn">Sign Out of Admin Mode</button>
+        </div>
+      </section>
     </main>
   </div>
+
+  <script src="techops/js/config.js"></script>
+  <script src="techops/js/firebase-config.js"></script>
+  <script src="techops/js/seed-data.js"></script>
+  <script src="techops/js/data.js"></script>
+  <script src="techops/js/common.js"></script>
+  <script src="techops/js/store.js"></script>
+  <script src="portal.js"></script>
 </body>
 </html>

@@ -28,11 +28,18 @@ TYPE_LETTER = {"chairs": "C", "small lecture": "S", "bring your device": "B", "l
 
 # --- dummy volunteers: replace with the real roster via seed_firebase.py --volunteers -------------
 VOLUNTEERS = [
-    ("Mohamed Khairy", "TO-001", "TechOps"), ("Omar", "TO-002", "TechOps"),
-    ("Lojine", "TO-003", "TechOps"), ("Karim", "TO-004", "TechOps"),
-    ("Tasbeeh", "TO-005", "TechOps"), ("Nour", "TO-006", "TechOps"),
-    ("Youssef", "TO-007", "TechOps"), ("Hana", "TO-008", "TechOps"),
-    ("Logistics Demo 1", "LG-001", "Logistics"), ("Logistics Demo 2", "LG-002", "Logistics"),
+    ("Eng. Mohamed Khairy", "ADM-001", "Admin"),
+    ("Lead Organizer", "ADMIN", "Admin"),
+    ("Mohamed Khairy", "TO-001", "TechOps"),
+    ("Omar", "TO-002", "TechOps"),
+    ("Lojine", "TO-003", "TechOps"),
+    ("Karim", "TO-004", "TechOps"),
+    ("Tasbeeh", "TO-005", "TechOps"),
+    ("Nour", "TO-006", "TechOps"),
+    ("Youssef", "TO-007", "TechOps"),
+    ("Hana", "TO-008", "TechOps"),
+    ("Norhan Yasser", "LG-001", "Logistics"),
+    ("Logistics Lead", "LG-002", "Logistics"),
 ]
 
 

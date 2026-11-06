@@ -208,20 +208,26 @@
   }
   function loadAll() {
     return readyP.then(function () {
-      var geo = {}; (D.ALL || []).forEach(function (g) { geo[g.code] = 1; });
+      var geo = {};
+      if (D && D.ALL) D.ALL.forEach(function (g) { geo[g.code] = 1; });
       var out = { meta: { live: LIVE, online: !lastError, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
       COLS.forEach(function (c) { out[c] = normalise(c, cache[c] || []); });
       /* only rooms that exist on the floor plans can be drawn / routed to */
-      out.rooms = out.rooms.filter(function (r) { return geo[r.code]; });
+      if (D && D.ALL) out.rooms = out.rooms.filter(function (r) { return geo[r.code]; });
       /* Wi-Fi readings only count when the point is physically INSIDE a room: corridor / hall / outer-stage points are erased */
-      out.wifi = out.wifi.filter(function (w) { var g = D.roomAt(w.floor, w.x, w.y); if (g) w.room = g.code; return !!g; });
+      if (D && D.roomAt) out.wifi = out.wifi.filter(function (w) { var g = D.roomAt(w.floor, w.x, w.y); if (g) w.room = g.code; return !!g; });
       return out;
     });
   }
 
   /* ---------------------------------------------------------------- auth */
   function normalizeCode(c) { return String(c || "").trim().toUpperCase().replace(/\s+/g, ""); }
-  function toUser(v) { return v && v.Name ? { name: String(v.Name), code: String(v["Volunteer Code"] || ""), team: String(v.Team || "") } : null; }
+  function toUser(v) {
+    if (!v || !v.Name) return null;
+    var team = String(v.Team || "");
+    var role = String(v.Role || (team.toLowerCase() === "admin" ? "Admin" : team));
+    return { name: String(v.Name), code: String(v["Volunteer Code"] || ""), team: team, role: role };
+  }
   function login(code) {
     code = normalizeCode(code);
     if (!/^[A-Z0-9_-]{2,40}$/.test(code)) return Promise.reject(fail("invalid", "That volunteer code is not valid."));

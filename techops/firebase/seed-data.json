@@ -1,5 +1,15 @@
 {
   "volunteers": {
+    "ADM-001": {
+      "Name": "Eng. Mohamed Khairy",
+      "Volunteer Code": "ADM-001",
+      "Team": "Admin"
+    },
+    "ADMIN": {
+      "Name": "Lead Organizer",
+      "Volunteer Code": "ADMIN",
+      "Team": "Admin"
+    },
     "TO-001": {
       "Name": "Mohamed Khairy",
       "Volunteer Code": "TO-001",
@@ -41,12 +51,12 @@
       "Team": "TechOps"
     },
     "LG-001": {
-      "Name": "Logistics Demo 1",
+      "Name": "Norhan Yasser",
       "Volunteer Code": "LG-001",
       "Team": "Logistics"
     },
     "LG-002": {
-      "Name": "Logistics Demo 2",
+      "Name": "Logistics Lead",
       "Volunteer Code": "LG-002",
       "Team": "Logistics"
     }
