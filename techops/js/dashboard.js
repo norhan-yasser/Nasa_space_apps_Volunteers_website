@@ -11,7 +11,7 @@
     data: null, tab: "issues", floor: "G", layer: "zones", selected: null, pins: true, zone: null,
     issueFilter: "open", issueText: "", first: true,
     activeRoute: null,
-    seen: jget(SEEN_KEY, []), seenMeet: jget(SEEN_MEET, []), me: lget(ME_KEY) || "", alertsOn: false
+    seen: jget(SEEN_KEY, []), seenMeet: jget(SEEN_MEET, []), me: lget(ME_KEY) || "Omar", alertsOn: false
   };
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
   function lget(k) { try { return localStorage.getItem(k); } catch (e) { return ""; } }
@@ -264,6 +264,9 @@
     map.select(code);
     renderSide();
     if (focus) map.focus(code);
+    if (window.innerWidth <= 768 && code) {
+      openMapBottomSheet(code);
+    }
   }
 
   function wifiFor(code) {
@@ -432,6 +435,115 @@
     };
   }
 
+  function openMapBottomSheet(code) {
+    var sheet = $("map-bottom-sheet"), backdrop = $("map-sheet-backdrop");
+    if (!sheet || !backdrop || !code) return;
+
+    var d = S.data;
+    var zEl = $("sheet-zone"), tEl = $("sheet-title"), mEl = $("sheet-meta"), bEl = $("sheet-body");
+    var btnHere = $("sheet-btn-route-here"), btnFrom = $("sheet-btn-route-from");
+
+    if (code.indexOf("wf:") === 0) {
+      var wId = code.slice(3);
+      var w = d.wifi.filter(function (x) { return x.id === wId; })[0];
+      if (w) {
+        zEl.textContent = "Wi-Fi Hotspot";
+        zEl.style.color = TO.speedColor(w.mbps);
+        tEl.textContent = w.label;
+        mEl.textContent = (Store.FLOOR_NAMES[w.floor] || "Venue Floor") + " · Access Point Node";
+        bEl.innerHTML =
+          '<div style="display:flex;align-items:center;gap:14px;background:var(--card-2);padding:14px;border-radius:12px;margin-bottom:12px">' +
+          '<div style="font-size:32px;font-weight:800;color:' + TO.speedColor(w.mbps) + '">' + w.mbps + '<span style="font-size:14px;font-weight:600;margin-left:4px">Mbps</span></div>' +
+          '<div style="font-size:13px;color:var(--mut);line-height:1.4">Latency: <b style="color:var(--ink-bright)">' + w.latency + ' ms</b><br>Quality: <b style="color:' + TO.speedColor(w.mbps) + '">' + TO.speedLabel(w.mbps) + '</b></div>' +
+          '</div>' +
+          '<p class="muted" style="font-size:13px;margin:0">Monitored Wi-Fi access point node. Signal is measured regularly across the venue.</p>';
+        btnHere.style.display = "none";
+        btnFrom.style.display = "none";
+      }
+    } else if (code.indexOf("STAIR-") === 0) {
+      var sk = code.replace("STAIR-", "");
+      var sName = Router.SN[sk] || "Stairway";
+      zEl.textContent = "Vertical Transit Node";
+      zEl.style.color = "var(--accent)";
+      tEl.textContent = sName;
+      mEl.textContent = "Inter-Floor Staircase Connector";
+      bEl.innerHTML = '<p class="muted" style="font-size:13.5px;margin:0">Direct walking staircase used by the wayfinding engine to calculate multi-floor routes.</p>';
+      btnHere.style.display = "none";
+      btnFrom.style.display = "none";
+    } else {
+      var r = d.roomMap[code];
+      if (!r) return;
+      var z = D.ZONES[r.zone] || {};
+      var w = wifiFor(r.code);
+      var iss = d.reports.filter(function (x) { return x.room === r.code && x.floor === r.floor && x.status !== "Resolved"; });
+      var url = TO.reportUrl(r.floor, r.code);
+
+      zEl.textContent = r.zone;
+      zEl.style.color = z.color || "var(--accent)";
+      tEl.textContent = "Room " + r.code;
+      mEl.textContent = (r.floorName || Store.FLOOR_NAMES[r.floor]) + " · " + r.type + (r.capacity ? " (Cap. " + r.capacity + ")" : "");
+
+      var wifiCard = w
+        ? '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--card-2);padding:10px 14px;border-radius:10px;margin-bottom:12px">' +
+          '<span style="font-size:13px;font-weight:600;color:var(--mut)">Wi-Fi Quality</span>' +
+          '<span style="font-size:13.5px;font-weight:700;color:' + TO.speedColor(w.mbps) + '">' + w.mbps + ' Mbps · ' + TO.speedLabel(w.mbps) + '</span>' +
+          '</div>'
+        : '';
+
+      var assignedRow = r.assigned
+        ? '<div style="font-size:13px;color:var(--mut);margin-bottom:10px">Occupant / Challenge: <b style="color:var(--ink-bright)">' + esc(r.assigned) + '</b></div>'
+        : '';
+
+      var issueCard = iss.length
+        ? '<div style="margin-bottom:12px"><b style="font-size:13px;display:block;margin-bottom:6px">Active Issues (' + iss.length + ')</b>' +
+          iss.map(function (x) {
+            return '<div style="padding:8px 10px;background:var(--card-2);border-radius:8px;margin-bottom:6px;font-size:12.5px"><span class="badge ' + TO.issueClass(x.issue) + '">' + esc(x.issue) + '</span> ' + esc(x.details || "") + '</div>';
+          }).join("") + '</div>'
+        : '<div class="muted" style="font-size:13px;margin-bottom:12px">No active issues reported.</div>';
+
+      bEl.innerHTML = wifiCard + assignedRow + issueCard +
+        '<div style="display:flex;gap:8px;margin-top:8px">' +
+        '<a class="btn small" style="flex:1;justify-content:center;height:42px" href="' + esc(url) + '" target="_blank" rel="noopener">Direct Form</a>' +
+        '<a class="btn small" style="flex:1;justify-content:center;height:42px" href="qr-codes.html">Universal QR</a>' +
+        '</div>';
+
+      btnHere.style.display = "flex";
+      btnFrom.style.display = "flex";
+
+      btnHere.onclick = function () {
+        closeMapBottomSheet();
+        $("rt-to").value = r.code;
+        var myRoom = myCurrentRoom();
+        $("rt-from").value = myRoom;
+        planAndShowRoute(myRoom, r.code);
+      };
+
+      btnFrom.onclick = function () {
+        closeMapBottomSheet();
+        $("rt-from").value = r.code;
+        TO.toast("Origin Set", "Origin set to Room " + r.code + ". Now pick a destination.", "ok");
+      };
+    }
+
+    sheet.hidden = false;
+    backdrop.hidden = false;
+    requestAnimationFrame(function () {
+      sheet.classList.add("is-open");
+      backdrop.classList.add("is-open");
+    });
+  }
+
+  function closeMapBottomSheet() {
+    var sheet = $("map-bottom-sheet"), backdrop = $("map-sheet-backdrop");
+    if (!sheet || !backdrop) return;
+    sheet.classList.remove("is-open");
+    backdrop.classList.remove("is-open");
+    setTimeout(function () {
+      sheet.hidden = true;
+      backdrop.hidden = true;
+    }, 280);
+  }
+
   function tipHtml(code) {
     var d = S.data;
     if (code.indexOf("wf:") === 0) {
@@ -473,12 +585,64 @@
     var my = $("my-status"), meMember = S.me && d.team.filter(function (t) { return t.name === S.me; })[0];
     if (meMember) {
       my.hidden = false;
-      my.innerHTML = '<div class="row"><b>My Live Location &amp; Status</b><span class="muted" style="font-size:12.5px">Keep teammates updated so routing reaches your current spot.</span><span class="sp"></span>' +
-        '<select id="ms-floor" aria-label="My floor">' + floorOpts(meMember.floor) + '</select>' +
-        '<select id="ms-room" aria-label="My room">' + roomOpts(meMember.floor, meMember.room) + '</select>' +
-        '<select id="ms-status" aria-label="My status">' + ["Available", "Busy", "On a task", "Off duty"].map(function (s) { return "<option" + (s === meMember.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select>' +
-        '<button class="btn primary small" id="ms-save">Save Location</button></div>';
+      var statusColor = meMember.status === "Available" ? "var(--ok)" : meMember.status === "Busy" ? "var(--bad)" : meMember.status === "On a task" ? "var(--warn)" : "var(--mut)";
       
+      my.innerHTML =
+        '<div class="my-status-compact">' +
+          '<div class="my-status-info">' +
+            '<div class="my-status-avatar">' +
+              esc(TO.initials(meMember.name)) +
+              '<span class="my-status-dot" style="background:' + statusColor + '"></span>' +
+            '</div>' +
+            '<div class="my-status-details">' +
+              '<div class="my-status-name">' + esc(meMember.name) + ' <span class="my-status-tag">You</span></div>' +
+              '<div class="my-status-loc"><b>' + esc(meMember.room || "No room") + '</b> · ' + esc(meMember.floorName || Store.FLOOR_NAMES[meMember.floor] || "Floor") + ' · <span style="color:' + statusColor + ';font-weight:600">' + esc(meMember.status) + '</span></div>' +
+            '</div>' +
+          '</div>' +
+          '<button class="my-status-edit-btn" id="ms-toggle-edit" aria-expanded="false">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
+            '<span>Update</span>' +
+          '</button>' +
+        '</div>' +
+        '<div class="my-status-editor" id="ms-editor" hidden>' +
+          '<div class="ms-grid">' +
+            '<div>' +
+              '<label for="ms-floor">Floor</label>' +
+              '<select id="ms-floor">' + floorOpts(meMember.floor) + '</select>' +
+            '</div>' +
+            '<div>' +
+              '<label for="ms-room">Room</label>' +
+              '<select id="ms-room">' + roomOpts(meMember.floor, meMember.room) + '</select>' +
+            '</div>' +
+            '<div>' +
+              '<label for="ms-status">Live Status</label>' +
+              '<select id="ms-status">' + ["Available", "Busy", "On a task", "Off duty"].map(function (s) { return "<option" + (s === meMember.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select>' +
+            '</div>' +
+          '</div>' +
+          '<div class="ms-actions">' +
+            '<button class="btn ghost small" id="ms-cancel" style="min-height:42px">Cancel</button>' +
+            '<button class="btn primary small" id="ms-save" style="min-height:42px">Save Location</button>' +
+          '</div>' +
+        '</div>';
+
+      var toggleBtn = $("ms-toggle-edit"), editor = $("ms-editor");
+      if (toggleBtn && editor) {
+        toggleBtn.onclick = function () {
+          var isHidden = editor.hidden;
+          editor.hidden = !isHidden;
+          toggleBtn.setAttribute("aria-expanded", String(isHidden));
+          toggleBtn.querySelector("span").textContent = isHidden ? "Close" : "Update";
+        };
+      }
+      var cancelBtn = $("ms-cancel");
+      if (cancelBtn && editor && toggleBtn) {
+        cancelBtn.onclick = function () {
+          editor.hidden = true;
+          toggleBtn.setAttribute("aria-expanded", "false");
+          toggleBtn.querySelector("span").textContent = "Update";
+        };
+      }
+
       $("ms-floor").onchange = function () { $("ms-room").innerHTML = roomOpts($("ms-floor").value, ""); };
       $("ms-save").onclick = function () {
         Store.update("team", meMember.name, { floor: $("ms-floor").value, floorName: Store.FLOOR_NAMES[$("ms-floor").value], room: $("ms-room").value, status: $("ms-status").value });
@@ -828,11 +992,15 @@
       TO.toast("Origin set", "Start location set to your current room (" + $("rt-from").value + ").", "ok");
     };
 
+    var sc = $("sheet-close"), sb = $("map-sheet-backdrop");
+    if (sc) sc.onclick = closeMapBottomSheet;
+    if (sb) sb.onclick = closeMapBottomSheet;
+
     /* Global dynamic click delegations */
     document.addEventListener("click", function (e) {
       var t;
       if ((t = e.target.closest("[data-if]"))) { S.issueFilter = t.dataset.if; renderIssues(); }
-      else if ((t = e.target.closest("[data-floor]"))) { S.floor = t.dataset.floor; S.selected = null; map.setFloor(S.floor); renderMapChrome(); renderSide(); }
+      else if ((t = e.target.closest("[data-floor]"))) { S.floor = t.dataset.floor; S.selected = null; closeMapBottomSheet(); map.setFloor(S.floor); renderMapChrome(); renderSide(); }
       else if ((t = e.target.closest("[data-layer]"))) { S.layer = t.dataset.layer; map.setLayer(S.layer); renderMapChrome(); }
       else if ((t = e.target.closest("[data-zone]"))) { S.zone = S.zone === t.dataset.zone ? null : t.dataset.zone; map.setZoneFilter(S.zone); renderMapChrome(); }
       else if ((t = e.target.closest("[data-member]"))) {
@@ -841,7 +1009,17 @@
         if (member.name === S.me) {
           /* Self click: focus live location update */
           var ms = $("my-status");
-          if (ms) { ms.scrollIntoView({ behavior: "smooth" }); }
+          if (ms) {
+            ms.scrollIntoView({ behavior: "smooth" });
+            var ed = $("ms-editor"), btn = $("ms-toggle-edit");
+            if (ed && ed.hidden) {
+              ed.hidden = false;
+              if (btn) {
+                btn.setAttribute("aria-expanded", "true");
+                btn.querySelector("span").textContent = "Close";
+              }
+            }
+          }
         } else {
           openPingModal(member);
         }
@@ -899,14 +1077,22 @@
   TO.initTheme();
   map = new FloorMap($("map"), {
     onSelect: function (c) {
-      if (c && c.indexOf("STAIR-") === 0) {
+      if (!c) {
+        closeMapBottomSheet();
+        return;
+      }
+      if (c.indexOf("STAIR-") === 0) {
         var sk = c.replace("STAIR-", "");
-        TO.toast(Router.SN[sk] || "Stairs", "Inter-floor staircase connecting Levels 0, 1, and 2.");
+        if (window.innerWidth <= 768) {
+          openMapBottomSheet(c);
+        } else {
+          TO.toast(Router.SN[sk] || "Stairs", "Inter-floor staircase connecting Levels 0, 1, and 2.");
+        }
         return;
       }
       selectRoom(c, false);
       /* Pre-fill destination field for route */
-      if (c && !/^wf:/i.test(c)) $("rt-to").value = c;
+      if (!/^wf:/i.test(c)) $("rt-to").value = c;
     },
     tipHtml: tipHtml
   });
@@ -921,7 +1107,14 @@
       map.setFloor(S.floor);
     }
     if (q.get("layer") === "heat") { S.layer = "heat"; map.setLayer("heat"); }
-    if (q.get("room")) { S.selected = q.get("room"); map.select(S.selected); $("rt-to").value = S.selected; }
+    if (q.get("room")) {
+      S.selected = q.get("room");
+      map.select(S.selected);
+      $("rt-to").value = S.selected;
+      if (window.innerWidth <= 768) {
+        openMapBottomSheet(S.selected);
+      }
+    }
     renderMapChrome();
     renderSide();
 
@@ -935,6 +1128,16 @@
       var md = $("mobile-drawer"), mt = $("mobile-menu-toggle");
       if (md) md.hidden = false;
       if (mt) { mt.classList.add("is-open"); mt.setAttribute("aria-expanded", "true"); }
+    }
+    if (q.get("edit")) {
+      var ed = $("ms-editor"), btn = $("ms-toggle-edit");
+      if (ed) {
+        ed.hidden = false;
+        if (btn) {
+          btn.setAttribute("aria-expanded", "true");
+          btn.querySelector("span").textContent = "Close";
+        }
+      }
     }
     setTimeout(function () { map.fit(); }, 60);
   });

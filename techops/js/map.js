@@ -75,14 +75,19 @@
       self.opts.onSelect(code);
     });
     this.svg.addEventListener("mousemove", function (e) {
+      if (window.innerWidth <= 768) { self.tip.style.display = "none"; return; }
       var t = e.target.closest("[data-code]");
       if (!t || !self.opts.tipHtml) { self.tip.style.display = "none"; return; }
       var r = el.getBoundingClientRect();
       self.tip.innerHTML = self.opts.tipHtml(t.dataset.code);
       self.tip.style.display = "block";
+      var tipW = self.tip.offsetWidth || 220;
+      var tipH = self.tip.offsetHeight || 60;
       var x = e.clientX - r.left + 14, y = e.clientY - r.top + 14;
-      if (x + 250 > r.width) x = e.clientX - r.left - 254;
-      if (y + 90 > r.height) y = e.clientY - r.top - 80;
+      if (x + tipW > r.width - 10) x = e.clientX - r.left - tipW - 14;
+      if (y + tipH > r.height - 10) y = e.clientY - r.top - tipH - 14;
+      x = Math.max(10, Math.min(r.width - tipW - 10, x));
+      y = Math.max(10, Math.min(r.height - tipH - 10, y));
       self.tip.style.left = x + "px"; self.tip.style.top = y + "px";
     });
     this.svg.addEventListener("mouseleave", function () { self.tip.style.display = "none"; });
