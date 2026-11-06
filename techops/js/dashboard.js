@@ -5,13 +5,13 @@
 (function () {
   var C = window.TECHOPS_CONFIG, D = window.TechOpsData, Store = window.TechOpsStore, Router = window.TechOpsRouter, esc = TO.esc;
   var $ = function (id) { return document.getElementById(id); };
-  var ME_KEY = "techops_me", SEEN_KEY = "techops_seen_reports", SEEN_MEET = "techops_seen_meetups";
+  var SEEN_KEY = "techops_seen_reports", SEEN_MEET = "techops_seen_meetups";
 
   var S = {
     data: null, tab: "issues", floor: "G", layer: "zones", selected: null, pins: true, zone: null,
-    issueFilter: "open", issueText: "", first: true,
-    activeRoute: null,
-    seen: jget(SEEN_KEY, []), seenMeet: jget(SEEN_MEET, []), me: lget(ME_KEY) || "Omar", alertsOn: false
+    issueFilter: "unassigned", issueText: "", first: true,
+    activeRoute: null, user: null, busy: {},
+    seen: jget(SEEN_KEY, []), seenMeet: jget(SEEN_MEET, []), me: "", alertsOn: false
   };
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
   function lget(k) { try { return localStorage.getItem(k); } catch (e) { return ""; } }
@@ -26,7 +26,7 @@
       d.roomMap = {}; d.rooms.forEach(function (r) { d.roomMap[r.code] = r; });
       fillRoomDataList();
       detectNew();
-      var sig = JSON.stringify([d.rooms, d.wifi, d.team, d.inventory, d.reports, d.meetups, d.meta.sheetOk]);
+      var sig = JSON.stringify([d.rooms, d.wifi, d.team, d.inventory, d.reports, d.meetups, d.meta.online]);
       if (sig === S.sig) { renderHeader(); return; }
       S.sig = sig;
       renderAll();
@@ -88,41 +88,37 @@
   function renderHeader() {
     var d = S.data, m = d.meta;
     var pill = $("status-pill");
-    pill.className = "pill-status " + (m.sheetOk ? "live" : "demo");
-    var statusLabel = m.sheetOk ? "Live from Google Sheet" : "Demo data";
-    var statusMobile = m.sheetOk ? "Live" : "Demo";
+    var state = !m.online ? "demo" : m.live ? "live" : "demo";
+    var statusLabel = !m.online ? "Offline" : m.live ? "Live from Firebase" : "Local preview";
+    var statusMobile = !m.online ? "Offline" : m.live ? "Live" : "Preview";
+    pill.className = "pill-status " + state;
     $("status-text").innerHTML = '<span class="status-text-full">' + esc(statusLabel) + '</span><span class="status-text-mobile">' + esc(statusMobile) + '</span>';
-    pill.title = m.sheetOk ? "Reading TechOps backend sheet. Updated " + m.fetchedAt.toLocaleTimeString() : "Could not read sheet. Showing bundled dummy data.";
-    
+    pill.title = !m.online ? (m.error || "Could not reach Firebase.") : m.live ? "Real-time connection to Firebase. Updated " + m.fetchedAt.toLocaleTimeString() : "Firebase is not configured: showing bundled dummy data stored in this browser.";
+
     var note = $("demo-note"), bits = [];
-    if (!m.sheetOk) bits.push("The TechOps dummy sheet could not be read. Showing bundled demo data.");
-    if (!m.live) bits.push("Write mode is DEMO: new reports, pings and inventory updates are stored in this browser only. Deploy apps-script/Code.gs to write live into Google Sheets.");
+    if (!m.online) bits.push("Could not load data from Firebase: " + (m.error || "unknown error") + ".");
+    if (!m.live) bits.push("Local preview: js/firebase-config.js is empty, so tasks, pings and inventory changes are stored in this browser only.");
     note.hidden = !bits.length;
-    note.innerHTML = esc(bits.join(" ")) + (!m.live ? ' <button class="btn small" id="reset-demo">Reset demo changes</button>' : "");
+    note.innerHTML = esc(bits.join(" ")) + (!m.live ? ' <button class="btn small" id="reset-demo">Reset preview data</button>' : "");
     var rb = $("reset-demo"); if (rb) rb.onclick = function () { Store.resetDemo(); load(); };
 
-    var cur = S.me;
-    var teamOpts = '<option value="">Not selected</option>' + d.team.map(function (t) {
-      return '<option value="' + esc(t.name) + '"' + (t.name === cur ? " selected" : "") + ">" + esc(t.name) + "</option>";
-    }).join("");
-    if ($("me")) $("me").innerHTML = teamOpts;
-    if ($("me-mobile")) $("me-mobile").innerHTML = teamOpts;
+    var unassigned = d.reports.filter(isUnassigned).length;
+    var mine = d.reports.filter(isMine).length;
+    var bc = $("bell-count"); bc.hidden = !unassigned; bc.textContent = unassigned;
+    $("n-issues").textContent = unassigned + mine;
+    $("n-issues").className = "n" + (unassigned ? " hot" : "");
+    $("greeting").textContent = unassigned + " unassigned · " + mine + " in your queue";
 
-    var openCount = d.reports.filter(function (r) { return r.status === "New"; }).length;
-    var bc = $("bell-count"); bc.hidden = !openCount; bc.textContent = openCount;
-    $("n-issues").textContent = d.reports.filter(function (r) { return r.status !== "Resolved"; }).length;
-    $("n-issues").className = "n" + (openCount ? " hot" : "");
-    
     var pendingCount = S.me ? d.meetups.filter(function (m) { return m.target === S.me && (m.status === "Pinged" || m.status === "Pending"); }).length : 0;
     $("n-meet").hidden = !pendingCount; $("n-meet").textContent = pendingCount; $("n-meet").className = "n hot";
 
     /* Mobile bottom bar badges */
     var mbIssues = $("m-badge-issues");
-    if (mbIssues) { mbIssues.hidden = !openCount; mbIssues.textContent = openCount; }
+    if (mbIssues) { mbIssues.hidden = !unassigned; mbIssues.textContent = unassigned; }
     var mbTeam = $("m-badge-team");
     if (mbTeam) { mbTeam.hidden = !pendingCount; mbTeam.textContent = pendingCount; }
 
-    document.title = (openCount ? "(" + openCount + ") " : "") + "TechOps Dashboard · NASA Space Apps Cairo";
+    document.title = (unassigned ? "(" + unassigned + ") " : "") + "TechOps Dashboard · NASA Space Apps Cairo";
   }
 
   function renderBanners() {
@@ -181,42 +177,66 @@
   }
 
   /* ------------------------------------------------------------ Issues Tab */
-  var FILTERS = [["open", "Open"], ["New", "New"], ["Resolved", "Resolved"], ["all", "All"]];
+  var FILTERS = [["unassigned", "Unassigned"], ["mine", "My tasks"], ["Resolved", "Resolved"], ["all", "All"]];
+  function isUnassigned(r) { return r.status !== "Resolved" && !r.assigned; }
+  function isMine(r) { return r.status !== "Resolved" && !!S.me && r.assigned === S.me; }
+  function matchFilter(r, f) {
+    if (f === "all") return true;
+    if (f === "unassigned") return isUnassigned(r);
+    if (f === "mine") return isMine(r);
+    return r.status === f;
+  }
+  var EMPTY = {
+    unassigned: "All caught up. There are no unassigned tasks.",
+    mine: "Nothing in your queue. Claim a task from Unassigned.",
+    Resolved: "No resolved tasks yet.",
+    all: "No tasks found."
+  };
+
   function renderIssues() {
     var d = S.data;
     $("issue-filters").innerHTML = FILTERS.map(function (f) {
       var n = d.reports.filter(function (r) { return matchFilter(r, f[0]); }).length;
       return '<button class="chip' + (S.issueFilter === f[0] ? " on" : "") + '" data-if="' + f[0] + '">' + f[1] + " (" + n + ")</button>";
     }).join("");
-    
+
     var q = S.issueText.toLowerCase();
     var rows = d.reports.filter(function (r) {
       return matchFilter(r, S.issueFilter) && (!q || (r.room + " " + r.details + " " + r.issue + " " + r.id + " " + r.assigned + " " + r.floorName).toLowerCase().indexOf(q) >= 0);
     }).sort(function (a, b) { return (Store.parseStamp(b.ts) || 0) - (Store.parseStamp(a.ts) || 0); });
 
     if (!rows.length) {
-      $("issue-rows").innerHTML = '<tr><td colspan="7" class="empty">No issues found matching this filter.</td></tr>';
+      $("issue-rows").innerHTML = '<tr><td colspan="7" class="empty">' + esc(q ? "No tasks match your search." : EMPTY[S.issueFilter] || EMPTY.all) + '</td></tr>';
       return;
     }
-    
-    var names = d.team.map(function (t) { return t.name; });
+
     $("issue-rows").innerHTML = rows.map(function (r) {
-      var when = Store.parseStamp(r.ts);
-      return '<tr class="' + (r.status === "New" ? "is-new" : "") + '">' +
-        '<td class="td-status"><select data-st="' + esc(r.id) + '" aria-label="Status of ' + esc(r.id) + '">' + D.STATUSES.map(function (s) { return "<option" + (s === r.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></td>" +
+      var when = Store.parseStamp(r.ts), mine = isMine(r), free = isUnassigned(r);
+      var action = free
+        ? '<button class="btn small primary claim-btn" data-claim="' + esc(r.id) + '">Claim</button>'
+        : mine ? '<button class="btn small ok resolve-btn" data-resolve="' + esc(r.id) + '">Mark as Resolved</button>' : "";
+      return '<tr class="' + (free ? "is-new" : mine ? "is-mine" : "") + '">' +
+        '<td class="td-status"><span class="badge ' + TO.statusClass(r.status) + '">' + esc(r.status) + '</span></td>' +
         '<td class="td-meta" title="' + esc(r.ts) + '"><span class="issue-ago">' + esc(TO.ago(when)) + '</span><span class="muted issue-id">' + esc(r.id) + "</span></td>" +
         '<td class="td-room"><div><b class="issue-room-code">' + esc(r.room) + '</b> <span class="muted issue-floor">(' + esc(r.floorName) + ')</span></div><span class="badge ' + TO.issueClass(r.issue) + ' mobile-only-badge">' + esc(r.issue) + '</span></td>' +
         '<td class="td-badge desktop-only"><span class="badge ' + TO.issueClass(r.issue) + '">' + esc(r.issue) + "</span></td>" +
         '<td class="td-desc">' + esc(r.details || "—") + "</td>" +
-        '<td class="td-assign"><select data-as="' + esc(r.id) + '" aria-label="Assign ' + esc(r.id) + '"><option value="">Unassigned</option>' + names.map(function (n) { return "<option" + (n === r.assigned ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></td>" +
-        '<td class="td-action"><button class="btn small primary" data-route-to="' + esc(r.room) + '">Route Here</button></td></tr>';
+        '<td class="td-assign">' + (r.assigned ? '<span class="assignee' + (mine ? " me" : "") + '">' + esc(mine ? "You" : r.assigned) + '</span>' : '<span class="muted">Unassigned</span>') + "</td>" +
+        '<td class="td-action"><div class="action-stack">' + action + '<button class="btn small" data-route-to="' + esc(r.room) + '">Route Here</button></div></td></tr>';
     }).join("");
   }
 
-  function matchFilter(r, f) {
-    if (f === "all") return true;
-    if (f === "open") return r.status !== "Resolved";
-    return r.status === f;
+  /* One-click claim / resolve: writes straight to Firebase; the real-time listener refreshes the list. */
+  function taskAction(btn, id, kind) {
+    if (S.busy[id]) return;
+    S.busy[id] = true;
+    var label = btn.textContent; btn.disabled = true; btn.textContent = kind === "claim" ? "Claiming…" : "Resolving…";
+    var p = kind === "claim" ? Store.claimReport(id) : Store.resolveReport(id);
+    p.then(function () {
+      TO.toast(kind === "claim" ? "Task claimed" : "Task resolved", kind === "claim" ? id + " is now In Progress and assigned to you." : id + " marked as resolved.", "ok");
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = label;
+    }).then(function () { delete S.busy[id]; return load(); });
   }
 
   function gotoIssueOnMap(r) {
@@ -699,10 +719,13 @@
     ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
 
     var body = ov.querySelector("#ping-body");
+    var senderHtml = S.me
+      ? '<div style="margin-bottom:12px;font-size:13px">Pinging as: <b style="color:var(--ink-bright)">' + esc(S.me) + '</b></div><input type="hidden" id="pt-by" value="' + esc(S.me) + '">'
+      : '<label class="lbl" for="pt-by">Who is pinging?</label><select id="pt-by" style="width:100%"><option value="">Select your name…</option>' + d.team.filter(function (t) { return t.name !== member.name; }).map(function (t) { return "<option" + (t.name === S.me ? " selected" : "") + ">" + esc(t.name) + "</option>"; }).join("") + '</select>';
+
     body.innerHTML =
       '<p class="muted" style="margin-bottom:12px">A ping notification will ask <b>' + esc(member.name) + '</b> to confirm their current room in case they moved. Once confirmed, you both get walking directions.</p>' +
-      '<label class="lbl" for="pt-by">Who is pinging?</label>' +
-      '<select id="pt-by" style="width:100%"><option value="">Select your name…</option>' + d.team.filter(function (t) { return t.name !== member.name; }).map(function (t) { return "<option" + (t.name === S.me ? " selected" : "") + ">" + esc(t.name) + "</option>"; }).join("") + '</select>' +
+      senderHtml +
       
       '<div class="two" style="margin-top:12px">' +
       '<div class="col"><h4>Your Current Spot</h4>' +
@@ -748,7 +771,6 @@
       };
 
       Store.addMeetup(rec).then(function () {
-        S.me = by; lset(ME_KEY, by);
         body.innerHTML = '<div class="success" style="padding-bottom:10px"><div class="tick">&#10003;</div>' +
           '<h3>Ping Sent to ' + esc(member.name) + '!</h3>' +
           '<p class="muted" style="margin-top:6px">They received a notification to confirm their current room. Once confirmed, you can click "Show Route" to walk straight to them.</p>' +
@@ -927,19 +949,34 @@
       if (b && b.dataset.tab) setTab(b.dataset.tab);
     });
 
-    $("bell").onclick = function () { setTab("issues"); S.issueFilter = "New"; renderIssues(); };
+    $("bell").onclick = function () { setTab("issues"); S.issueFilter = "unassigned"; renderIssues(); };
 
-    function setViewingAs(val) {
-      S.me = val;
-      lset(ME_KEY, S.me);
-      if ($("me")) $("me").value = val;
-      if ($("me-mobile")) $("me-mobile").value = val;
-      renderHeader();
-      renderBanners();
-      renderTeam();
+    var lf = $("login-form");
+    if (lf) {
+      lf.onsubmit = function (e) {
+        e.preventDefault();
+        var code = ($("login-code").value || "").trim().toUpperCase();
+        if (!code) { showLoginError("Please enter your volunteer code."); return; }
+        var btn = $("login-btn");
+        btn.disabled = true; btn.textContent = "Signing in…";
+        showLoginError("");
+        Store.login(code).then(function (user) {
+          btn.disabled = false; btn.textContent = "Sign in";
+          applyUser(user);
+        }).catch(function (err) {
+          btn.disabled = false; btn.textContent = "Sign in";
+          showLoginError(err && err.message ? err.message : "Invalid volunteer code.");
+        });
+      };
     }
-    if ($("me")) $("me").onchange = function () { setViewingAs(this.value); };
-    if ($("me-mobile")) $("me-mobile").onchange = function () { setViewingAs(this.value); };
+    function doLogout() {
+      Store.logout().then(function () {
+        applyUser(null);
+      });
+    }
+    if ($("logout-btn")) $("logout-btn").onclick = doLogout;
+    if ($("mobile-logout-btn")) $("mobile-logout-btn").onclick = doLogout;
+    if ($("logistics-logout")) $("logistics-logout").onclick = doLogout;
 
     /* Mobile drawer toggle */
     var mToggle = $("mobile-menu-toggle");
@@ -1000,6 +1037,8 @@
     document.addEventListener("click", function (e) {
       var t;
       if ((t = e.target.closest("[data-if]"))) { S.issueFilter = t.dataset.if; renderIssues(); }
+      else if ((t = e.target.closest("[data-claim]"))) { taskAction(t, t.dataset.claim, "claim"); }
+      else if ((t = e.target.closest("[data-resolve]"))) { taskAction(t, t.dataset.resolve, "resolve"); }
       else if ((t = e.target.closest("[data-floor]"))) { S.floor = t.dataset.floor; S.selected = null; closeMapBottomSheet(); map.setFloor(S.floor); renderMapChrome(); renderSide(); }
       else if ((t = e.target.closest("[data-layer]"))) { S.layer = t.dataset.layer; map.setLayer(S.layer); renderMapChrome(); }
       else if ((t = e.target.closest("[data-zone]"))) { S.zone = S.zone === t.dataset.zone ? null : t.dataset.zone; map.setZoneFilter(S.zone); renderMapChrome(); }
@@ -1056,15 +1095,7 @@
 
     document.addEventListener("change", function (e) {
       var t = e.target;
-      if (t.dataset.st && t.tagName === "SELECT") {
-        var f = { status: t.value };
-        if (t.value === "Resolved") f.resolvedAt = Store.stamp();
-        Store.update("reports", t.dataset.st, f); load();
-      } else if (t.dataset.as !== undefined && t.tagName === "SELECT") {
-        var rep = S.data.reports.filter(function (x) { return x.id === t.dataset.as; })[0], f2 = { assigned: t.value };
-        if (t.value && rep && rep.status === "New") f2.status = "Acknowledged";
-        Store.update("reports", t.dataset.as, f2); load();
-      } else if (t.dataset.holder) {
+      if (t.dataset.holder) {
         Store.update("inventory", t.dataset.holder, { holder: t.value, updated: Store.stamp() }); load();
       }
     });
@@ -1073,34 +1104,17 @@
     document.addEventListener("techops-theme", function () { map.render(); });
   }
 
-  /* ------------------------------------------------------------ Boot */
-  TO.initTheme();
-  map = new FloorMap($("map"), {
-    onSelect: function (c) {
-      if (!c) {
-        closeMapBottomSheet();
-        return;
-      }
-      if (c.indexOf("STAIR-") === 0) {
-        var sk = c.replace("STAIR-", "");
-        if (window.innerWidth <= 768) {
-          openMapBottomSheet(c);
-        } else {
-          TO.toast(Router.SN[sk] || "Stairs", "Inter-floor staircase connecting Levels 0, 1, and 2.");
-        }
-        return;
-      }
-      selectRoom(c, false);
-      /* Pre-fill destination field for route */
-      if (!/^wf:/i.test(c)) $("rt-to").value = c;
-    },
-    tipHtml: tipHtml
-  });
+  function showLoginError(msg) {
+    var el = $("login-error");
+    if (!el) return;
+    el.textContent = msg || "";
+    el.hidden = !msg;
+  }
 
-  map.setFloor("G");
-  bind();
-
-  load().then(function () {
+  var queryHandled = false;
+  function handleQuery() {
+    if (queryHandled) return;
+    queryHandled = true;
     var q = new URLSearchParams(location.search);
     if (q.get("floor") && D.FLOORS.some(function (f) { return f.id === q.get("floor"); })) {
       S.floor = q.get("floor");
@@ -1140,7 +1154,109 @@
       }
     }
     setTimeout(function () { map.fit(); }, 60);
+  }
+
+  function applyUser(user) {
+    S.user = user || null;
+    S.me = user ? user.name : "";
+    var main = document.querySelector("main");
+    var nav = document.querySelector(".mobile-nav");
+    var chip = $("user-chip");
+    var mobUser = $("mobile-user");
+    var loginScreen = $("login-screen");
+    var logisticsView = $("logistics-view");
+    var bell = $("bell");
+    var techOnly = document.querySelectorAll(".tech-only");
+
+    if (!user) {
+      if (loginScreen) loginScreen.hidden = false;
+      if (logisticsView) logisticsView.hidden = true;
+      if (main) main.hidden = true;
+      if (nav) nav.hidden = true;
+      if (chip) chip.hidden = true;
+      if (mobUser) mobUser.hidden = true;
+      if (bell) bell.hidden = true;
+      techOnly.forEach(function (el) { el.hidden = true; });
+
+      var ln = $("login-note");
+      if (ln && !Store.isLive()) {
+        ln.hidden = false;
+        ln.innerHTML = 'Preview mode volunteer codes: <b>TO-001</b> (Mohamed Khairy), <b>TO-002</b> (Omar), <b>TO-003</b> (Lojine), or <b>LG-001</b> (Logistics).';
+      }
+      var inp = $("login-code");
+      if (inp) { inp.value = ""; setTimeout(function () { inp.focus(); }, 120); }
+      return;
+    }
+
+    if (chip) {
+      chip.hidden = false;
+      if ($("user-name")) $("user-name").textContent = user.name;
+      if ($("user-team")) $("user-team").textContent = user.team + " · " + user.code;
+      if ($("user-avatar")) $("user-avatar").textContent = user.initials || TO.initials(user.name);
+    }
+    if (mobUser) {
+      mobUser.hidden = false;
+      if ($("mobile-user-name")) $("mobile-user-name").textContent = user.name;
+      if ($("mobile-user-team")) $("mobile-user-team").textContent = user.team + " · " + user.code;
+      if ($("mobile-user-avatar")) $("mobile-user-avatar").textContent = user.initials || TO.initials(user.name);
+    }
+
+    if (user.team === "Logistics") {
+      if (loginScreen) loginScreen.hidden = true;
+      if (logisticsView) logisticsView.hidden = false;
+      if (main) main.hidden = true;
+      if (nav) nav.hidden = true;
+      if (bell) bell.hidden = true;
+      techOnly.forEach(function (el) { el.hidden = true; });
+      if ($("logistics-msg")) {
+        $("logistics-msg").textContent = "Welcome, " + user.name + " (" + user.code + "). Your Logistics workspace is being prepared by Norhan. Check back soon!";
+      }
+      return;
+    }
+
+    /* TechOps user */
+    if (loginScreen) loginScreen.hidden = true;
+    if (logisticsView) logisticsView.hidden = true;
+    if (main) main.hidden = false;
+    if (nav) nav.hidden = false;
+    if (bell) bell.hidden = false;
+    techOnly.forEach(function (el) { el.hidden = false; });
+
+    Store.start().then(function () {
+      return load();
+    }).then(function () {
+      handleQuery();
+    });
+  }
+
+  /* ------------------------------------------------------------ Boot */
+  TO.initTheme();
+  map = new FloorMap($("map"), {
+    onSelect: function (c) {
+      if (!c) {
+        closeMapBottomSheet();
+        return;
+      }
+      if (c.indexOf("STAIR-") === 0) {
+        var sk = c.replace("STAIR-", "");
+        if (window.innerWidth <= 768) {
+          openMapBottomSheet(c);
+        } else {
+          TO.toast(Router.SN[sk] || "Stairs", "Inter-floor staircase connecting Levels 0, 1, and 2.");
+        }
+        return;
+      }
+      selectRoom(c, false);
+      /* Pre-fill destination field for route */
+      if (!/^wf:/i.test(c)) $("rt-to").value = c;
+    },
+    tipHtml: tipHtml
   });
 
-  setInterval(load, C.POLL_MS);
+  map.setFloor("G");
+  bind();
+
+  Store.restore().then(function (user) {
+    applyUser(user);
+  });
 })();

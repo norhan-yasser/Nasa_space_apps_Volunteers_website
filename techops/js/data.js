@@ -66,7 +66,22 @@
   var ALL_ROOMS = [];
   FLOORS.forEach(function (f) { ALL_ROOMS = ALL_ROOMS.concat(f.rooms); });
 
+  /* Point-in-polygon: the room (geometry) that contains pixel (x, y) on a floor plan, or null. */
+  function roomAt(floorId, x, y) {
+    var f = FLOORS.filter(function (fl) { return fl.id === floorId; })[0];
+    if (!f) return null;
+    for (var i = 0; i < f.rooms.length; i++) {
+      var p = f.rooms[i].pts, inside = false;
+      for (var a = 0, b = p.length - 1; a < p.length; b = a++) {
+        if ((p[a][1] > y) !== (p[b][1] > y) && x < (p[b][0] - p[a][0]) * (y - p[a][1]) / (p[b][1] - p[a][1]) + p[a][0]) inside = !inside;
+      }
+      if (inside) return f.rooms[i];
+    }
+    return null;
+  }
+
   window.TechOpsData = {
+    roomAt: roomAt,
     W: 1673,
     H: 940,
     FLOORS: FLOORS,
@@ -84,6 +99,6 @@
       { id: "help", label: "Need TechOps assistance", hint: "Equipment, setup or any tech help" },
       { id: "other", label: "Other", hint: "Describe the problem yourself" }
     ],
-    STATUSES: ["New", "Acknowledged", "In progress", "Resolved"]
+    STATUSES: ["New", "In Progress", "Resolved"]
   };
 })();

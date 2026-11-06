@@ -1,38 +1,31 @@
 /**
- * TechOps data layer.
+ * TechOps data layer (Firebase).
  *
- * READ  : the TechOps Google Sheet is read through Google's public "gviz" JSONP endpoint
- *         (works on file://, localhost and GitHub Pages; the sheet must be shared as
- *         "Anyone with the link can view"). If the sheet is not reachable, bundled dummy
- *         data (js/sample-data.js) is used and the UI shows "Demo data".
- * WRITE : rows are sent to a Google Apps Script web app (CONFIG.APPS_SCRIPT_URL).
- *         Without that URL the app runs in DEMO mode: writes stay in this browser only
- *         (localStorage) and are announced to other tabs through BroadcastChannel.
+ *  AUTH  : volunteers sign in with their Volunteer Code. The code is the document id in the `volunteers`
+ *          collection ({ "Name", "Volunteer Code", "Team" }); the app reads `Team` from there to pick the workspace.
+ *          Firebase Anonymous Auth gives the browser an identity; `sessions/{uid}` links it to the code so the
+ *          Firestore rules can tell who is a TechOps volunteer (see firebase/firestore.rules).
+ *  DATA  : Firestore collections rooms, wifi, team, inventory, reports, meetups, streamed in real time
+ *          with onSnapshot (reports are limited to team == "TechOps").
+ *  LOCAL : when js/firebase-config.js is empty the same API runs against bundled DUMMY data kept in
+ *          localStorage, so the UI can be previewed without a Firebase project.
  */
 (function () {
-  var C = window.TECHOPS_CONFIG;
-  var KEYS = { pending: "techops_pending_v1", edits: "techops_edits_v1" };
-
-  /* tab -> key field + [jsKey, sheetHeader] pairs */
-  var SCHEMA = {
-    rooms: { tab: C.TABS.rooms, key: "code", cols: [["code", "Room Code"], ["floorName", "Floor"], ["zone", "Zone"], ["type", "Space Type"], ["capacity", "Capacity"], ["assigned", "Assigned To"], ["contact", "Room Contact"]] },
-    wifi: { tab: C.TABS.wifi, key: "id", cols: [["id", "Point ID"], ["floorName", "Floor"], ["label", "Label"], ["x", "X"], ["y", "Y"], ["mbps", "Speed Mbps"], ["latency", "Latency ms"], ["updated", "Last Updated"]] },
-    team: { tab: C.TABS.team, key: "name", cols: [["name", "Name"], ["role", "Role"], ["phone", "Phone"], ["floorName", "Current Floor"], ["room", "Current Room"], ["status", "Status"], ["focus", "Focus Area"]] },
-    inventory: { tab: C.TABS.inventory, key: "id", cols: [["id", "Item ID"], ["item", "Item"], ["category", "Category"], ["qty", "Quantity"], ["holder", "Held By"], ["team", "Lent To Team"], ["room", "Lent To Room"], ["floorName", "Lent To Floor"], ["status", "Status"], ["updated", "Last Updated"]] },
-    reports: { tab: C.TABS.reports, key: "id", cols: [["id", "Report ID"], ["ts", "Timestamp"], ["floorName", "Floor"], ["room", "Room"], ["issue", "Issue Type"], ["details", "Details"], ["status", "Status"], ["assigned", "Assigned To"], ["resolvedAt", "Resolved At"], ["reporter", "Reporter"]] },
-    meetups: { tab: C.TABS.meetups, key: "id", cols: [["id", "Request ID"], ["ts", "Timestamp"], ["by", "Requested By"], ["target", "Target Member"], ["byFloorName", "Requester Floor"], ["byRoom", "Requester Room"], ["targetFloorName", "Target Floor"], ["targetRoom", "Target Room"], ["meetAt", "Meet At"], ["note", "Note"], ["status", "Status"]] }
-  };
+  var FB = window.TECHOPS_FIREBASE || {}, D = window.TechOpsData;
+  var LIVE = !!(FB.apiKey && FB.projectId);
+  var SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
+  var COLS = ["rooms", "wifi", "team", "inventory", "reports", "meetups"];
+  var KEYFIELD = { rooms: "code", wifi: "id", team: "name", inventory: "id", reports: "id", meetups: "id" };
   var NUMERIC = { capacity: 1, x: 1, y: 1, mbps: 1, latency: 1, qty: 1 };
   var FLOOR_NAMES = { G: "Ground Floor", F: "First Floor", S: "Second Floor" };
+  var TYPE_LABEL = { "chairs": "Classroom", "small lecture": "Small Lecture Hall", "bring your device": "Bring Your Own Device", "lecture": "Lecture Hall" };
+  var SESSION_KEY = "techops_volunteer_code", LOCAL_KEY = "techops_local_db_v1";
+  var TEAM = "TechOps";
 
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
   function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  function isLive() { return !!C.APPS_SCRIPT_URL; }
-
-  function floorId(name) {
-    for (var id in FLOOR_NAMES) if (FLOOR_NAMES[id].toLowerCase() === String(name || "").trim().toLowerCase()) return id;
-    return "";
-  }
+  function lget(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function lset(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function stamp(d) {
     d = d || new Date();
@@ -43,66 +36,154 @@
     var d = new Date(String(s).replace(" ", "T"));
     return isNaN(d) ? null : d;
   }
+  function floorId(name) {
+    for (var id in FLOOR_NAMES) if (FLOOR_NAMES[id].toLowerCase() === String(name || "").trim().toLowerCase()) return id;
+    return "";
+  }
+  function newId(prefix) {
+    var d = new Date();
+    return prefix + "-" + String(d.getFullYear()).slice(2) + pad(d.getMonth() + 1) + pad(d.getDate()) + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds()) + Math.random().toString(36).slice(2, 4).toUpperCase();
+  }
+  function clip(s, n) { return String(s || "").slice(0, n); }
+  function fail(code, msg) { var e = new Error(msg || code); e.code = code; return e; }
+  function friendly(e) {
+    var c = e && e.code || "";
+    if (c === "claimed" || c === "invalid" || c === "missing" || c === "sdk") return e.message;
+    if (c === "permission-denied") return "Your volunteer account is not allowed to do that.";
+    if (c === "auth/operation-not-allowed") return "Anonymous sign-in is disabled in the Firebase console (Authentication > Sign-in method).";
+    if (c === "unavailable" || c === "auth/network-request-failed") return "No connection to Firebase. Check your internet and try again.";
+    return (e && e.message) || "Something went wrong.";
+  }
 
-  /* ---------------------------------------------------------------- READ (gviz JSONP) */
-  var jsonpSeq = 0;
-  function fetchTab(tab) {
-    return new Promise(function (resolve, reject) {
-      var cb = "__techops_cb_" + (++jsonpSeq) + "_" + Math.random().toString(36).slice(2, 7);
-      var s = document.createElement("script");
-      var done = false;
-      function cleanup() { clearTimeout(timer); delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s); }
-      var timer = setTimeout(function () { if (done) return; done = true; cleanup(); reject(new Error("timeout")); }, 9000);
-      window[cb] = function (resp) {
-        if (done) return; done = true; cleanup();
-        if (!resp || resp.status === "error" || !resp.table) return reject(new Error("sheet error"));
-        resolve(resp.table);
-      };
-      s.onerror = function () { if (done) return; done = true; cleanup(); reject(new Error("blocked")); };
-      s.src = "https://docs.google.com/spreadsheets/d/" + C.SHEET_ID + "/gviz/tq?headers=1&sheet=" + encodeURIComponent(tab) +
-        "&tqx=responseHandler:" + cb + "&_=" + Date.now();
+  /* ---------------------------------------------------------------- shared state */
+  var cache = {}, ready = {}, listeners = [], user = null, started = false, lastError = null;
+  var emitT = 0, readyResolve, readyP = new Promise(function (r) { readyResolve = r; });
+  function emit() { clearTimeout(emitT); emitT = setTimeout(function () { listeners.forEach(function (f) { f({ kind: "data" }); }); }, 30); }
+  function checkReady() { if (COLS.every(function (c) { return ready[c]; })) readyResolve(); }
+
+  /* ---------------------------------------------------------------- Firebase backend */
+  var fb = { db: null, auth: null, unsubs: [], boot: null };
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var s = document.createElement("script"); s.src = src; s.onload = res;
+      s.onerror = function () { rej(fail("sdk", "Could not load the Firebase SDK. Check your internet connection.")); };
       document.head.appendChild(s);
     });
   }
-  function cellText(c) {
-    if (!c || c.v === null || c.v === undefined) return "";
-    if (typeof c.v === "string" && c.v.indexOf("Date(") === 0) {
-      var m = c.v.match(/Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?/);
-      if (m) return m[1] + "-" + pad(+m[2] + 1) + "-" + pad(+m[3]) + " " + pad(+(m[4] || 0)) + ":" + pad(+(m[5] || 0)) + ":" + pad(+(m[6] || 0));
-    }
-    return c.v;
-  }
-  function tableToObjects(table) {
-    var heads = table.cols.map(function (c) { return (c.label || "").trim(); });
-    return table.rows.map(function (r) {
-      var o = {};
-      heads.forEach(function (h, i) { o[h] = cellText(r.c && r.c[i]); });
-      return o;
+  fb.init = function () {
+    if (fb.boot) return fb.boot;
+    fb.boot = loadScript(SDK + "firebase-app-compat.js")
+      .then(function () { return Promise.all([loadScript(SDK + "firebase-auth-compat.js"), loadScript(SDK + "firebase-firestore-compat.js")]); })
+      .then(function () {
+        if (!firebase.apps.length) firebase.initializeApp(FB);
+        fb.auth = firebase.auth(); fb.db = firebase.firestore();
+      });
+    return fb.boot;
+  };
+  fb.authUser = function () {
+    return fb.init().then(function () {
+      return new Promise(function (res) { var off = fb.auth.onAuthStateChanged(function (u) { off(); res(u); }); });
     });
-  }
+  };
+  fb.signedIn = function () {
+    return fb.authUser().then(function (u) { return u || fb.auth.signInAnonymously().then(function (r) { return r.user; }); });
+  };
+  fb.getVolunteer = function (code) {
+    return fb.signedIn().then(function () { return fb.db.collection("volunteers").doc(code).get(); })
+      .then(function (d) { return d.exists ? d.data() : null; });
+  };
+  fb.bindSession = function (code) {
+    return fb.signedIn().then(function (u) { return fb.db.collection("sessions").doc(u.uid).set({ code: code, at: stamp() }); });
+  };
+  fb.start = function () {
+    return fb.signedIn().then(function () {
+      COLS.forEach(function (col) {
+        var ref = fb.db.collection(col);
+        if (col === "reports") ref = ref.where("team", "==", TEAM);
+        fb.unsubs.push(ref.onSnapshot(function (snap) {
+          cache[col] = snap.docs.map(function (d) { var o = d.data(); o._id = d.id; return o; });
+          ready[col] = true; checkReady(); emit();
+        }, function (err) { lastError = err; ready[col] = true; checkReady(); emit(); }));
+      });
+    });
+  };
+  fb.set = function (col, id, obj) { return fb.signedIn().then(function () { return fb.db.collection(col).doc(id).set(obj); }); };
+  fb.update = function (col, id, fields) { return fb.signedIn().then(function () { return fb.db.collection(col).doc(id).update(fields); }); };
+  /* Transactional: two volunteers can never claim the same task. */
+  fb.mutateReport = function (id, fn) {
+    var ref = fb.db.collection("reports").doc(id);
+    return fb.signedIn().then(function () {
+      return fb.db.runTransaction(function (tx) {
+        return tx.get(ref).then(function (snap) {
+          if (!snap.exists) throw fail("missing", "This task no longer exists.");
+          tx.update(ref, fn(snap.data()));
+        });
+      });
+    });
+  };
+  fb.stop = function () { fb.unsubs.forEach(function (u) { u(); }); fb.unsubs = []; };
+  fb.signOut = function () { return fb.init().then(function () { return fb.auth.signOut(); }); };
+
+  /* ---------------------------------------------------------------- Local preview backend (dummy data) */
+  var channel = ("BroadcastChannel" in window) ? new BroadcastChannel("techops_local") : null;
+  var loc = {
+    db: function () {
+      var d = jget(LOCAL_KEY, null);
+      if (!d) { d = JSON.parse(JSON.stringify(window.TECHOPS_SEED || {})); jset(LOCAL_KEY, d); }
+      return d;
+    },
+    save: function (d) { jset(LOCAL_KEY, d); if (channel) channel.postMessage({ at: Date.now() }); },
+    refresh: function () {
+      var d = loc.db();
+      COLS.forEach(function (c) {
+        cache[c] = Object.keys(d[c] || {}).map(function (k) { var o = Object.assign({}, d[c][k]); o._id = k; return o; });
+        ready[c] = true;
+      });
+      cache.reports = cache.reports.filter(function (r) { return r.team === TEAM; });
+      checkReady();
+    },
+    getVolunteer: function (code) { return Promise.resolve(loc.db().volunteers[code] || null); },
+    set: function (col, id, obj) { var d = loc.db(); (d[col] = d[col] || {})[id] = obj; loc.save(d); loc.refresh(); emit(); return Promise.resolve(); },
+    update: function (col, id, fields) {
+      var d = loc.db(); if (!d[col] || !d[col][id]) return Promise.reject(fail("missing", "Record not found."));
+      Object.assign(d[col][id], fields); loc.save(d); loc.refresh(); emit(); return Promise.resolve();
+    },
+    mutateReport: function (id, fn) {
+      var d = loc.db(), r = d.reports && d.reports[id];
+      if (!r) return Promise.reject(fail("missing", "This task no longer exists."));
+      try { Object.assign(r, fn(r)); } catch (e) { return Promise.reject(e); }
+      loc.save(d); loc.refresh(); emit(); return Promise.resolve();
+    }
+  };
+  function backend() { return LIVE ? fb : loc; }
 
   /* ---------------------------------------------------------------- normalise */
-  function normalise(name, rawRows) {
-    var sc = SCHEMA[name];
-    return rawRows.map(function (raw) {
-      var o = {};
-      sc.cols.forEach(function (p) {
-        var v = raw[p[1]];
-        if (v === undefined || v === null) v = "";
-        if (NUMERIC[p[0]]) v = v === "" ? 0 : Number(v);
-        else v = String(v).trim();
-        o[p[0]] = v;
-      });
-      if ("floorName" in o) o.floor = floorId(o.floorName);
-      if ("byFloorName" in o) o.byFloor = floorId(o.byFloorName);
-      if ("targetFloorName" in o) o.targetFloor = floorId(o.targetFloorName);
-      return o;
-    }).filter(function (o) { return o[sc.key] !== ""; });
+  function normaliseRoom(r) {
+    var t = String(r["Room Type"] || "").trim();
+    return {
+      code: r.code || r._id, floor: r.floor || floorId(r.floorName),
+      wing: r.Wing || "", roomNo: r["Room No."] || "", type: TYPE_LABEL[t.toLowerCase()] || t,
+      capacity: Number(r["Assigned Capacity"]) || 0, physicalCapacity: Number(r["Physical Capacity"]) || 0,
+      zone: r.zone || "", assigned: r["Room Use / Function"] || "", contact: ""
+    };
   }
-  function toSheetRow(name, obj) {
-    var row = {};
-    SCHEMA[name].cols.forEach(function (p) { if (obj[p[0]] !== undefined) row[p[1]] = obj[p[0]]; });
-    return row;
+  function normalise(col, docs) {
+    var key = KEYFIELD[col];
+    return docs.map(function (raw) {
+      var o;
+      if (col === "rooms") o = normaliseRoom(raw);
+      else {
+        o = {};
+        Object.keys(raw).forEach(function (k) { if (k !== "_id") o[k] = raw[k]; });
+        Object.keys(NUMERIC).forEach(function (k) { if (k in o) o[k] = Number(o[k]) || 0; });
+        if (!o[key]) o[key] = raw._id;
+      }
+      ["", "by", "target"].forEach(function (p) {
+        var id = p ? p + "Floor" : "floor", nm = p ? p + "FloorName" : "floorName";
+        if (o[id] || o[nm]) { o[id] = o[id] || floorId(o[nm]); o[nm] = FLOOR_NAMES[o[id]] || o[nm] || ""; }
+      });
+      return o;
+    }).filter(function (o) { return o[key] !== "" && o[key] !== undefined; });
   }
   function withFloorNames(obj) {
     if (obj.floor) obj.floorName = FLOOR_NAMES[obj.floor];
@@ -111,137 +192,102 @@
     return obj;
   }
 
-  /* ---------------------------------------------------------------- local overlay */
-  function overlay(name, rows, sheetOk) {
-    var sc = SCHEMA[name], key = sc.key;
-    var pend = jget(KEYS.pending, {})[name] || [];
-    var edits = jget(KEYS.edits, {});
-    var tabEdits = edits[name] || {};
-    var have = {};
-    rows.forEach(function (r) { have[r[key]] = r; });
-
-    /* edits: apply to existing rows; in live mode drop an edit once the sheet reflects it */
-    var changedEdits = false;
-    Object.keys(tabEdits).forEach(function (k) {
-      var r = have[k];
-      if (!r) return;
-      var f = tabEdits[k], same = true;
-      Object.keys(f).forEach(function (fk) { if (String(r[fk]) !== String(f[fk])) same = false; });
-      if (isLive() && sheetOk && same) { delete tabEdits[k]; changedEdits = true; return; }
-      Object.keys(f).forEach(function (fk) { r[fk] = f[fk]; });
-      withFloorNames(r);
-    });
-    if (changedEdits) { edits[name] = tabEdits; jset(KEYS.edits, edits); }
-
-    /* pending (locally created) rows */
-    var stillPending = [];
-    pend.forEach(function (p) {
-      if (have[p[key]]) { if (isLive() && sheetOk) return; }  /* sheet now has it: forget the local copy */
-      else rows.push(p);
-      stillPending.push(p);
-    });
-    if (stillPending.length !== pend.length) {
-      var all = jget(KEYS.pending, {}); all[name] = stillPending; jset(KEYS.pending, all);
+  /* ---------------------------------------------------------------- real-time read */
+  function start() {
+    if (started) return readyP;
+    started = true;
+    if (LIVE) {
+      fb.start().catch(function (e) { lastError = e; COLS.forEach(function (c) { ready[c] = true; }); checkReady(); emit(); });
+    } else {
+      loc.refresh();
+      if (channel) channel.onmessage = function () { loc.refresh(); emit(); };
+      window.addEventListener("storage", function (e) { if (e.key === LOCAL_KEY) { loc.refresh(); emit(); } });
     }
-    /* edits for pending rows */
-    rows.forEach(function (r) {
-      var f = tabEdits[r[key]];
-      if (f && !have[r[key]]) { Object.keys(f).forEach(function (fk) { r[fk] = f[fk]; }); withFloorNames(r); }
-    });
-    return rows;
+    setTimeout(readyResolve, 9000);
+    return readyP;
   }
-
-  /* ---------------------------------------------------------------- load */
   function loadAll() {
-    var names = Object.keys(SCHEMA);
-    var failed = [];
-    var jobs = names.map(function (n) {
-      return fetchTab(SCHEMA[n].tab).then(function (t) {
-        return { name: n, rows: normalise(n, tableToObjects(t)), ok: true };
-      }, function () {
-        failed.push(SCHEMA[n].tab);
-        var sample = (window.TECHOPS_SAMPLE && window.TECHOPS_SAMPLE[SCHEMA[n].tab]) || [];
-        return { name: n, rows: normalise(n, sample), ok: false };
-      });
-    });
-    return Promise.all(jobs).then(function (res) {
-      var out = { meta: { sheetOk: failed.length === 0, failed: failed, live: isLive(), fetchedAt: new Date() } };
-      res.forEach(function (r) { out[r.name] = overlay(r.name, r.rows, r.ok); });
+    return readyP.then(function () {
+      var geo = {}; (D.ALL || []).forEach(function (g) { geo[g.code] = 1; });
+      var out = { meta: { live: LIVE, online: !lastError, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
+      COLS.forEach(function (c) { out[c] = normalise(c, cache[c] || []); });
+      /* only rooms that exist on the floor plans can be drawn / routed to */
+      out.rooms = out.rooms.filter(function (r) { return geo[r.code]; });
+      /* Wi-Fi readings only count when the point is physically INSIDE a room: corridor / hall / outer-stage points are erased */
+      out.wifi = out.wifi.filter(function (w) { var g = D.roomAt(w.floor, w.x, w.y); if (g) w.room = g.code; return !!g; });
       return out;
     });
   }
 
-  /* ---------------------------------------------------------------- WRITE */
-  var channel = ("BroadcastChannel" in window) ? new BroadcastChannel("techops_prototype") : null;
-  var listeners = [];
-  function notify(kind) {
-    if (channel) channel.postMessage({ kind: kind, at: Date.now() });
-  }
-  function onChange(cb) {
-    listeners.push(cb);
-    if (channel) channel.onmessage = function (e) { listeners.forEach(function (f) { f(e.data); }); };
-    window.addEventListener("storage", function (e) {
-      if (e.key === KEYS.pending || e.key === KEYS.edits) listeners.forEach(function (f) { f({ kind: "storage" }); });
+  /* ---------------------------------------------------------------- auth */
+  function normalizeCode(c) { return String(c || "").trim().toUpperCase().replace(/\s+/g, ""); }
+  function toUser(v) { return v && v.Name ? { name: String(v.Name), code: String(v["Volunteer Code"] || ""), team: String(v.Team || "") } : null; }
+  function login(code) {
+    code = normalizeCode(code);
+    if (!/^[A-Z0-9_-]{2,40}$/.test(code)) return Promise.reject(fail("invalid", "That volunteer code is not valid."));
+    return backend().getVolunteer(code).then(function (v) {
+      var u = toUser(v);
+      if (!u) throw fail("invalid", "We couldn't find that volunteer code. Check it and try again.");
+      return (LIVE ? fb.bindSession(code) : Promise.resolve()).then(function () { user = u; lset(SESSION_KEY, code); return u; });
     });
   }
-  function post(payload) {
-    if (!isLive()) return Promise.resolve({ demo: true });
-    return fetch(C.APPS_SCRIPT_URL, {
-      method: "POST", mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    }).then(function () { return { ok: true }; }, function (err) { return { error: String(err) }; });
+  function restore() {
+    var qCode = "";
+    try { qCode = new URLSearchParams(location.search).get("auth") || ""; } catch (e) {}
+    var code = qCode ? normalizeCode(qCode) : lget(SESSION_KEY);
+    if (!code) return Promise.resolve(null);
+    var check = LIVE ? fb.authUser().then(function (au) { return au ? fb.getVolunteer(code) : null; }) : loc.getVolunteer(code);
+    return check.then(function (v) { user = toUser(v); if (!user) lset(SESSION_KEY, ""); else if (qCode) lset(SESSION_KEY, code); return user; }, function () { return null; });
   }
-  function addPending(name, obj) {
-    var all = jget(KEYS.pending, {});
-    (all[name] = all[name] || []).push(obj);
-    jset(KEYS.pending, all);
-  }
-  function newId(prefix) {
-    var d = new Date();
-    return prefix + "-" + String(d.getFullYear()).slice(2) + pad(d.getMonth() + 1) + pad(d.getDate()) + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds()) + Math.random().toString(36).slice(2, 4).toUpperCase();
-  }
-  function clip(s, n) { return String(s || "").slice(0, n); }
-
-  function addRow(name, obj) {
-    withFloorNames(obj);
-    addPending(name, obj);
-    notify(name);
-    return post({ action: "addRow", tab: SCHEMA[name].tab, row: toSheetRow(name, obj) }).then(function (r) { r.id = obj[SCHEMA[name].key]; return r; });
-  }
-  function update(name, keyValue, fields) {
-    var edits = jget(KEYS.edits, {});
-    var t = edits[name] = edits[name] || {};
-    t[keyValue] = Object.assign(t[keyValue] || {}, fields);
-    jset(KEYS.edits, edits);
-    /* also patch a locally pending row */
-    var all = jget(KEYS.pending, {}), key = SCHEMA[name].key;
-    (all[name] || []).forEach(function (p) { if (p[key] === keyValue) Object.assign(p, fields); });
-    jset(KEYS.pending, all);
-    notify(name);
-    var sheetFields = {};
-    var tmp = toSheetRow(name, fields);
-    Object.keys(tmp).forEach(function (h) { sheetFields[h] = tmp[h]; });
-    return post({ action: "updateRow", tab: SCHEMA[name].tab, keyHeader: SCHEMA[name].cols.filter(function (p) { return p[0] === key; })[0][1], key: keyValue, fields: sheetFields });
+  function logout() {
+    user = null; lset(SESSION_KEY, "");
+    if (LIVE) { fb.stop(); return fb.signOut().catch(function () {}); }
+    return Promise.resolve();
   }
 
+  /* ---------------------------------------------------------------- writes */
+  function guard(p) {
+    return p.catch(function (e) { if (window.TO) TO.toast("Couldn't save", friendly(e), "bad"); throw e; });
+  }
+  function update(name, keyValue, fields) { return guard(backend().update(name, keyValue, withFloorNames(Object.assign({}, fields)))); }
   function addReport(d) {
-    return addRow("reports", {
+    var obj = withFloorNames({
       id: newId("RPT"), ts: stamp(), floor: d.floor, room: d.room, issue: clip(d.issue, 80), details: clip(d.details, 500),
-      status: "New", assigned: "", resolvedAt: "", reporter: clip(d.reporter, 60)
+      status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: clip(d.reporter, 60), team: TEAM
     });
+    return backend().set("reports", obj.id, obj).then(function () { return { id: obj.id, demo: !LIVE }; });
   }
   function addMeetup(d) {
-    return addRow("meetups", {
+    var obj = withFloorNames({
       id: newId("MTG"), ts: stamp(), by: d.by, target: d.target, byFloor: d.byFloor, byRoom: d.byRoom,
       targetFloor: d.targetFloor || "", targetRoom: d.targetRoom || "", meetAt: d.meetAt || "", note: clip(d.note, 300), status: d.status || "Pending"
     });
+    return guard(backend().set("meetups", obj.id, obj)).then(function () { return { id: obj.id, demo: !LIVE }; });
   }
-  function resetDemo() { localStorage.removeItem(KEYS.pending); localStorage.removeItem(KEYS.edits); notify("reset"); }
+  /* One-click claim: assigns the task to the signed-in volunteer and moves it to "In Progress". */
+  function claimReport(id) {
+    if (!user) return Promise.reject(fail("auth", "Sign in first."));
+    return guard(backend().mutateReport(id, function (r) {
+      if (r.status === "Resolved") throw fail("claimed", "This task is already resolved.");
+      if (r.assigned && r.assigned !== user.name) throw fail("claimed", "Already claimed by " + r.assigned + ".");
+      return { assigned: user.name, status: "In Progress", claimedAt: stamp() };
+    }));
+  }
+  /* One-click resolve: only the volunteer who claimed the task can resolve it. */
+  function resolveReport(id) {
+    if (!user) return Promise.reject(fail("auth", "Sign in first."));
+    return guard(backend().mutateReport(id, function (r) {
+      if (r.assigned !== user.name) throw fail("claimed", "Only " + (r.assigned || "the assignee") + " can resolve this task.");
+      return { status: "Resolved", resolvedAt: stamp() };
+    }));
+  }
+  function resetDemo() { if (LIVE) return; localStorage.removeItem(LOCAL_KEY); loc.refresh(); emit(); }
+  function onChange(cb) { listeners.push(cb); }
 
   window.TechOpsStore = {
-    SCHEMA: SCHEMA, FLOOR_NAMES: FLOOR_NAMES,
-    isLive: isLive, floorId: floorId, stamp: stamp, parseStamp: parseStamp,
-    loadAll: loadAll, addReport: addReport, addMeetup: addMeetup, update: update, onChange: onChange, resetDemo: resetDemo
+    FLOOR_NAMES: FLOOR_NAMES, isLive: function () { return LIVE; }, floorId: floorId, stamp: stamp, parseStamp: parseStamp, friendly: friendly,
+    login: login, restore: restore, logout: logout, currentUser: function () { return user; },
+    start: start, loadAll: loadAll, onChange: onChange,
+    addReport: addReport, addMeetup: addMeetup, update: update, claimReport: claimReport, resolveReport: resolveReport, resetDemo: resetDemo
   };
 })();

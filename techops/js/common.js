@@ -62,7 +62,7 @@
     return Math.floor(s / 86400) + " d ago";
   }
   function statusClass(s) {
-    return { "New": "b-new", "Acknowledged": "b-ack", "In progress": "b-prog", "Resolved": "b-done" }[s] || "b-other";
+    return { "New": "b-new", "Acknowledged": "b-ack", "In progress": "b-prog", "In Progress": "b-prog", "Resolved": "b-done" }[s] || "b-other";
   }
   function issueClass(i) {
     i = String(i || "").toLowerCase();

@@ -28,18 +28,19 @@
 
       <!-- Desktop header controls -->
       <div class="desktop-controls">
-        <div class="who">
-          <label for="me">Viewing as</label>
-          <select id="me" aria-label="Which TechOps member are you"><option value="">Not selected</option></select>
-        </div>
-        <button class="btn" id="alerts-btn" title="Enable sound and desktop notifications for new issues">Enable alerts</button>
-        <a class="btn" href="qr-codes.html" title="Universal Venue QR Code for issue reporting">Universal QR</a>
-        <a class="btn" href="report.html" target="_blank" rel="noopener" title="Open the public report form">Report form</a>
+        <button class="btn tech-only" id="alerts-btn" title="Enable sound and desktop notifications for new tasks">Enable alerts</button>
+        <a class="btn tech-only" href="qr-codes.html" title="Universal Venue QR Code for issue reporting">Universal QR</a>
+        <a class="btn tech-only" href="report.html" target="_blank" rel="noopener" title="Open the public report form">Report form</a>
         <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
+        <div class="user-chip" id="user-chip" hidden>
+          <span class="user-avatar" id="user-avatar" aria-hidden="true"></span>
+          <span class="user-meta"><b id="user-name"></b><small id="user-team"></small></span>
+          <button class="btn small" id="logout-btn" aria-label="Sign out">Sign out</button>
+        </div>
       </div>
 
       <!-- Always visible notification bell with prominent icon -->
-      <button class="icon-btn bell" id="bell" aria-label="Open issues">
+      <button class="icon-btn bell tech-only" id="bell" aria-label="Open unassigned tasks">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
         <span class="count" id="bell-count" hidden>0</span>
       </button>
@@ -54,18 +55,16 @@
     <!-- Mobile Top Navigation Drawer -->
     <div class="mobile-drawer" id="mobile-drawer" hidden>
       <div class="mobile-drawer-body">
-        <div class="mobile-drawer-section">
-          <label class="mobile-drawer-label" for="me-mobile">Viewing as Team Member</label>
-          <select id="me-mobile" class="mobile-select" aria-label="Which TechOps member are you on mobile">
-            <option value="">Not selected</option>
-          </select>
+        <div class="mobile-drawer-section mobile-user" id="mobile-user" hidden>
+          <span class="user-avatar" id="mobile-user-avatar" aria-hidden="true"></span>
+          <span class="user-meta"><b id="mobile-user-name"></b><small id="mobile-user-team"></small></span>
         </div>
         <div class="mobile-drawer-actions">
-          <a class="btn mobile-drawer-btn" href="qr-codes.html">
+          <a class="btn mobile-drawer-btn tech-only" href="qr-codes.html">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             <span>Universal QR Poster</span>
           </a>
-          <a class="btn mobile-drawer-btn" href="report.html" target="_blank" rel="noopener">
+          <a class="btn mobile-drawer-btn tech-only" href="report.html" target="_blank" rel="noopener">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span>Public Report Form ↗</span>
           </a>
@@ -73,13 +72,47 @@
             <span class="theme-icon">🌓</span>
             <span id="mobile-theme-text">Toggle Light / Dark</span>
           </button>
-          <button class="btn mobile-drawer-btn" id="mobile-alerts-btn">
+          <button class="btn mobile-drawer-btn tech-only" id="mobile-alerts-btn">
             <span>🔔</span>
             <span>Enable Sound Alerts</span>
+          </button>
+          <button class="btn mobile-drawer-btn" id="mobile-logout-btn">
+            <span>⎋</span>
+            <span>Sign out</span>
           </button>
         </div>
       </div>
     </div>
+
+    <!-- LOGIN: volunteers sign in with their Volunteer Code -->
+    <section class="login-screen" id="login-screen" hidden>
+      <div class="login-card">
+        <div class="login-logo">
+          <img class="logo-dark" src="../assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
+          <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
+        </div>
+        <div class="form-header-badge">Volunteer portal · Cairo</div>
+        <h1>Welcome, volunteer</h1>
+        <form id="login-form" autocomplete="off" novalidate>
+          <label class="lbl" for="login-code">Volunteer Code</label>
+          <input id="login-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="e.g. TO-001" aria-describedby="login-error">
+          <p class="login-error" id="login-error" role="alert" hidden></p>
+          <button class="btn primary login-btn" id="login-btn" type="submit">Sign in</button>
+        </form>
+        <p class="login-note" id="login-note" hidden></p>
+      </div>
+    </section>
+
+    <!-- LOGISTICS placeholder (the Logistics team builds this workspace) -->
+    <section class="login-screen" id="logistics-view" hidden>
+      <div class="login-card">
+        <div class="form-header-badge">Logistics</div>
+        <h1>Logistics workspace</h1>
+        <p class="form-sub" id="logistics-msg">Your Logistics dashboard is coming soon.</p>
+        <button class="btn login-btn" id="logistics-logout">Sign out</button>
+      </div>
+    </section>
+
 
     <main>
       <div id="banners"></div>
@@ -95,7 +128,8 @@
       <!-- ISSUES -->
       <section id="tab-issues">
         <div class="page-title">
-          <h2>Reported Issues</h2>
+          <h2>Task Queue</h2>
+          <span class="greeting" id="greeting"></span>
         </div>
         <div class="row issues-filter-row" style="margin-bottom:14px">
           <div id="issue-filters" class="chips-scroll-row"></div>
@@ -259,7 +293,8 @@
 
   <script src="vendor/qrcode.js"></script>
   <script src="js/config.js"></script>
-  <script src="js/sample-data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/seed-data.js"></script>
   <script src="js/data.js"></script>
   <script src="js/router.js"></script>
   <script src="js/common.js"></script>

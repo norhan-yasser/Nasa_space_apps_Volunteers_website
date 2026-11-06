@@ -1,0 +1,83 @@
+rules_version = '2';
+
+// NASA Space Apps Cairo - volunteer portal (TechOps + Logistics)
+//
+// Sign-in model: a browser signs in with Firebase Anonymous Auth, then proves it knows a valid Volunteer Code by
+// writing sessions/{uid} = { code }. That write is only accepted when volunteers/{code} exists. Every other rule
+// reads the volunteer record behind the session to find the Name and Team. Volunteer codes cannot be listed:
+// volunteers can only be fetched one by one with `get` (you must already know the code).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function vol(code) { return get(/databases/$(database)/documents/volunteers/$(code)).data; }
+    function hasSession() { return signedIn() && exists(/databases/$(database)/documents/sessions/$(request.auth.uid)); }
+    function myCode() { return get(/databases/$(database)/documents/sessions/$(request.auth.uid)).data.code; }
+    function me() { return vol(myCode()); }
+    function isTechOps() { return hasSession() && me().Team == 'TechOps'; }
+    function isVolunteer() { return hasSession(); }
+
+    // ---- identity --------------------------------------------------------------------------------------
+    match /volunteers/{code} {
+      allow get: if signedIn();
+      allow list, write: if false;                       // roster is managed with the admin seed script only
+    }
+    match /sessions/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['code', 'at'])
+        && exists(/databases/$(database)/documents/volunteers/$(request.resource.data.code));
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    // ---- venue reference data (read-only for every volunteer) ------------------------------------------
+    match /rooms/{id} { allow read: if isVolunteer(); allow write: if false; }
+    match /wifi/{id}  { allow read: if isVolunteer(); allow write: if isTechOps(); }
+
+    // ---- TechOps tasks (issue reports) -------------------------------------------------------------------
+    match /reports/{id} {
+      allow read: if isTechOps() && resource.data.team == 'TechOps';
+
+      // Public QR form: anyone holding an (anonymous) session may file a NEW, UNASSIGNED TechOps report.
+      allow create: if signedIn()
+        && request.resource.data.team == 'TechOps'
+        && request.resource.data.status == 'New'
+        && request.resource.data.assigned == ''
+        && request.resource.data.keys().hasOnly(['id', 'ts', 'floor', 'floorName', 'room', 'issue', 'details',
+                                                  'status', 'assigned', 'claimedAt', 'resolvedAt', 'reporter', 'team'])
+        && request.resource.data.issue is string && request.resource.data.issue.size() <= 80
+        && request.resource.data.details is string && request.resource.data.details.size() <= 500
+        && request.resource.data.reporter is string && request.resource.data.reporter.size() <= 60;
+
+      // One-click Claim: only an unassigned task, only for yourself, and it becomes "In Progress".
+      allow update: if isTechOps()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assigned', 'status', 'claimedAt'])
+        && resource.data.assigned == '' && resource.data.status != 'Resolved'
+        && request.resource.data.assigned == me().Name
+        && request.resource.data.status == 'In Progress';
+
+      // One-click Resolve: only the volunteer who claimed it.
+      allow update: if isTechOps()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])
+        && resource.data.assigned == me().Name
+        && request.resource.data.status in ['In Progress', 'Resolved'];
+
+      allow delete: if false;
+    }
+
+    // ---- TechOps team, meetups and inventory --------------------------------------------------------------
+    match /team/{name} {
+      allow read: if isTechOps();
+      allow update: if isTechOps() && name == me().Name;   // you can only move / re-status yourself
+      allow create, delete: if false;
+    }
+    match /meetups/{id} {
+      allow read, create, update: if isTechOps();
+      allow delete: if false;
+    }
+    match /inventory/{id} {
+      allow read, update: if isTechOps();
+      allow create, delete: if false;
+    }
+  }
+}

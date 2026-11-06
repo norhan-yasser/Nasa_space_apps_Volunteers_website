@@ -106,17 +106,17 @@
       details: details,
       reporter: $("reporter").value.trim()
     }).then(function (res) {
-      btn.disabled = false; btn.textContent = "Send report";
+      btn.disabled = false; btn.textContent = "Send Report to TechOps";
       $("form-card").hidden = true; $("done").hidden = false;
       $("done-id").textContent = res.id;
       $("done-msg").textContent = "TechOps has been alerted about " + issue.toLowerCase() + " in Room " + room + " (" + Store.FLOOR_NAMES[floor] + "). A volunteer is on the way.";
       
       var demo = $("done-demo");
       demo.hidden = Store.isLive();
-      demo.textContent = "Demo Mode: this report is stored in browser memory & local storage (will feed into Google Sheets once APPS_SCRIPT_URL is deployed).";
+      demo.textContent = "Local preview mode: Firebase is not configured yet, so this report is stored in this browser only.";
     }).catch(function (err) {
-      btn.disabled = false; btn.textContent = "Send report";
-      fail("Failed to submit report. Please try again: " + err.message);
+      btn.disabled = false; btn.textContent = "Send Report to TechOps";
+      fail("Failed to submit report. Please try again: " + Store.friendly(err));
     });
   });
 
@@ -131,5 +131,6 @@
     $("done").hidden = true; $("form-card").hidden = false;
     $("details").value = ""; $("other").value = ""; $("other-wrap").hidden = true;
     document.querySelectorAll("input[name=issue]").forEach(function (r) { r.checked = false; });
+    syncSelectedOpt();
   };
 })();

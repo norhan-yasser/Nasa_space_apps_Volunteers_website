@@ -182,14 +182,22 @@
     if (!this.img.getAttribute("src")) this.img.src = f.img;
     this.el.classList.toggle("heat", heat);
 
+    /* Wi-Fi readings that sit INSIDE a room of this floor. Points in corridors, halls or outside (outer stage)
+       are never drawn: the heatmap lives strictly in room interiors. */
+    var roomWifi = heat ? this.wifi.map(function (w) {
+      var g = w.floor === f.id ? D.roomAt(f.id, w.x, w.y) : null;
+      return g ? { w: w, g: g } : null;
+    }).filter(Boolean) : [];
+
     if (heat) {
-      var pointsHere = this.wifi.filter(function (w) { return w.floor === f.id; });
       var glows = "";
-      pointsHere.forEach(function (w, i) {
-        var c = TO.speedColor(w.mbps), isRoom = /^WF-[A-Z]\d/.test(w.id);
-        var rad = isRoom ? 105 : 150;
-        defs += '<radialGradient id="hg' + i + '"><stop offset="0" stop-color="' + c + '" stop-opacity=".95"/><stop offset=".35" stop-color="' + c + '" stop-opacity=".6"/><stop offset=".7" stop-color="' + c + '" stop-opacity=".18"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></radialGradient>';
-        glows += '<circle class="heat-glow" cx="' + w.x + '" cy="' + w.y + '" r="' + rad + '" fill="url(#hg' + i + ')"/>';
+      roomWifi.forEach(function (p, i) {
+        var w = p.w, g = p.g, c = TO.speedColor(w.mbps);
+        var bw = g.bb[2] - g.bb[0], bh = g.bb[3] - g.bb[1];
+        var rad = Math.round(Math.hypot(bw, bh) * 0.62);   /* wide enough to tint the whole room, then clipped to its walls */
+        defs += '<clipPath id="rc' + i + '"><polygon points="' + pts(g) + '"/></clipPath>';
+        defs += '<radialGradient id="hg' + i + '"><stop offset="0" stop-color="' + c + '" stop-opacity=".95"/><stop offset=".45" stop-color="' + c + '" stop-opacity=".72"/><stop offset=".8" stop-color="' + c + '" stop-opacity=".4"/><stop offset="1" stop-color="' + c + '" stop-opacity=".22"/></radialGradient>';
+        glows += '<circle class="heat-glow" clip-path="url(#rc' + i + ')" cx="' + w.x + '" cy="' + w.y + '" r="' + rad + '" fill="url(#hg' + i + ')"/>';
       });
       h += "<defs>" + defs + "</defs>" + '<g style="mix-blend-mode:normal">' + glows + "</g>";
     }
@@ -208,11 +216,11 @@
     });
 
     if (heat) {
-      this.wifi.filter(function (w) { return w.floor === f.id; }).forEach(function (w) {
+      roomWifi.forEach(function (p) {
+        var w = p.w;
         h += '<g data-code="wf:' + w.id + '" style="cursor:pointer"><circle cx="' + w.x + '" cy="' + w.y + '" r="22" fill="transparent"/><circle cx="' + w.x + '" cy="' + w.y + '" r="6" fill="#fff" stroke="rgba(0,0,0,.6)" stroke-width="2"/></g>';
         h += '<text class="heat-tag" x="' + w.x + '" y="' + (w.y + 30) + '">' + w.mbps + "</text>";
       });
-      /* AP / hall points have no room code: give them a tooltip hit-area */
     }
 
     /* issue pins */
