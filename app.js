@@ -19,7 +19,8 @@ const TYPES = {
   H: "Lecture Hall",
   S: "Small Lecture Hall",
   C: "Classroom",
-  X: "Inaccessible"
+  X: "Inaccessible",
+  T: "Outer Stage"
 };
 
 const IMG = {
@@ -32,9 +33,11 @@ const R=(a,b)=>a.map((c,i)=>[c,...b[i]]);
 
 const FLOORS=[
 {id:"G",name:"Ground Floor",rooms:[
-["S034",[165,160,269,250]],["S035",[166,276,269,362]],["C027",[611,201,660,285]],["C026",[661,201,711,285]],["C017",[1288,201,1335,284]],
-["S016",[1395,235,1355,167,1433,122,1473,189]],["S015",[1448,326,1407,258,1481,213,1523,280]],["X",[166,511,270,673]],["X",[1100,313,1332,358]],["X",[1100,513,1380,588]],
-["X",[1054,616,1284,700]]]},
+["S034",[86,201,185,287]],["S035",[87,312,185,394]],["C027",[511,240,558,320]],["C026",[559,240,607,320]],["C017",[1157,240,1202,320]],
+["S016",[1259,273,1220,208,1295,165,1333,229]],["S015",[1309,360,1270,295,1341,252,1381,316]],["X",[87,536,187,690]],["X",[978,347,1199,390]],["X",[978,538,1245,609]],
+["X",[934,636,1153,716]],
+/* Outer Stage (outdoor, east of the building) - only data kept: the people responsible for arranging it */
+["STAGE",[1462,182,1660,213,1617,499,1414,470]]]},
 {id:"F",name:"First Floor",rooms:[
 ["S140",[126,178,229,269]],["S141",[126,295,230,378]],["C139",[283,218,335,304]],["C138",[334,218,384,304]],["C137",[384,218,434,304]],
 ["C136",[434,218,485,304]],["B135",[485,218,537,304]],["B134",[537,218,591,304]],["B133",[589,218,639,304]],["B132",[639,218,691,304]],
@@ -66,9 +69,9 @@ FLOORS.forEach(f => {
     const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
     return {
       code: x ? "X-" + f.id + String(n).padStart(2, "0") : c,
-      name: x ? "Restricted room " + n : null,
+      name: null,   /* restricted rooms carry no public label or code */
       floor: f.id,
-      type: c[0],
+      type: c == "STAGE" ? "T" : c[0],
       pts,
       bb: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]
     };
@@ -112,7 +115,7 @@ const canView = r => access(r) == "ok";
 let floor = null, sel = null;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
-const color = r => access(r) == "no" ? COL.no : mode(r) == "Unassigned" ? COL.na : COL.ok;
+const color = r => r.type == "T" ? "#14b8a6" : access(r) == "no" ? COL.no : mode(r) == "Unassigned" ? COL.na : COL.ok;
 
 /* Theme handling */
 function initTheme() {
@@ -349,8 +352,7 @@ function home() {
   `;
 
   let cardsHtml = FLOORS.map(f => {
-    const a = f.rooms.filter(r => access(r) == "ok").length;
-    const p = f.rooms.filter(r => mode(r) == "Participants").length;
+    const a = f.rooms.filter(r => r.type != "T" && access(r) == "ok").length;   /* accessible rooms only (no total, no restricted, no stage) */
     const levelCode = f.id == "G" ? "Level 0" : f.id == "F" ? "Level 1" : "Level 2";
     return `
       <div class="fc" data-f="${f.id}">
@@ -362,9 +364,7 @@ function home() {
           <div class="fc-meta">
             <h3 class="fc-title">${f.name}</h3>
             <div class="fc-pills">
-              <span class="pill">${f.rooms.length} Rooms</span>
-              <span class="pill pill-ok">${a} Accessible</span>
-              ${p ? `<span class="pill pill-accent">${p} Assigned</span>` : ''}
+              <span class="pill pill-ok">${a} Accessible Rooms</span>
             </div>
           </div>
           <button class="fc-btn" tabindex="-1">Open Floor Map →</button>
@@ -449,10 +449,11 @@ function draw() {
   $("svg").innerHTML = floor.rooms.map(r => {
     const dim = (ft && r.type != ft) || (fa && access(r) != fa) || (fs && mode(r) != fs);
     const isSel = r === sel;
-    const c = isSel ? COL.sel : color(r);
+    const no = access(r) == "no";
+    const c = isSel && !no ? COL.sel : color(r);
     const p = r.pts.map(q => q.join(",")).join(" ");
-    return `<polygon class="rm ${isSel ? 'sel' : ''}" data-c="${r.code}" points="${p}" fill="${c}" fill-opacity="${isSel ? .55 : dim ? .03 : .22}" stroke="${c}" stroke-width="${isSel ? 3.5 : 2}" stroke-opacity="${dim ? .2 : 1}" tabindex="0" aria-label="Room ${r.code}"/>`;
-  }).join("") + bathsSvg() + stairsSvg() + routeSvg();
+    return `<polygon class="rm ${r.type == 'T' ? 'stage' : ''} ${isSel ? 'sel' : ''}" data-c="${r.code}" points="${p}" fill="${c}" fill-opacity="${dim ? .03 : isSel ? .55 : no ? .42 : .22}" stroke="${c}" stroke-width="${isSel ? 3.5 : 2}" stroke-opacity="${dim ? .2 : 1}" tabindex="0" aria-label="${no ? 'Restricted area' : 'Room ' + r.code}"/>`;
+  }).join("") + bathsSvg() + exitsSvg() + stairsSvg() + routeSvg();
 
   $("svg").querySelectorAll(".rm").forEach(e => {
     const r = ALL.find(x => x.code == e.dataset.c);
@@ -463,7 +464,9 @@ function draw() {
       t.style.display = "block";
       const acc = access(r) == "no" ? '<span class="tip-tag tip-no">Restricted</span>' : '<span class="tip-tag tip-ok">Accessible</span>';
       const m = mode(r) != "Unassigned" ? ` · ${mode(r)}` : "";
-      t.innerHTML = `<div class="tip-head"><b>${r.code}</b> ${acc}</div><div class="tip-sub">${TYPES[r.type] || "Room"}${m}</div>`;
+      t.innerHTML = access(r) == "no"
+        ? `<div class="tip-head"><b>Restricted area</b> ${acc}</div>`
+        : `<div class="tip-head"><b>${r.code}</b> ${acc}</div><div class="tip-sub">${TYPES[r.type] || "Room"}${m}</div>`;
       t.style.left = ev.clientX - b.left + 14 + "px";
       t.style.top = ev.clientY - b.top + 14 + "px";
     };
@@ -498,6 +501,19 @@ function draw() {
     e.onmouseleave = () => $("tip").style.display = "none";
   });
 
+  $("svg").querySelectorAll(".exit-mk").forEach(e => {
+    const x = EXITS.find(v => v.id == e.dataset.exit);
+    e.onmousemove = ev => {
+      const bb = map.getBoundingClientRect(), t = $("tip");
+      t.style.display = "block";
+      t.innerHTML = `<div class="tip-head"><b>${esc(x.label)}</b> <span class="tip-tag" style="background:rgba(34,197,94,.22);color:#86efac;border:1px solid #22c55e">Exit</span></div><div class="tip-sub">Click for directions</div>`;
+      t.style.left = ev.clientX - bb.left + 14 + "px";
+      t.style.top = ev.clientY - bb.top + 14 + "px";
+    };
+    e.onmouseleave = () => $("tip").style.display = "none";
+    e.onclick = () => { if (moved < 10) openDir("t", x.id); };
+  });
+
   $("svg").querySelectorAll(".wc").forEach(e => {
     const b = BATH_ALL.find(x => x.id == e.dataset.wc);
     e.onmousemove = ev => {
@@ -519,7 +535,8 @@ function draw() {
   ].map(([k, t]) => `<span><i style="background:${COL[k]}"></i>${t}</span>`).join("")
   + `<span><i class="leg-stair-ok"></i>Authorized Stairs (Available)</span>`
   + `<span><i class="leg-stair-no"></i>Emergency Stairs (Closed)</span>`
-  + `<span><i class="leg-wc"></i>Bathrooms</span>`;
+  + `<span><i class="leg-wc"></i>Bathrooms</span>`
+  + (floor.id == "G" ? `<span><i class="leg-exit"></i>Exits (5)</span><span><i class="leg-stage"></i>Outer Stage</span>` : "");
 }
 
 ["ft", "fa", "fs"].forEach(i => $(i).onchange = draw);
@@ -624,8 +641,8 @@ function show(r) {
   let h = `
     <div class="mh">
       <div>
-        <h2>${r.code}</h2>
-        <div class="pill">${r.name ? esc(r.name) + " · " : ""}${TYPES[r.type]} · ${FLOORS.find(f => f.id == r.floor).name}</div>
+        <h2>${r.type == "T" ? "Outer Stage" : a == "no" ? "Restricted Area" : r.code}</h2>
+        <div class="pill">${a == "no" ? "Restricted" : (r.name ? esc(r.name) + " · " : "") + TYPES[r.type]} · ${FLOORS.find(f => f.id == r.floor).name}</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         ${tag}
@@ -643,6 +660,18 @@ function show(r) {
         </svg>
         <b>Access Restricted</b>
         <span class="pill">This room is restricted for operations staff and authorized personnel.</span>
+      </div>
+    `;
+  } else if (r.type == "T") {
+    const names = (d.resp || "").split(/[;,]/).map(s => s.trim()).filter(Boolean);
+    h += `
+      <div class="sec">
+        <h4>Stage Management</h4>
+        <div class="kv">${row("Total people responsible", names.length ? String(names.length) : "")}</div>
+        <div style="margin-top:10px">
+          <div class="pill" style="margin-bottom:6px">Responsible for arranging the stage</div>
+          ${names.length ? names.map(x => `<span class="chip">${esc(x)}</span>`).join("") : "<span class='na'>Not assigned</span>"}
+        </div>
       </div>
     `;
   } else {
@@ -749,7 +778,7 @@ function hits(q) {
   q = q.toLowerCase();
   return ALL.filter(r => {
     const d = D(r);
-    if (!canView(r)) return r.code.toLowerCase().includes(q);
+    if (!canView(r)) return false;   /* restricted rooms are never listed in search */
     return [r.code, r.name, d.resp, d.chal, d.vteam, ...teams(r)].some(s => s && String(s).toLowerCase().includes(q));
   });
 }
@@ -775,6 +804,19 @@ $("q").oninput = e => {
         </div>`;
       }).join("")
     : `<div><small>No matching rooms or teams found.</small></div>`;
+
+  /* exits: typing "exit", "door" or "entrance" lists the 5 ground-floor exits */
+  if (/^(exit|door|entr)/i.test(q)) {
+    const exHtml = EXITS.map(e => `<div data-ex="${e.id}"><div style="flex:1;min-width:0"><b>${esc(e.label)}</b> <small>Exit · Ground Floor</small></div><button type="button" class="res-dir-btn" data-rc="${e.id}" title="Get directions">Route →</button></div>`).join("");
+    res.innerHTML = exHtml + (h.length ? res.innerHTML : "");
+    res.hidden = false;
+    res.querySelectorAll("[data-ex]").forEach(e => e.onclick = ev => {
+      if (ev.target.closest(".res-dir-btn")) return;
+      const x = EXITS.find(v => v.id == e.dataset.ex);
+      res.hidden = true;
+      open("G", x);
+    });
+  }
 
   /* bathrooms: typing "bath", "wc", "toilet" or "restroom" lists them */
   if (/^(bath|wc|rest|toil|lav)/i.test(q)) {
@@ -816,11 +858,11 @@ $("q").oninput = e => {
 /* Only the 5 designated inner staircases are available for inter-floor routing */
 const ST = {
   G: {
-    WN: [608, 390],
-    WS: [591, 556],
-    SW: [444, 676],
-    EN: [1065, 388],
-    SE: [1030, 673]
+    WN: [508, 421],
+    WS: [492, 579],
+    SW: [352, 693],
+    EN: [944, 419],
+    SE: [911, 690]
   },
   F: {
     WN: [573, 407],
@@ -846,13 +888,24 @@ const SN = {
   SE: "South-East Wing Stairs"
 };
 const UNAVAILABLE_STAIRS = [
-  { id: "NW_OUT", name: "Far NW Outer Stairs (Closed)", p: [77, 245], pf: { G: [114, 228], F: [77, 250], S: [75, 238] } },
-  { id: "SW_OUT", name: "Far SW Outer Stairs (Closed)", p: [77, 645], pf: { G: [116, 640], F: [77, 660], S: [66, 634] } },
-  { id: "NE_OUT", name: "Far NE Outer Stairs (Closed)", p: [1490, 150], pf: { G: [1495, 160], F: [1495, 166], S: [1476, 135] } },
-  { id: "SE_OUT", name: "Far SE Outer Stairs (Closed)", p: [1595, 515], pf: { G: [1585, 513], F: [1596, 535], S: [1617, 477] } }
+  { id: "NW_OUT", name: "Far NW Outer Stairs (Closed)", p: [77, 245], pf: { G: [37, 266], F: [77, 250], S: [75, 238] } },
+  { id: "SW_OUT", name: "Far SW Outer Stairs (Closed)", p: [77, 645], pf: { G: [40, 659], F: [77, 660], S: [66, 634] } },
+  { id: "NE_OUT", name: "Far NE Outer Stairs (Closed)", p: [1490, 150], pf: { G: [1354, 201], F: [1495, 166], S: [1476, 135] } },
+  { id: "SE_OUT", name: "Far SE Outer Stairs (Closed)", p: [1595, 515], pf: { G: [1440, 538], F: [1596, 535], S: [1617, 477] } }
 ];
 const ORD = ["G", "F", "S"];
-const ENT = { code: "ENTRANCE", floor: "G", p: [836, 672] };
+const ENT = { code: "ENTRANCE", floor: "G", p: [726, 689] };
+
+/* ============================================================
+   EXITS (green) - the main entrance + 4 small doors on the ground floor
+   ============================================================ */
+const EXITS = [
+  { id: "ENTRANCE", label: "Main Entrance", main: true, p: ENT.p, bb: [659, 655, 801, 694] },
+  { id: "EXIT-1", label: "North-West Door", p: [199, 386], bb: [186, 377, 213, 396] },
+  { id: "EXIT-2", label: "North-East Door", p: [1208, 378], bb: [1195, 366, 1221, 391] },
+  { id: "EXIT-3", label: "South-West Door", p: [199, 539], bb: [186, 529, 212, 550] },
+  { id: "EXIT-4", label: "South-East Door", p: [1306, 573], bb: [1292, 555, 1320, 592] }
+];
 
 /* ============================================================
    BATHROOMS (pink)
@@ -862,10 +915,10 @@ const ENT = { code: "ENTRANCE", floor: "G", p: [836, 672] };
    ============================================================ */
 const BATHS = {
   G: [
-    { id: "WC-G1", bb: [570, 310, 638, 358] },
-    { id: "WC-G2", bb: [1032, 310, 1108, 358] },
-    { id: "WC-G3", bb: [468, 607, 538, 701] },
-    { id: "WC-G4", bb: [1283, 604, 1356, 699] }
+    { id: "WC-G1", bb: [472, 344, 537, 390] },
+    { id: "WC-G2", bb: [913, 344, 985, 390] },
+    { id: "WC-G3", bb: [375, 627, 442, 717] },
+    { id: "WC-G4", bb: [1152, 625, 1222, 715] }
   ],
   F: [
     { id: "WC-F1", bb: [553, 343, 612, 395] },
@@ -893,37 +946,42 @@ let ROUTE = null;
    part of this map, so they can never be used. */
 const CORRIDORS = {
   G: [
-    [[262, 300], [710, 300]],                    // north-west corridor
-    [[590, 300], [590, 603]],                    // west inner hall (stairs WN, WS)
-    [[960, 300], [1340, 300], [1375, 290]],      // north-east corridor
-    [[1030, 300], [1030, 603]],                  // east inner hall (stairs EN)
-    [[285, 603], [1435, 603]]                    // main east-west spine through the lobby
+    [[178, 334], [600, 334]],                                    // north-west corridor
+    [[551, 334], [550, 500], [549, 600], [539, 613]],            // west inner hall (stairs WN, WS)
+    [[830, 332], [1213, 334], [1240, 325]],                      // north-east corridor
+    [[909, 334], [902, 360], [899, 560], [913, 622]],            // east inner hall (stairs EN)
+    [[288, 624], [327, 624], [482, 630], [539, 613], [600, 608], [817, 610], [864, 622], [945, 623], [1076, 622], [1291, 619]],   // main east-west spine through the lobby
+    [[300, 624], [300, 592], [236, 560], [199, 539]],            // spine -> hall -> south-west door
+    [[1291, 619], [1306, 573]],                                  // east wing up to the south-east door
+    [[1306, 573], [1265, 556], [1250, 513], [1273, 482], [1334, 448], [1422, 420]],  // outdoor path: south-east door -> around the east wing -> stage
+    [[1213, 334], [1208, 378]],                                  // corridor end -> north-east door
+    [[1208, 378], [1262, 420], [1334, 448]]                      // outdoor path: north-east door -> joins the stage path
   ],
   F: [
-    [[243, 330], [694, 330]],                    // north-west corridor
-    [[243, 262], [243, 633]],                    // far-west vertical corridor
-    [[588, 330], [588, 612]],                    // west inner hall
-    [[940, 330], [1335, 330]],                   // north-east corridor
-    [[1335, 330], [1370, 305]],                  // to S122 / S123
-    [[1335, 330], [1452, 603], [1452, 633]],     // diagonal wing to H113 / H114
-    [[1030, 330], [1030, 628]],                  // east inner hall
-    [[243, 633], [520, 633], [588, 612], [720, 605], [890, 600], [980, 620], [1030, 628], [1060, 633], [1452, 633]]
+    [[243, 319], [680, 319]],                                    // north-west corridor
+    [[243, 266], [244, 549], [243, 631]],                        // far-west vertical corridor
+    [[622, 319], [622, 592], [616, 622]],                        // west inner hall
+    [[940, 318], [1317, 317], [1335, 328]],                      // north-east corridor
+    [[1335, 328], [1372, 305]],                                  // to S122 / S123
+    [[1335, 328], [1332, 341], [1461, 588], [1448, 625]],        // diagonal wing to H113 / H114
+    [[1030, 318], [1008, 330], [1005, 420], [1005, 594], [1030, 626]],   // east inner hall
+    [[243, 631], [601, 632], [616, 622], [734, 611], [751, 598], [855, 597], [925, 596], [962, 621], [1030, 626], [1448, 625]]   // main east-west spine
   ],
   S: [
-    [[243, 303], [667, 303]],                    // north-west corridor
-    [[243, 250], [243, 596]],                    // far-west vertical corridor
-    [[598, 303], [598, 596]],                    // west inner hall
-    [[920, 303], [1300, 303]],                   // north-east corridor
-    [[1300, 303], [1398, 527], [1419, 596]],     // diagonal wing to H209 / H210
-    [[1040, 303], [1040, 596]],                  // east inner hall
-    [[130, 596], [1419, 596]]                    // main east-west spine
+    [[243, 303], [681, 303]],                                    // north-west corridor
+    [[243, 250], [243, 596]],                                    // far-west vertical corridor
+    [[598, 303], [598, 596]],                                    // west inner hall
+    [[920, 294], [1290, 294], [1298, 300]],                      // north-east corridor
+    [[1298, 300], [1296, 320], [1411, 499], [1400, 536], [1417, 590]],   // diagonal wing to H209 / H210
+    [[1036, 294], [975, 296], [971, 462], [980, 472], [980, 489], [966, 503], [968, 585], [985, 597]],   // east inner hall
+    [[134, 598], [973, 592], [1018, 600], [1078, 596], [1383, 597], [1417, 590]]  // main east-west spine
   ]
 };
 
 /* Door points. A "row" is a line of rooms along one corridor: the door
    x comes from each room's centre, y is the room's corridor-side wall. */
 const DOOR_ROWS = [
-  { f: "G", y: 288, dx: 0,   codes: ["C027", "C026", "C017"] },
+  { f: "G", y: 323, dx: 0,   codes: ["C027", "C026", "C017"] },
   { f: "F", y: 305, dx: 0,   codes: ["C139", "C138", "C137", "C136", "B135", "B134", "B133", "B132"] },
   { f: "F", y: 305, dx: 0,  codes: ["B131", "B130", "B129", "B128", "C127", "C126", "C125", "C124"] },
   { f: "F", y: 622, dx: 0,   codes: ["C154", "C153", "C152"] },
@@ -933,11 +991,13 @@ const DOOR_ROWS = [
   { f: "S", y: 616, dx: 0,   codes: ["C265"] }
 ];
 const DOOR_PTS = {
-  S034: [262, 262], S035: [268, 306], S016: [1393, 235], S015: [1412, 287],
+  S034: [178, 298], S035: [184, 340], S016: [1257, 273], S015: [1275, 323],
   S140: [232, 265], S141: [232, 338], S123: [1383, 238], S122: [1392, 284],
   H114: [1438, 520], H113: [1482, 612],
   S241: [232, 250], S242: [232, 322], H210: [1408, 468], H209: [1466, 560]
 };
+
+DOOR_PTS.STAGE = [1422, 420];   /* stage entrance (outdoor) */
 
 function doorOf(r) {
   if (DOOR_PTS[r.code]) return DOOR_PTS[r.code];
@@ -968,7 +1028,7 @@ function buildNav(fid) {
         if (oi == li) return;
         for (let i = 0; i < o.length - 1; i++) {
           const r = nvNearest(e, o[i], o[i + 1]), d = nvDist(e, r.pt);
-          if (d <= 6 && (!best || d < best.d)) best = { d, oi, i, pt: r.pt };
+          if (d <= 10 && (!best || d < best.d)) best = { d, oi, i, pt: r.pt };
         }
       });
       if (!best) return;
@@ -985,6 +1045,7 @@ function buildNav(fid) {
   const targets = {};
   for (const k in ST[fid]) targets["STAIR:" + k] = ST[fid][k];
   if (fid == "G") targets["ENTRANCE"] = ENT.p;
+  if (fid == "G") EXITS.filter(e => !e.main).forEach(e => { targets["E:" + e.id] = e.p; });
   (BATHS[fid] || []).forEach(b => { targets["B:" + b.id] = BATH_ALL.find(x => x.id == b.id).door; });
   FLOORS.find(f => f.id == fid).rooms.forEach(r => {
     if (r.type != "X") targets["R:" + r.code] = doorOf(r);
@@ -1057,6 +1118,8 @@ function loc(code) {
       return { code: SN[k], floor: floor.id, p: ST[floor.id][k], id: "STAIR:" + k };
     }
   }
+  const ex = EXITS.find(x => x.id == code && !x.main);
+  if (ex) return { code: ex.label + " (Exit)", floor: "G", p: ex.p, id: "E:" + ex.id, exit: ex };
   const wc = BATH_ALL.find(x => x.id == code);
   if (wc) return { code: wc.label, floor: wc.floor, p: wc.door, id: "B:" + wc.id, bath: wc };
   const r = ALL.find(x => x.code == code);
@@ -1093,6 +1156,14 @@ async function planRoute(a, b) {
     [1, `Leave the ${SN[best.k]} and follow the highlighted path to ${b.code}.`]
   );
   return { legs, steps };
+}
+
+function exitsSvg() {
+  if (!floor || floor.id != "G") return "";
+  return EXITS.map(e => {
+    const cx = (e.bb[0] + e.bb[2]) / 2, cy = (e.bb[1] + e.bb[3]) / 2, w = e.main ? 64 : 40;
+    return `<g class="exit-mk" data-exit="${e.id}" transform="translate(${cx},${cy})" tabindex="0" aria-label="${esc(e.label)} (exit)"><circle r="15" fill="#22c55e" stroke="#ffffff" stroke-width="2.5"/><path d="M-5 -5 L5 -5 L5 5 M5 -5 L-6 6" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="${-w / 2}" y="18" width="${w}" height="14" rx="3" fill="rgba(9,13,24,.9)" stroke="#22c55e" stroke-width="1"/><text y="28.5" text-anchor="middle" font-size="9" font-weight="800" fill="#4ade80" font-family="'Inter', system-ui, sans-serif">${e.main ? "MAIN EXIT" : "EXIT"}</text></g>`;
+  }).join("");
 }
 
 function bathsSvg() {
@@ -1193,6 +1264,7 @@ function fillDL() {
   if (!dl) return;
   dl.innerHTML = [
     '<option value="ENTRANCE">Main Entrance (Ground Floor)</option>',
+    ...EXITS.filter(e => !e.main).map(e => `<option value="${e.id}">${e.label} (Exit, Ground Floor)</option>`),
     ...BATH_ALL.map(b => `<option value="${b.id}">${b.label}</option>`),
     ...ALL.filter(canView).map(r => {
       const flName = FLOORS.find(f => f.id == r.floor).name;

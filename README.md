@@ -15,7 +15,9 @@ Official Venue Floor Management, Interactive Room Wayfinding, and Realtime Opera
 
 ## Project Structure
 ```
-├── index.html                   # Main application entry point
+├── index.html                   # Operations entry page (background, description, team choices)
+├── landing.css                  # Entry page styling
+├── logistics.html               # Logistics team dashboard (venue map, rooms, wayfinding)
 ├── styles.css                   # Responsive layout & NASA brand styling
 ├── app.js                       # Floor geometries, A* pathfinding, and Google Sheets sync
 ├── rooms_database_template.csv  # 85-room database template
@@ -31,3 +33,11 @@ Official Venue Floor Management, Interactive Room Wayfinding, and Realtime Opera
 ## Live Google Sheet Database
 The database is connected to:
 [NASA Space Apps Volunteers Web Sheet](https://docs.google.com/spreadsheets/d/1E4-_JjPiIhed005w43jl1s-FfmRiAzNaISEfJZihAbQ/edit)
+
+
+---
+
+## Ground floor additions
+- **Outer Stage** (code `STAGE`): add a row in the Google Sheet with code `STAGE` and put the people responsible for arranging it in the **Lead Manager** column, separated by `;` (example: `Name 1; Name 2`).
+- **Exits**: the main entrance plus four small doors are highlighted in green on the ground floor and can be used as route destinations (`EXIT-1` to `EXIT-4`, `ENTRANCE`).
+- **Bathrooms** (pink) and **Nearest bathroom** from any origin on every floor.

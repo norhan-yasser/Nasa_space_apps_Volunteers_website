@@ -1,0 +1,131 @@
+/* NASA Space Apps Cairo · Operations entry page */
+@font-face { font-family: 'Munake'; src: url('assets/fonts/Munake-Demo.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'abeatbyKai'; src: url('assets/fonts/abeatbyKaiRegular.otf') format('opentype'); font-display: swap; }
+
+:root {
+  --bg: #090d18;
+  --ink: #e8edf8;
+  --ink-bright: #ffffff;
+  --mut: #a9b6cf;
+  --line: rgba(255, 255, 255, 0.22);
+  --panel: rgba(9, 13, 24, 0.58);
+  --panel-hover: rgba(9, 13, 24, 0.78);
+  --accent: #fb9746;
+  --pri: #2548e6;
+  --shade-a: rgba(9, 13, 24, 0.15);
+  --shade-b: rgba(9, 13, 24, 0.82);
+  --font-title: 'Munake', 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #f5f7fb;
+  --ink: #152036;
+  --ink-bright: #030712;
+  --mut: #3f4d68;
+  --line: rgba(3, 35, 178, 0.28);
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel-hover: rgba(255, 255, 255, 0.92);
+  --accent: #ea7a20;
+  --pri: #0323b2;
+  --shade-a: rgba(245, 247, 251, 0.30);
+  --shade-b: rgba(245, 247, 251, 0.90);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.6 var(--font-body);
+}
+
+/* Background: the hero photo carries the page, lightly shaded so text stays readable */
+.bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+.bg-image {
+  position: absolute; inset: 0;
+  background: url('assets/images/hero-optimized.jpg') center / cover no-repeat;
+}
+.bg-shade {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to top, var(--shade-b) 0%, var(--shade-a) 55%, var(--shade-a) 100%),
+    linear-gradient(to right, var(--shade-b) 0%, transparent 70%);
+}
+:root[data-theme="light"] .bg-image { opacity: 0.55; }
+
+.page {
+  position: relative; z-index: 1;
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;
+  padding: max(28px, env(safe-area-inset-top)) clamp(20px, 6vw, 80px) max(32px, env(safe-area-inset-bottom));
+}
+
+
+.intro {
+  flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
+  max-width: 760px;
+  padding: 96px 0 48px;
+}
+h1 {
+  font-family: var(--font-title);
+  font-weight: normal;
+  font-size: clamp(44px, 8vw, 92px);
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+  color: var(--ink-bright);
+}
+.sub {
+  margin-top: 10px;
+  font-family: var(--font-title);
+  font-size: clamp(16px, 2.2vw, 22px);
+  color: var(--accent);
+}
+.desc {
+  margin-top: 24px;
+  max-width: 62ch;
+  font-size: clamp(16px, 1.6vw, 18px);
+  color: var(--ink);
+}
+.desc + .desc { margin-top: 12px; color: var(--mut); }
+
+.choices {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 340px);
+  gap: 14px;
+}
+.choice {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  color: var(--ink-bright);
+  text-decoration: none;
+  font: inherit; text-align: left;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+.choice-name { font-family: var(--font-title); font-size: 20px; line-height: 1.2; }
+.choice-note { font-size: 13.5px; color: var(--mut); }
+
+a.choice { cursor: pointer; border-color: var(--accent); }
+a.choice:hover { background: var(--panel-hover); transform: translateY(-2px); }
+.choice:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+button.choice[aria-disabled="true"] { cursor: not-allowed; opacity: 0.78; }
+button.choice[aria-disabled="true"] .choice-note { color: var(--accent); }
+
+
+@media (max-width: 640px) {
+  .choices { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .choice { transition: none; }
+  a.choice:hover { transform: none; }
+}
