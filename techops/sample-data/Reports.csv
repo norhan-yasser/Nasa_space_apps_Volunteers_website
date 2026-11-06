@@ -1,0 +1,7 @@
+"Report ID","Timestamp","Floor","Room","Issue Type","Details","Status","Assigned To","Resolved At","Reporter"
+"RPT-0001","2026-11-06 10:12:00","Second Floor","C227","Internet is lagging","Video call drops every few minutes","Resolved","Lojine","2026-11-06 10:40:00",""
+"RPT-0002","2026-11-06 11:05:00","First Floor","H113","Internet is lagging","Very slow for the whole room","In progress","Lojine","",""
+"RPT-0003","2026-11-06 11:30:00","First Floor","C139","Electricity / Power problem","No power at the back row outlets","Acknowledged","Karim","",""
+"RPT-0004","2026-11-06 11:52:00","Ground Floor","C026","Need TechOps assistance","Projector is not detected by laptop","New","","",""
+"RPT-0005","2026-11-06 12:08:00","Second Floor","C259","Internet is lagging","Cannot upload files","New","","",""
+"RPT-0006","2026-11-06 12:15:00","First Floor","B128","Other","Need a second monitor for demo","New","","",""

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Room QR codes · TechOps · NASA Space Apps Cairo</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="../assets/favicon.png">
+  <link rel="stylesheet" href="css/techops.css">
+  <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || 'dark'); } catch (e) {}</script>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="app">
+    <header class="top">
+      <a class="brand" href="index.html">
+        <img class="logo-dark" src="../assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
+        <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
+        <span class="brand-text"><span class="brand-title">TECHOPS</span><span class="brand-sub">ROOM QR CODES</span></span>
+      </a>
+      <div class="sp"></div>
+      <a class="btn" href="index.html">Dashboard</a>
+      <button class="btn primary" id="print">Print</button>
+      <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
+    </header>
+    <main>
+      <div class="page-title noprint"><h2>Room QR codes</h2><p>Print and stick one QR code in each room. Scanning opens the report form with the floor and room already selected.</p></div>
+      <div class="card panel noprint" style="margin-bottom:16px">
+        <label class="lbl" for="base" style="margin-top:0">Address the QR codes point to</label>
+        <div class="row"><input id="base" style="flex:1;min-width:260px" placeholder="https://…/techops/"><button class="btn" id="save-base">Apply</button><button class="btn ghost" id="reset-base">Use default</button></div>
+        <p class="muted" style="font-size:12.5px;margin-top:8px">The QR codes must point to the public address where this folder is hosted (for example GitHub Pages). Phones cannot open <code>file://</code> or <code>localhost</code> addresses.</p>
+        <div class="row" style="margin-top:12px" id="floor-filter"></div>
+      </div>
+      <div class="qr-grid" id="grid"></div>
+    </main>
+  </div>
+  <script src="vendor/qrcode.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/qr-page.js"></script>
+</body>
+</html>

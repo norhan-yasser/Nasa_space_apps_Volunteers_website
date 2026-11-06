@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Report a TechOps issue · NASA Space Apps Cairo</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="../assets/favicon.png">
+  <link rel="stylesheet" href="css/techops.css">
+  <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || 'dark'); } catch (e) {}</script>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="app">
+    <header class="top">
+      <span class="brand">
+        <img class="logo-dark" src="../assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
+        <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
+        <span class="brand-text"><span class="brand-title">TECHOPS</span><span class="brand-sub">REPORT AN ISSUE</span></span>
+      </span>
+      <div class="sp"></div>
+      <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
+    </header>
+
+    <div class="form-shell">
+      <div class="card form-card" id="form-card">
+        <h2 style="font-size:22px">Need TechOps help?</h2>
+        <p class="muted" style="margin-top:4px">Tell us where you are and what's wrong. The TechOps team gets an alert right away.</p>
+
+        <form id="f" novalidate>
+          <div class="two" style="margin-top:6px">
+            <div class="field"><label class="lbl" for="floor">Floor</label>
+              <select id="floor" required><option value="">Select floor…</option></select></div>
+            <div class="field"><label class="lbl" for="room">Room code</label>
+              <select id="room" required><option value="">Select room…</option></select></div>
+          </div>
+
+          <fieldset style="border:none;margin-top:6px">
+            <legend class="lbl" style="padding:0">What is the problem?</legend>
+            <div class="issue-opts" id="issues"></div>
+          </fieldset>
+
+          <div id="other-wrap" hidden>
+            <label class="lbl" for="other">Describe the issue</label>
+            <input id="other" maxlength="80" placeholder="e.g. Projector has no signal">
+          </div>
+
+          <label class="lbl" for="details">More details <span style="font-weight:400">(optional)</span></label>
+          <textarea id="details" maxlength="500" placeholder="Anything that helps us find and fix it faster"></textarea>
+
+          <label class="lbl" for="reporter">Your name or team <span style="font-weight:400">(optional)</span></label>
+          <input id="reporter" maxlength="60" autocomplete="off">
+          <input id="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+
+          <p id="err" style="color:var(--bad);font-size:13px;margin-top:10px" role="alert" hidden></p>
+          <button class="btn primary" id="send" type="submit" style="width:100%;margin-top:16px;padding:12px">Send report</button>
+        </form>
+      </div>
+
+      <div class="card form-card success" id="done" hidden>
+        <div class="tick">&#10003;</div>
+        <h2 style="font-size:22px">Report sent</h2>
+        <p class="muted" style="margin-top:6px" id="done-msg"></p>
+        <p style="margin-top:10px">Reference: <b id="done-id"></b></p>
+        <p class="note" id="done-demo" hidden></p>
+        <button class="btn" id="again" style="margin-top:18px">Report another problem</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/report.js"></script>
+</body>
+</html>

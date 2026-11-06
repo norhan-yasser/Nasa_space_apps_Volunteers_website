@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>TechOps Dashboard · NASA Space Apps Challenge Cairo</title>
+  <meta name="description" content="TechOps team dashboard prototype: issue reports, floor maps, Wi-Fi heatmap, team meetups and equipment inventory.">
+  <link rel="icon" type="image/png" href="../assets/favicon.png">
+  <link rel="stylesheet" href="css/techops.css">
+  <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || 'dark'); } catch (e) {}</script>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="app">
+    <header class="top">
+      <a class="brand" href="index.html" aria-label="TechOps dashboard home">
+        <img class="logo-dark" src="../assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
+        <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
+        <span class="brand-text">
+          <span class="brand-title">TECHOPS</span>
+          <span class="brand-sub">PROTOTYPE · CAIRO</span>
+        </span>
+      </a>
+      <div class="sp"></div>
+      <span class="pill-status demo" id="status-pill" title=""><i></i><span id="status-text">Connecting…</span></span>
+      <div class="who">
+        <label for="me">Viewing as</label>
+        <select id="me" aria-label="Which TechOps member are you"><option value="">Not selected</option></select>
+      </div>
+      <button class="btn" id="alerts-btn" title="Enable sound and desktop notifications for new issues">Enable alerts</button>
+      <a class="btn" href="qr-codes.html" title="Printable room QR codes">QR codes</a>
+      <a class="btn" href="report.html" target="_blank" rel="noopener" title="Open the public report form">Report form</a>
+      <button class="btn bell" id="bell" aria-label="Open issues">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="count" id="bell-count" hidden>0</span>
+      </button>
+      <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
+    </header>
+
+    <main>
+      <div id="banners"></div>
+
+      <nav class="tabs" role="tablist" aria-label="TechOps sections">
+        <button class="tab on" role="tab" data-tab="issues">Issues <span class="n" id="n-issues">0</span></button>
+        <button class="tab" role="tab" data-tab="maps">Floor maps</button>
+        <button class="tab" role="tab" data-tab="team">Team &amp; meetups <span class="n" id="n-meet" hidden>0</span></button>
+        <button class="tab" role="tab" data-tab="inventory">Inventory</button>
+      </nav>
+
+      <!-- ISSUES -->
+      <section id="tab-issues">
+        <div class="page-title"><h2>Reported issues</h2><p>Reports from room QR codes appear here automatically.</p></div>
+        <div class="row" style="margin-bottom:12px">
+          <span id="issue-filters" class="row" style="gap:6px"></span>
+          <span class="sp"></span>
+          <input id="issue-search" type="search" placeholder="Search room or text…" style="max-width:240px" aria-label="Search issues">
+        </div>
+        <div class="card table-wrap"><table>
+          <thead><tr><th>Status</th><th>Reported</th><th>Location</th><th>Issue</th><th>Details</th><th>Assigned to</th><th></th></tr></thead>
+          <tbody id="issue-rows"></tbody>
+        </table></div>
+      </section>
+
+      <!-- MAPS -->
+      <section id="tab-maps" hidden>
+        <div class="page-title"><h2>Floor maps</h2><p>Click a room for details, its QR code and open issues.</p></div>
+        <div class="map-tools">
+          <div class="seg" id="floor-seg" role="group" aria-label="Floor"></div>
+          <div class="seg" id="layer-seg" role="group" aria-label="Map layer">
+            <button data-layer="zones" class="on">Room zones</button>
+            <button data-layer="heat">Wi-Fi heatmap</button>
+          </div>
+          <button class="chip on" id="pins-chip" aria-pressed="true">Issue pins</button>
+        </div>
+        <div class="map-layout">
+          <div>
+            <div class="map" id="map"></div>
+            <div class="legend" id="zone-legend"></div>
+            <div class="heat-scale" id="heat-scale" hidden><span>Poor</span><div class="heat-bar"></div><span>Good</span><span class="muted">&nbsp;5 · 15 · 28 · 45 · 70+ Mbps</span></div>
+          </div>
+          <aside class="card panel" id="side" aria-live="polite"></aside>
+        </div>
+      </section>
+
+      <!-- TEAM -->
+      <section id="tab-team" hidden>
+        <div class="page-title"><h2>TechOps team</h2><p>Click a profile to request a meetup. You'll be asked for both locations.</p></div>
+        <div class="card panel" id="my-status" style="margin-bottom:16px" hidden></div>
+        <div class="team-grid" id="team-grid"></div>
+        <div class="meet-list">
+          <div class="page-title"><h2 style="font-size:17px">Meetup requests</h2></div>
+          <div class="card" id="meet-rows"></div>
+        </div>
+      </section>
+
+      <!-- INVENTORY -->
+      <section id="tab-inventory" hidden>
+        <div class="page-title"><h2>Equipment &amp; inventory</h2><p>Who holds each item and who it was lent to.</p></div>
+        <div class="inv-summary" id="inv-summary"></div>
+        <div class="row" style="margin-bottom:12px">
+          <input id="inv-search" type="search" placeholder="Search item, team or room…" style="max-width:260px" aria-label="Search inventory">
+          <select id="inv-cat" aria-label="Category"></select>
+          <select id="inv-holder" aria-label="Held by"></select>
+          <select id="inv-status" aria-label="Status"><option value="">Any status</option><option>With member</option><option>Lent out</option></select>
+        </div>
+        <div class="card table-wrap"><table>
+          <thead><tr><th>ID</th><th>Item</th><th class="num">Qty</th><th>Held by</th><th>Lent to</th><th>Status</th><th></th></tr></thead>
+          <tbody id="inv-rows"></tbody>
+        </table></div>
+      </section>
+
+      <p class="note" id="demo-note" hidden></p>
+    </main>
+  </div>
+
+  <script src="vendor/qrcode.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/sample-data.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
