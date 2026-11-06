@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>TechOps Dashboard · NASA Space Apps Challenge Cairo</title>
-  <meta name="description" content="TechOps team dashboard prototype: issue reports, floor maps, Wi-Fi heatmap, team meetups and equipment inventory.">
+  <meta name="description" content="TechOps team operations dashboard: fastest route navigation, universal QR issue alerts, floor maps, Wi-Fi heatmap, team pings and equipment inventory.">
   <link rel="icon" type="image/png" href="../assets/favicon.png">
   <link rel="stylesheet" href="css/techops.css">
   <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || 'dark'); } catch (e) {}</script>
@@ -18,7 +18,7 @@
         <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
         <span class="brand-text">
           <span class="brand-title">TECHOPS</span>
-          <span class="brand-sub">PROTOTYPE · CAIRO</span>
+          <span class="brand-sub">OPERATIONS · CAIRO</span>
         </span>
       </a>
       <div class="sp"></div>
@@ -28,7 +28,7 @@
         <select id="me" aria-label="Which TechOps member are you"><option value="">Not selected</option></select>
       </div>
       <button class="btn" id="alerts-btn" title="Enable sound and desktop notifications for new issues">Enable alerts</button>
-      <a class="btn" href="qr-codes.html" title="Printable room QR codes">QR codes</a>
+      <a class="btn" href="qr-codes.html" title="Universal Venue QR Code for issue reporting">Universal QR</a>
       <a class="btn" href="report.html" target="_blank" rel="noopener" title="Open the public report form">Report form</a>
       <button class="btn bell" id="bell" aria-label="Open issues">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
@@ -40,83 +40,154 @@
     <main>
       <div id="banners"></div>
 
+      <!-- Desktop Tabs -->
       <nav class="tabs" role="tablist" aria-label="TechOps sections">
         <button class="tab on" role="tab" data-tab="issues">Issues <span class="n" id="n-issues">0</span></button>
-        <button class="tab" role="tab" data-tab="maps">Floor maps</button>
-        <button class="tab" role="tab" data-tab="team">Team &amp; meetups <span class="n" id="n-meet" hidden>0</span></button>
+        <button class="tab" role="tab" data-tab="maps">Floor maps &amp; routing</button>
+        <button class="tab" role="tab" data-tab="team">Team &amp; pings <span class="n" id="n-meet" hidden>0</span></button>
         <button class="tab" role="tab" data-tab="inventory">Inventory</button>
       </nav>
 
       <!-- ISSUES -->
       <section id="tab-issues">
-        <div class="page-title"><h2>Reported issues</h2><p>Reports from room QR codes appear here automatically.</p></div>
+        <div class="page-title">
+          <h2>Reported issues</h2>
+          <p>Scanned via Universal QR code. Real-time updates sync to the dummy Google Sheet.</p>
+        </div>
         <div class="row" style="margin-bottom:12px">
           <span id="issue-filters" class="row" style="gap:6px"></span>
           <span class="sp"></span>
-          <input id="issue-search" type="search" placeholder="Search room or text…" style="max-width:240px" aria-label="Search issues">
+          <input id="issue-search" type="search" placeholder="Search room, team, or problem…" style="max-width:260px" aria-label="Search issues">
         </div>
-        <div class="card table-wrap"><table>
-          <thead><tr><th>Status</th><th>Reported</th><th>Location</th><th>Issue</th><th>Details</th><th>Assigned to</th><th></th></tr></thead>
-          <tbody id="issue-rows"></tbody>
-        </table></div>
+        <div class="card table-wrap">
+          <table>
+            <thead>
+              <tr><th>Status</th><th>Reported</th><th>Location</th><th>Issue</th><th>Details</th><th>Assigned to</th><th>Action</th></tr>
+            </thead>
+            <tbody id="issue-rows"></tbody>
+          </table>
+        </div>
       </section>
 
-      <!-- MAPS -->
+      <!-- MAPS & ROUTING -->
       <section id="tab-maps" hidden>
-        <div class="page-title"><h2>Floor maps</h2><p>Click a room for details, its QR code and open issues.</p></div>
+        <div class="page-title">
+          <h2>Floor maps &amp; corridor wayfinding</h2>
+          <p>Click any room to view details or calculate the fastest walking route across floors and inner stairways.</p>
+        </div>
+
+        <!-- Wayfinding bar -->
+        <div class="card panel" id="route-bar" style="margin-bottom:14px;padding:12px 16px">
+          <div class="row" style="gap:10px;align-items:center">
+            <span style="font-weight:700;color:var(--accent);display:flex;align-items:center;gap:6px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              Fastest Route:
+            </span>
+            <div style="display:flex;gap:6px;align-items:center;flex:1;min-width:280px;flex-wrap:wrap">
+              <input id="rt-from" list="rooms-list" placeholder="From (e.g. B133, Entrance)" style="flex:1;min-width:130px;max-width:220px">
+              <button class="btn small" id="rt-swap" title="Swap From and To" aria-label="Swap directions">⇄</button>
+              <input id="rt-to" list="rooms-list" placeholder="To (e.g. H113, S016)" style="flex:1;min-width:130px;max-width:220px">
+              <datalist id="rooms-list"></datalist>
+              <button class="btn primary small" id="rt-calc">Find Route</button>
+              <button class="btn small ghost" id="rt-clear">Clear</button>
+            </div>
+            <button class="btn small" id="rt-my-room" title="Set Origin to my current room">From My Room</button>
+          </div>
+          <div id="route-output" hidden style="margin-top:10px"></div>
+        </div>
+
         <div class="map-tools">
-          <div class="seg" id="floor-seg" role="group" aria-label="Floor"></div>
+          <div class="seg" id="floor-seg" role="group" aria-label="Floor selection"></div>
           <div class="seg" id="layer-seg" role="group" aria-label="Map layer">
             <button data-layer="zones" class="on">Room zones</button>
             <button data-layer="heat">Wi-Fi heatmap</button>
           </div>
           <button class="chip on" id="pins-chip" aria-pressed="true">Issue pins</button>
         </div>
+
         <div class="map-layout">
           <div>
             <div class="map" id="map"></div>
             <div class="legend" id="zone-legend"></div>
-            <div class="heat-scale" id="heat-scale" hidden><span>Poor</span><div class="heat-bar"></div><span>Good</span><span class="muted">&nbsp;5 · 15 · 28 · 45 · 70+ Mbps</span></div>
+            <div class="heat-scale" id="heat-scale" hidden>
+              <span>Poor</span>
+              <div class="heat-bar"></div>
+              <span>Good</span>
+              <span class="muted">&nbsp;5 · 15 · 28 · 45 · 70+ Mbps</span>
+            </div>
           </div>
           <aside class="card panel" id="side" aria-live="polite"></aside>
         </div>
       </section>
 
-      <!-- TEAM -->
+      <!-- TEAM & PINGS -->
       <section id="tab-team" hidden>
-        <div class="page-title"><h2>TechOps team</h2><p>Click a profile to request a meetup. You'll be asked for both locations.</p></div>
+        <div class="page-title">
+          <h2>TechOps team &amp; location pings</h2>
+          <p>Click a team member to ping them for a meetup. They will be prompted to confirm their current room before routing.</p>
+        </div>
         <div class="card panel" id="my-status" style="margin-bottom:16px" hidden></div>
         <div class="team-grid" id="team-grid"></div>
         <div class="meet-list">
-          <div class="page-title"><h2 style="font-size:17px">Meetup requests</h2></div>
+          <div class="page-title"><h2 style="font-size:17px">Meetup &amp; Ping History</h2></div>
           <div class="card" id="meet-rows"></div>
         </div>
       </section>
 
       <!-- INVENTORY -->
       <section id="tab-inventory" hidden>
-        <div class="page-title"><h2>Equipment &amp; inventory</h2><p>Who holds each item and who it was lent to.</p></div>
+        <div class="page-title">
+          <h2>Equipment &amp; inventory tracker</h2>
+          <p>Track hardware ownership, who holds each item, and lending status to specific teams and rooms.</p>
+        </div>
         <div class="inv-summary" id="inv-summary"></div>
         <div class="row" style="margin-bottom:12px">
-          <input id="inv-search" type="search" placeholder="Search item, team or room…" style="max-width:260px" aria-label="Search inventory">
+          <input id="inv-search" type="search" placeholder="Search equipment, team or room…" style="max-width:260px" aria-label="Search inventory">
           <select id="inv-cat" aria-label="Category"></select>
           <select id="inv-holder" aria-label="Held by"></select>
           <select id="inv-status" aria-label="Status"><option value="">Any status</option><option>With member</option><option>Lent out</option></select>
         </div>
-        <div class="card table-wrap"><table>
-          <thead><tr><th>ID</th><th>Item</th><th class="num">Qty</th><th>Held by</th><th>Lent to</th><th>Status</th><th></th></tr></thead>
-          <tbody id="inv-rows"></tbody>
-        </table></div>
+        <div class="card table-wrap">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Item</th><th class="num">Qty</th><th>Held by</th><th>Lent to</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody id="inv-rows"></tbody>
+          </table>
+        </div>
       </section>
 
       <p class="note" id="demo-note" hidden></p>
     </main>
+
+    <!-- Mobile Bottom App Bar -->
+    <nav class="mobile-nav" aria-label="Mobile navigation">
+      <button class="mobile-nav-btn on" data-tab="issues">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Issues</span>
+        <span class="m-badge" id="m-badge-issues" hidden>0</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="maps">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        <span>Maps &amp; Route</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="team">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Team &amp; Pings</span>
+        <span class="m-badge" id="m-badge-team" hidden>0</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="inventory">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span>Inventory</span>
+      </button>
+    </nav>
   </div>
 
   <script src="vendor/qrcode.js"></script>
   <script src="js/config.js"></script>
   <script src="js/sample-data.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/router.js"></script>
   <script src="js/common.js"></script>
   <script src="js/store.js"></script>
   <script src="js/map.js"></script>

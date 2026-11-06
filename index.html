@@ -35,17 +35,12 @@
           <span class="choice-name">Logistics team dashboard</span>
           <span class="choice-note">Venue map, rooms, and wayfinding</span>
         </a>
-        <button class="choice" type="button" aria-disabled="true" aria-describedby="techops-note">
+        <a class="choice" href="techops/index.html">
           <span class="choice-name">Tech Ops team dashboard</span>
-          <span class="choice-note" id="techops-note">Coming soon</span>
-        </button>
+          <span class="choice-note">Wi-Fi heatmaps, issue alerts, &amp; routing</span>
+        </a>
       </div>
     </main>
   </div>
-
-  <script>
-    // Tech Ops is not built yet: the button is visible but does nothing
-    document.querySelector('button.choice[aria-disabled="true"]').addEventListener('click', function (e) { e.preventDefault(); });
-  </script>
 </body>
 </html>

@@ -234,7 +234,7 @@
   function addMeetup(d) {
     return addRow("meetups", {
       id: newId("MTG"), ts: stamp(), by: d.by, target: d.target, byFloor: d.byFloor, byRoom: d.byRoom,
-      targetFloor: d.targetFloor, targetRoom: d.targetRoom, meetAt: d.meetAt, note: clip(d.note, 300), status: "Pending"
+      targetFloor: d.targetFloor || "", targetRoom: d.targetRoom || "", meetAt: d.meetAt || "", note: clip(d.note, 300), status: d.status || "Pending"
     });
   }
   function resetDemo() { localStorage.removeItem(KEYS.pending); localStorage.removeItem(KEYS.edits); notify("reset"); }

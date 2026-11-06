@@ -12,6 +12,7 @@
     this.el = el; this.opts = opts || {};
     this.floorId = "G"; this.layer = "zones"; this.pins = true;
     this.zoneFilter = null; this.selected = null; this.hl = null;
+    this.route = null;
     this.rooms = {}; this.wifi = []; this.openIssues = {};
     this.V = { k: 1, x: 0, y: 0 };
     this._build();
@@ -139,6 +140,34 @@
   P.setZoneFilter = function (z) { this.zoneFilter = z; this.render(); };
   P.select = function (code) { this.selected = code; this.render(); };
   P.highlight = function (hl) { this.hl = hl; this.render(); };
+  P.setRoute = function (route, autoPan) {
+    this.route = route;
+    this.render();
+    if (autoPan && route && route.legs) {
+      var self = this;
+      var currentLeg = route.legs.filter(function (l) { return l.floor === self.floorId; })[0] || route.legs[0];
+      if (currentLeg) {
+        if (currentLeg.floor !== this.floorId) this.setFloor(currentLeg.floor, true);
+        this.panToLeg(currentLeg);
+      }
+    }
+  };
+  P.clearRoute = function () { this.route = null; this.render(); };
+  P.panToLeg = function (leg) {
+    if (!leg || !leg.pts || !leg.pts.length) return;
+    var xs = leg.pts.map(function (p) { return p[0]; }), ys = leg.pts.map(function (p) { return p[1]; });
+    var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+    var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    var cw = this.el.clientWidth, ch = this.el.clientHeight;
+    var spanW = Math.max(160, maxX - minX + 100), spanH = Math.max(160, maxY - minY + 100);
+    var k = Math.min(2.5, Math.max(0.65, Math.min(cw / spanW, ch / spanH) * 0.9));
+    this.V = { k: k, x: cw / 2 - cx * k, y: ch / 2 - cy * k };
+    this.stage.style.transition = "transform .5s ease";
+    this._apply();
+    var s = this.stage;
+    setTimeout(function () { s.style.transition = ""; }, 520);
+  };
 
   function pts(r) { return r.pts.map(function (p) { return p.join(","); }).join(" "); }
 
@@ -200,6 +229,36 @@
         if (!p[0]) return;
         h += '<g pointer-events="none"><circle cx="' + p[0].cx + '" cy="' + p[0].cy + '" r="22" fill="none" stroke="#fb9746" stroke-width="5"/><rect x="' + (p[0].cx - 30) + '" y="' + (p[0].cy - 58) + '" width="60" height="24" rx="12" fill="#fb9746"/><text x="' + p[0].cx + '" y="' + (p[0].cy - 41) + '" text-anchor="middle" font-size="14" font-weight="800" fill="#1a0f05">' + p[1] + "</text></g>";
       });
+    }
+
+    /* active walking route */
+    if (this.route && this.route.legs) {
+      this.route.legs.forEach(function (leg) {
+        if (leg.floor !== f.id) return;
+        var p = leg.pts.map(function (q) { return Math.round(q[0]) + "," + Math.round(q[1]); }).join(" ");
+        h += '<g pointer-events="none" class="route-group">';
+        h += '<polyline points="' + p + '" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>';
+        h += '<polyline class="rt-active-line" points="' + p + '" fill="none" stroke="#fb9746" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>';
+        leg.m.forEach(function (m) {
+          var q = m[0], type = m[1], label = m[2] || (type === "s" ? "A" : type === "e" ? "B" : "▲");
+          var bg = type === "s" ? "#10b981" : type === "e" ? "#ef4444" : "#fb9746";
+          h += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="14" fill="' + bg + '" stroke="#ffffff" stroke-width="3"/>';
+          h += '<text x="' + q[0] + '" y="' + (q[1] + 5) + '" text-anchor="middle" font-size="12" font-weight="800" fill="#ffffff">' + (type === "s" ? "A" : type === "e" ? "B" : "▲") + '</text>';
+        });
+        h += '</g>';
+      });
+    }
+
+    /* stair navigation nodes on this floor */
+    if (window.TechOpsRouter && window.TechOpsRouter.ST[f.id]) {
+      var stairs = window.TechOpsRouter.ST[f.id];
+      for (var sk in stairs) {
+        var sp = stairs[sk], sname = window.TechOpsRouter.SN[sk] || "Stairs";
+        h += '<g class="stair-node" data-code="STAIR-' + sk + '" style="cursor:pointer" title="' + TO.esc(sname) + '">';
+        h += '<circle cx="' + sp[0] + '" cy="' + sp[1] + '" r="13" fill="#172140" stroke="#fb9746" stroke-width="2"/>';
+        h += '<text x="' + sp[0] + '" y="' + (sp[1] + 4) + '" text-anchor="middle" font-size="9.5" font-weight="800" fill="#fb9746" pointer-events="none">ST</text>';
+        h += '</g>';
+      }
     }
     this.svg.innerHTML = h;
   };

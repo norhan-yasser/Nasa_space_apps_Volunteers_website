@@ -1,12 +1,16 @@
-/* TechOps dashboard */
+/* TechOps Operations Dashboard
+ * Fastest Route Wayfinding, Universal QR Issue Alerting, Ping & Meetup Confirmation,
+ * Wi-Fi Heatmap, and Mobile-first UX.
+ */
 (function () {
-  var C = window.TECHOPS_CONFIG, D = window.TechOpsData, Store = window.TechOpsStore, esc = TO.esc;
+  var C = window.TECHOPS_CONFIG, D = window.TechOpsData, Store = window.TechOpsStore, Router = window.TechOpsRouter, esc = TO.esc;
   var $ = function (id) { return document.getElementById(id); };
   var ME_KEY = "techops_me", SEEN_KEY = "techops_seen_reports", SEEN_MEET = "techops_seen_meetups";
 
   var S = {
     data: null, tab: "issues", floor: "G", layer: "zones", selected: null, pins: true, zone: null,
     issueFilter: "open", issueText: "", first: true,
+    activeRoute: null,
     seen: jget(SEEN_KEY, []), seenMeet: jget(SEEN_MEET, []), me: lget(ME_KEY) || "", alertsOn: false
   };
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
@@ -15,24 +19,39 @@
 
   var map;
 
-  /* ------------------------------------------------------------ loading */
+  /* ------------------------------------------------------------ Data Loading */
   function load() {
     return Store.loadAll().then(function (d) {
       S.data = d;
       d.roomMap = {}; d.rooms.forEach(function (r) { d.roomMap[r.code] = r; });
+      fillRoomDataList();
       detectNew();
       var sig = JSON.stringify([d.rooms, d.wifi, d.team, d.inventory, d.reports, d.meetups, d.meta.sheetOk]);
-      if (sig === S.sig) { renderHeader(); return; }   /* nothing changed: keep open dropdowns / scroll position */
+      if (sig === S.sig) { renderHeader(); return; }
       S.sig = sig;
       renderAll();
     });
   }
+
+  function fillRoomDataList() {
+    var dl = $("rooms-list");
+    if (!dl || dl.children.length) return;
+    var h = '<option value="ENTRANCE">Main Entrance (Ground Floor)</option>';
+    D.FLOORS.forEach(function (f) {
+      f.rooms.forEach(function (r) {
+        h += '<option value="' + esc(r.code) + '">' + esc(r.code) + ' (' + esc(f.name) + ')</option>';
+      });
+    });
+    dl.innerHTML = h;
+  }
+
   function detectNew() {
-    var d = S.data, fresh = d.reports.filter(function (r) { return r.status === "New" && S.seen.indexOf(r.id) < 0; });
+    var d = S.data;
+    var fresh = d.reports.filter(function (r) { return r.status === "New" && S.seen.indexOf(r.id) < 0; });
     if (!S.first) {
       fresh.slice(0, 3).forEach(function (r) {
         var msg = r.issue + " · " + Store.FLOOR_NAMES[r.floor] + " · " + r.room;
-        TO.toast("New issue reported", msg, "bad", function () { gotoIssueOnMap(r); });
+        TO.toast("New TechOps Issue!", msg, "bad", function () { gotoIssueOnMap(r); });
         notifyDesktop("New TechOps issue", msg);
       });
       if (fresh.length) TO.beep();
@@ -40,71 +59,124 @@
     d.reports.forEach(function (r) { if (S.seen.indexOf(r.id) < 0) S.seen.push(r.id); });
     lset(SEEN_KEY, JSON.stringify(S.seen.slice(-500)));
 
-    /* meetup requests addressed to me */
+    /* Meetup requests & Pings addressed to me */
     d.meetups.forEach(function (m) {
       if (S.seenMeet.indexOf(m.id) >= 0) return;
       S.seenMeet.push(m.id);
-      if (!S.first && S.me && m.target === S.me && m.status === "Pending") {
-        TO.toast("Meetup request", m.by + " wants to meet at " + m.meetAt, "", function () { setTab("team"); });
-        notifyDesktop("TechOps meetup request", m.by + " wants to meet at " + m.meetAt);
+      if (!S.first && S.me && m.target === S.me && (m.status === "Pinged" || m.status === "Pending")) {
+        TO.toast("Location Ping Received!", m.by + " wants to meet. Please confirm your current room.", "", function () {
+          setTab("team");
+          openConfirmLocationModal(m);
+        });
+        notifyDesktop("TechOps Location Ping", m.by + " wants to meet you! Please confirm your room.");
         TO.beep();
       }
     });
     lset(SEEN_MEET, JSON.stringify(S.seenMeet.slice(-300)));
     S.first = false;
   }
+
   function notifyDesktop(title, body) {
-    try { if (S.alertsOn && "Notification" in window && Notification.permission === "granted") new Notification(title, { body: body, icon: "../assets/favicon.png" }); } catch (e) {}
+    try {
+      if (S.alertsOn && "Notification" in window && Notification.permission === "granted") {
+        new Notification(title, { body: body, icon: "../assets/favicon.png" });
+      }
+    } catch (e) {}
   }
 
-  /* ------------------------------------------------------------ chrome */
+  /* ------------------------------------------------------------ Chrome & Navigation */
   function renderHeader() {
     var d = S.data, m = d.meta;
     var pill = $("status-pill");
     pill.className = "pill-status " + (m.sheetOk ? "live" : "demo");
     $("status-text").textContent = m.sheetOk ? "Live from Google Sheet" : "Demo data";
-    pill.title = m.sheetOk ? "Reading the TechOps sheet. Updated " + m.fetchedAt.toLocaleTimeString() : "Could not read: " + m.failed.join(", ") + ". Showing bundled dummy data.";
+    pill.title = m.sheetOk ? "Reading TechOps backend sheet. Updated " + m.fetchedAt.toLocaleTimeString() : "Could not read sheet. Showing bundled dummy data.";
+    
     var note = $("demo-note"), bits = [];
-    if (!m.sheetOk) bits.push("The TechOps sheet could not be read (is it shared as \u201CAnyone with the link can view\u201D?). Showing the bundled dummy data.");
-    if (!m.live) bits.push("Write mode is DEMO: new reports, meetups and edits are stored in this browser only, not in the Google Sheet. Deploy apps-script/Code.gs and set APPS_SCRIPT_URL in js/config.js to enable sheet writes.");
+    if (!m.sheetOk) bits.push("The TechOps dummy sheet could not be read. Showing bundled demo data.");
+    if (!m.live) bits.push("Write mode is DEMO: new reports, pings and inventory updates are stored in this browser only. Deploy apps-script/Code.gs to write live into Google Sheets.");
     note.hidden = !bits.length;
     note.innerHTML = esc(bits.join(" ")) + (!m.live ? ' <button class="btn small" id="reset-demo">Reset demo changes</button>' : "");
     var rb = $("reset-demo"); if (rb) rb.onclick = function () { Store.resetDemo(); load(); };
 
     var sel = $("me"), cur = S.me;
-    sel.innerHTML = '<option value="">Not selected</option>' + d.team.map(function (t) { return '<option value="' + esc(t.name) + '"' + (t.name === cur ? " selected" : "") + ">" + esc(t.name) + "</option>"; }).join("");
-    var open = d.reports.filter(function (r) { return r.status === "New"; }).length;
-    var bc = $("bell-count"); bc.hidden = !open; bc.textContent = open;
+    sel.innerHTML = '<option value="">Not selected</option>' + d.team.map(function (t) {
+      return '<option value="' + esc(t.name) + '"' + (t.name === cur ? " selected" : "") + ">" + esc(t.name) + "</option>";
+    }).join("");
+
+    var openCount = d.reports.filter(function (r) { return r.status === "New"; }).length;
+    var bc = $("bell-count"); bc.hidden = !openCount; bc.textContent = openCount;
     $("n-issues").textContent = d.reports.filter(function (r) { return r.status !== "Resolved"; }).length;
-    $("n-issues").className = "n" + (open ? " hot" : "");
-    var pending = S.me ? d.meetups.filter(function (m) { return m.target === S.me && m.status === "Pending"; }).length : 0;
-    $("n-meet").hidden = !pending; $("n-meet").textContent = pending; $("n-meet").className = "n hot";
-    document.title = (open ? "(" + open + ") " : "") + "TechOps Dashboard · NASA Space Apps Cairo";
+    $("n-issues").className = "n" + (openCount ? " hot" : "");
+    
+    var pendingCount = S.me ? d.meetups.filter(function (m) { return m.target === S.me && (m.status === "Pinged" || m.status === "Pending"); }).length : 0;
+    $("n-meet").hidden = !pendingCount; $("n-meet").textContent = pendingCount; $("n-meet").className = "n hot";
+
+    /* Mobile bottom bar badges */
+    var mbIssues = $("m-badge-issues");
+    if (mbIssues) { mbIssues.hidden = !openCount; mbIssues.textContent = openCount; }
+    var mbTeam = $("m-badge-team");
+    if (mbTeam) { mbTeam.hidden = !pendingCount; mbTeam.textContent = pendingCount; }
+
+    document.title = (openCount ? "(" + openCount + ") " : "") + "TechOps Dashboard · NASA Space Apps Cairo";
   }
+
   function renderBanners() {
     var d = S.data, h = "";
     if (S.me) {
-      d.meetups.filter(function (m) { return m.target === S.me && (m.status === "Pending" || m.status === "On the way"); }).forEach(function (m) {
-        h += '<div class="banner"><div style="flex:1;min-width:220px"><b>' + esc(m.by) + "</b> asks you to meet at <b>" + esc(m.meetAt) + "</b> (" + esc(m.meetAt === m.byRoom ? m.byFloorName : m.targetFloorName) + ")" +
-          '<div class="muted" style="font-size:12.5px">They are in ' + esc(m.byRoom) + " (" + esc(m.byFloorName) + ")" + (m.note ? " · " + esc(m.note) : "") + "</div></div>" +
-          (m.status === "Pending" ? '<button class="btn accent" data-meet="' + esc(m.id) + '" data-st="On the way">On my way</button>' : '<span class="badge b-prog">On the way</span>') +
-          '<button class="btn" data-meet="' + esc(m.id) + '" data-st="Done">' + (m.status === "Pending" ? "Decline / done" : "Mark done") + "</button></div>";
+      /* Pings awaiting my location confirmation */
+      d.meetups.filter(function (m) { return m.target === S.me && (m.status === "Pinged" || m.status === "Pending"); }).forEach(function (m) {
+        h += '<div class="banner" style="border-color:var(--bad);background:rgba(239,68,68,0.14)">' +
+          '<div style="flex:1;min-width:220px">' +
+          '<b style="color:#ff8a8a">🔔 Location Ping from ' + esc(m.by) + '</b>' +
+          '<div style="font-size:13px;margin-top:2px">They want to meet you! Please confirm your current room so we can guide you to each other.</div>' +
+          (m.note ? '<div class="muted" style="font-size:12px;margin-top:2px">Note: ' + esc(m.note) + '</div>' : '') +
+          '</div>' +
+          '<button class="btn accent small" data-confirm-ping="' + esc(m.id) + '">Confirm Location &amp; Meet</button>' +
+          '</div>';
+      });
+
+      /* Confirmed meetups ready for navigation */
+      d.meetups.filter(function (m) { return (m.by === S.me || m.target === S.me) && (m.status === "Confirmed" || m.status === "On the way"); }).forEach(function (m) {
+        var other = m.by === S.me ? m.target : m.by;
+        var myRole = m.by === S.me ? "Requester" : "Recipient";
+        h += '<div class="banner" style="border-color:var(--ok);background:rgba(16,185,129,0.12)">' +
+          '<div style="flex:1;min-width:220px">' +
+          '<b style="color:#34d399">📍 Meetup Confirmed with ' + esc(other) + '</b>' +
+          '<div style="font-size:13px;margin-top:2px">Meeting point: <b>' + esc(m.meetAt) + '</b> (' + esc(m.targetFloorName || m.byFloorName) + ')</div>' +
+          '</div>' +
+          '<button class="btn primary small" data-route-to="' + esc(m.meetAt) + '">🗺️ Show Walking Route</button>' +
+          '<button class="btn small" data-meet="' + esc(m.id) + '" data-st="Done">Mark Done</button>' +
+          '</div>';
       });
     }
     $("banners").innerHTML = h;
   }
+
   function renderAll() {
     renderHeader(); renderBanners(); renderIssues(); renderMaps(); renderTeam(); renderInventory();
   }
 
   function setTab(t) {
     S.tab = t;
-    document.querySelectorAll(".tab").forEach(function (b) { b.classList.toggle("on", b.dataset.tab === t); b.setAttribute("aria-selected", b.dataset.tab === t); });
+    /* Desktop tabs */
+    document.querySelectorAll(".tabs .tab").forEach(function (b) {
+      var on = b.dataset.tab === t;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", on);
+    });
+    /* Mobile bottom navigation */
+    document.querySelectorAll(".mobile-nav-btn").forEach(function (b) {
+      var on = b.dataset.tab === t;
+      b.classList.toggle("on", on);
+    });
     ["issues", "maps", "team", "inventory"].forEach(function (n) { $("tab-" + n).hidden = n !== t; });
-    if (t === "maps") { map.fit(); }
+    if (t === "maps") {
+      setTimeout(function () { map.fit(); }, 50);
+    }
   }
 
-  /* ------------------------------------------------------------ issues */
+  /* ------------------------------------------------------------ Issues Tab */
   var FILTERS = [["open", "Open"], ["New", "New"], ["Resolved", "Resolved"], ["all", "All"]];
   function renderIssues() {
     var d = S.data;
@@ -112,11 +184,17 @@
       var n = d.reports.filter(function (r) { return matchFilter(r, f[0]); }).length;
       return '<button class="chip' + (S.issueFilter === f[0] ? " on" : "") + '" data-if="' + f[0] + '">' + f[1] + " (" + n + ")</button>";
     }).join("");
+    
     var q = S.issueText.toLowerCase();
     var rows = d.reports.filter(function (r) {
-      return matchFilter(r, S.issueFilter) && (!q || (r.room + " " + r.details + " " + r.issue + " " + r.id + " " + r.assigned).toLowerCase().indexOf(q) >= 0);
+      return matchFilter(r, S.issueFilter) && (!q || (r.room + " " + r.details + " " + r.issue + " " + r.id + " " + r.assigned + " " + r.floorName).toLowerCase().indexOf(q) >= 0);
     }).sort(function (a, b) { return (Store.parseStamp(b.ts) || 0) - (Store.parseStamp(a.ts) || 0); });
-    if (!rows.length) { $("issue-rows").innerHTML = '<tr><td colspan="7" class="empty">No issues in this view.</td></tr>'; return; }
+
+    if (!rows.length) {
+      $("issue-rows").innerHTML = '<tr><td colspan="7" class="empty">No issues found matching this filter.</td></tr>';
+      return;
+    }
+    
     var names = d.team.map(function (t) { return t.name; });
     $("issue-rows").innerHTML = rows.map(function (r) {
       var when = Store.parseStamp(r.ts);
@@ -125,117 +203,311 @@
         '<td title="' + esc(r.ts) + '">' + esc(TO.ago(when)) + '<div class="muted" style="font-size:11.5px">' + esc(r.id) + "</div></td>" +
         "<td><b>" + esc(r.room) + '</b><div class="muted" style="font-size:12px">' + esc(r.floorName) + "</div></td>" +
         '<td><span class="badge ' + TO.issueClass(r.issue) + '">' + esc(r.issue) + "</span></td>" +
-        '<td style="max-width:300px">' + esc(r.details || "—") + "</td>" +
+        '<td style="max-width:280px">' + esc(r.details || "—") + "</td>" +
         '<td><select data-as="' + esc(r.id) + '" aria-label="Assign ' + esc(r.id) + '"><option value="">Unassigned</option>' + names.map(function (n) { return "<option" + (n === r.assigned ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></td>" +
-        '<td><button class="btn small" data-map="' + esc(r.id) + '">Show on map</button></td></tr>';
+        '<td><button class="btn small primary" data-route-to="' + esc(r.room) + '">Route Here</button></td></tr>';
     }).join("");
   }
+
   function matchFilter(r, f) {
     if (f === "all") return true;
     if (f === "open") return r.status !== "Resolved";
     return r.status === f;
   }
+
   function gotoIssueOnMap(r) {
-    setTab("maps"); S.floor = r.floor; map.setFloor(r.floor); renderMapChrome(); selectRoom(r.room, true);
+    setTab("maps");
+    S.floor = r.floor;
+    map.setFloor(r.floor);
+    renderMapChrome();
+    selectRoom(r.room, true);
+    /* Pre-fill destination */
+    $("rt-to").value = r.room;
   }
 
-  /* ------------------------------------------------------------ maps */
+  /* ------------------------------------------------------------ Maps & Routing Engine */
   function mapData() {
     var d = S.data, rooms = {}; d.rooms.forEach(function (r) { rooms[r.code] = r; });
     return { rooms: rooms, wifi: d.wifi, reports: d.reports };
   }
+
   function renderMapChrome() {
     var d = S.data;
     $("floor-seg").innerHTML = D.FLOORS.map(function (f) {
       var n = d.reports.filter(function (r) { return r.floor === f.id && r.status !== "Resolved"; }).length;
       return '<button data-floor="' + f.id + '" class="' + (S.floor === f.id ? "on" : "") + '">' + f.name + (n ? " · " + n + " open" : "") + "</button>";
     }).join("");
+    
     document.querySelectorAll("#layer-seg button").forEach(function (b) { b.classList.toggle("on", b.dataset.layer === S.layer); });
     $("pins-chip").classList.toggle("on", S.pins); $("pins-chip").setAttribute("aria-pressed", S.pins);
     $("heat-scale").hidden = S.layer !== "heat";
+    
     var zones = Object.keys(D.ZONES), counts = {};
     d.rooms.forEach(function (r) { if (r.floor === S.floor) counts[r.zone] = (counts[r.zone] || 0) + 1; });
     $("zone-legend").innerHTML = S.layer === "zones" ? zones.map(function (z) {
       return '<button class="chip' + (S.zone && S.zone !== z ? " dim" : "") + '" data-zone="' + z + '"><span class="dot" style="background:' + D.ZONES[z].color + '"></span>' + z + " (" + (counts[z] || 0) + ")</button>";
     }).join("") : "";
   }
+
   function renderMaps() {
     renderMapChrome();
     map.setData(mapData());
     renderSide();
   }
+
   function selectRoom(code, focus) {
-    S.selected = code; map.select(code); renderSide();
+    S.selected = code;
+    map.select(code);
+    renderSide();
     if (focus) map.focus(code);
   }
-  function wifiFor(code) { return S.data.wifi.filter(function (w) { return w.id === "WF-" + code; })[0]; }
+
+  function wifiFor(code) {
+    return S.data.wifi.filter(function (w) { return w.id === "WF-" + code; })[0];
+  }
+
+  function myCurrentRoom() {
+    var meMember = S.me && S.data.team.filter(function (t) { return t.name === S.me; })[0];
+    return meMember ? meMember.room : "B133";
+  }
+
+  /* Plan and display fastest walking route between any two rooms */
+  function planAndShowRoute(fromCode, toCode) {
+    if (!Router) return;
+    fromCode = (fromCode || "").trim();
+    toCode = (toCode || "").trim();
+
+    if (!fromCode) fromCode = myCurrentRoom() || "ENTRANCE";
+    if (!toCode) {
+      TO.toast("Destination required", "Please enter a destination room code.", "bad");
+      return;
+    }
+
+    var locA = Router.loc(fromCode, S.floor);
+    var locB = Router.loc(toCode, S.floor);
+
+    if (!locA) {
+      TO.toast("Origin not recognized", "Cannot find start location: " + fromCode, "bad");
+      return;
+    }
+    if (!locB) {
+      TO.toast("Destination not recognized", "Cannot find room: " + toCode, "bad");
+      return;
+    }
+
+    try {
+      var route = Router.planRoute(locA, locB);
+      if (!route || !route.legs || !route.legs.length) {
+        TO.toast("Route calculation failed", "Could not connect walking path between " + fromCode + " and " + toCode, "bad");
+        return;
+      }
+
+      S.activeRoute = route;
+      $("rt-from").value = fromCode;
+      $("rt-to").value = toCode;
+
+      /* Switch map to the origin floor first */
+      var startFloor = route.legs[0].floor;
+      if (S.floor !== startFloor) {
+        S.floor = startFloor;
+        map.setFloor(startFloor, true);
+        renderMapChrome();
+      }
+
+      map.setRoute(route, true);
+      renderRouteOutput(route, locA, locB);
+      TO.toast("Fastest Route Found", route.summary, "ok");
+    } catch (err) {
+      TO.toast("Routing error", err.message, "bad");
+    }
+  }
+
+  function clearActiveRoute() {
+    S.activeRoute = null;
+    map.clearRoute();
+    var out = $("route-output");
+    if (out) { out.hidden = true; out.innerHTML = ""; }
+  }
+
+  function renderRouteOutput(route, locA, locB) {
+    var out = $("route-output");
+    if (!out) return;
+    out.hidden = false;
+
+    var h = '<div class="route-panel">' +
+      '<div class="route-summary">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' +
+      esc(route.summary) +
+      '</div>';
+
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">';
+    route.steps.forEach(function (st, idx) {
+      var isCurrent = st.floor === S.floor;
+      h += '<div class="route-step' + (isCurrent ? ' on' : '') + '" data-step-floor="' + st.floor + '" data-step-leg="' + st.legIdx + '">' +
+        '<div class="route-step-num">' + (idx + 1) + '</div>' +
+        '<div style="flex:1">' + esc(st.text) + ' <span class="muted" style="font-size:11px">(' + esc(Store.FLOOR_NAMES[st.floor]) + ')</span></div>' +
+        '<button class="btn small" style="padding:2px 8px;font-size:11px">View Floor</button>' +
+        '</div>';
+    });
+    h += '</div></div>';
+    out.innerHTML = h;
+
+    out.querySelectorAll(".route-step").forEach(function (el) {
+      el.onclick = function () {
+        var fl = el.dataset.stepFloor;
+        var legIdx = +el.dataset.stepLeg;
+        if (fl !== S.floor) {
+          S.floor = fl;
+          map.setFloor(fl, true);
+          renderMapChrome();
+        }
+        if (route.legs[legIdx]) map.panToLeg(route.legs[legIdx]);
+        renderRouteOutput(route, locA, locB);
+      };
+    });
+  }
+
   function renderSide() {
     var d = S.data, side = $("side");
     if (S.selected && d.roomMap[S.selected]) {
       var r = d.roomMap[S.selected], w = wifiFor(r.code), z = D.ZONES[r.zone] || {};
       var iss = d.reports.filter(function (x) { return x.room === r.code && x.floor === r.floor && x.status !== "Resolved"; });
       var url = TO.reportUrl(r.floor, r.code);
+
       side.innerHTML = '<h3>Room ' + esc(r.code) + '</h3><div class="sub"><span class="badge" style="background:' + (z.color || "#64748b") + '33;border-color:' + (z.color || "#64748b") + ';color:var(--ink-bright)">' + esc(r.zone) + "</span> " + esc(r.floorName) + "</div>" +
         '<dl class="kv"><dt>Space</dt><dd>' + esc(r.type) + "</dd><dt>Capacity</dt><dd>" + esc(r.capacity) + "</dd><dt>Assigned to</dt><dd>" + esc(r.assigned || "—") + "</dd>" +
         "<dt>Wi-Fi</dt><dd>" + (w ? '<b style="color:' + TO.speedColor(w.mbps) + '">' + w.mbps + " Mbps</b> · " + w.latency + " ms · " + TO.speedLabel(w.mbps) : "No reading") + "</dd></dl>" +
-        "<b>Open issues (" + iss.length + ")</b>" + (iss.length ? iss.map(function (x) { return '<div class="mini-issue"><span class="badge ' + TO.issueClass(x.issue) + '">' + esc(x.issue) + '</span> <span class="badge ' + TO.statusClass(x.status) + '">' + esc(x.status) + '</span><div class="muted" style="margin-top:4px">' + esc(x.details || "") + "</div></div>"; }).join("") : '<div class="muted" style="font-size:13px;margin-top:4px">None.</div>') +
-        '<div style="margin-top:14px"><b>Room QR code</b><div class="muted" style="font-size:12px;margin-bottom:6px">Scan to report a problem from this room.</div><div class="qr-box">' + TO.qrSvg(url, 4) + '</div></div>' +
-        '<div class="row" style="margin-top:12px"><a class="btn small" href="' + esc(url) + '" target="_blank" rel="noopener">Open form</a><a class="btn small" href="qr-codes.html?room=' + esc(r.code) + '">Print QR</a><button class="btn small ghost" id="side-clear">Clear</button></div>';
+        
+        '<div class="row" style="margin:12px 0 14px;gap:8px">' +
+        '<button class="btn primary small" id="side-route-here">📍 Fastest Route Here</button>' +
+        '<button class="btn small" id="side-route-from">Route From Here</button>' +
+        '</div>' +
+
+        "<b>Open issues (" + iss.length + ")</b>" + (iss.length ? iss.map(function (x) {
+          return '<div class="mini-issue"><span class="badge ' + TO.issueClass(x.issue) + '">' + esc(x.issue) + '</span> <span class="badge ' + TO.statusClass(x.status) + '">' + esc(x.status) + '</span><div class="muted" style="margin-top:4px">' + esc(x.details || "") + "</div></div>";
+        }).join("") : '<div class="muted" style="font-size:13px;margin-top:4px">No open issues for this room.</div>') +
+        
+        '<div style="margin-top:14px"><b>Room QR code</b><div class="muted" style="font-size:12px;margin-bottom:6px">Scan to report an issue directly from this room.</div><div class="qr-box">' + TO.qrSvg(url, 4) + '</div></div>' +
+        '<div class="row" style="margin-top:12px"><a class="btn small" href="' + esc(url) + '" target="_blank" rel="noopener">Open form</a><a class="btn small" href="qr-codes.html">Universal QR</a><button class="btn small ghost" id="side-clear">Clear</button></div>';
+
       var c = $("side-clear"); if (c) c.onclick = function () { S.selected = null; map.select(null); renderSide(); };
+      var btnHere = $("side-route-here");
+      if (btnHere) btnHere.onclick = function () {
+        $("rt-to").value = r.code;
+        var myRoom = myCurrentRoom();
+        $("rt-from").value = myRoom;
+        planAndShowRoute(myRoom, r.code);
+      };
+      var btnFrom = $("side-route-from");
+      if (btnFrom) btnFrom.onclick = function () {
+        $("rt-from").value = r.code;
+        TO.toast("Origin set", "Now click destination or enter room in To field.", "ok");
+      };
       return;
     }
+
     var rooms = d.rooms.filter(function (r) { return r.floor === S.floor; });
     var w = d.wifi.filter(function (x) { return x.floor === S.floor; });
     var avg = w.length ? Math.round(w.reduce(function (a, b) { return a + b.mbps; }, 0) / w.length) : 0;
     var weak = w.filter(function (x) { return x.mbps < 15; });
     var open = d.reports.filter(function (r) { return r.floor === S.floor && r.status !== "Resolved"; }).length;
     var zc = {}; rooms.forEach(function (r) { zc[r.zone] = (zc[r.zone] || 0) + 1; });
-    side.innerHTML = "<h3>" + esc(Store.FLOOR_NAMES[S.floor]) + '</h3><div class="sub">Select a room on the map.</div>' +
+    
+    side.innerHTML = "<h3>" + esc(Store.FLOOR_NAMES[S.floor]) + '</h3><div class="sub">Select any room on the blueprint or click directions.</div>' +
       '<dl class="kv"><dt>Rooms</dt><dd>' + rooms.length + "</dd><dt>Open issues</dt><dd>" + open + "</dd><dt>Avg Wi-Fi</dt><dd>" + (avg ? '<b style="color:' + TO.speedColor(avg) + '">' + avg + " Mbps</b>" : "—") + "</dd>" +
       "<dt>Weak spots</dt><dd>" + (weak.length ? esc(weak.map(function (x) { return x.label.replace("Room ", ""); }).join(", ")) : "None") + "</dd></dl>" +
-      "<b>Rooms by zone</b>" + Object.keys(D.ZONES).map(function (z) { return '<div class="row" style="margin-top:6px;gap:8px"><span class="dot" style="width:10px;height:10px;border-radius:50%;background:' + D.ZONES[z].color + '"></span><span style="flex:1">' + z + "</span><b>" + (zc[z] || 0) + "</b></div>"; }).join("");
+      '<div class="row" style="margin:12px 0 10px"><button class="btn small primary" id="side-route-ent">Route from Main Entrance</button></div>' +
+      "<b>Rooms by zone</b>" + Object.keys(D.ZONES).map(function (z) {
+        return '<div class="row" style="margin-top:6px;gap:8px"><span class="dot" style="width:10px;height:10px;border-radius:50%;background:' + D.ZONES[z].color + '"></span><span style="flex:1">' + z + "</span><b>" + (zc[z] || 0) + "</b></div>";
+      }).join("");
+
+    var rEnt = $("side-route-ent");
+    if (rEnt) rEnt.onclick = function () {
+      $("rt-from").value = "ENTRANCE";
+      TO.toast("Start at Entrance", "Choose a destination room to view fastest route.", "ok");
+    };
   }
+
   function tipHtml(code) {
     var d = S.data;
     if (code.indexOf("wf:") === 0) {
       var w = d.wifi.filter(function (x) { return x.id === code.slice(3); })[0];
       return w ? "<b>" + esc(w.label) + '</b><br><span style="color:' + TO.speedColor(w.mbps) + '">' + w.mbps + " Mbps</span> · " + w.latency + " ms · " + TO.speedLabel(w.mbps) : "";
     }
+    if (code.indexOf("STAIR-") === 0) {
+      var sk = code.replace("STAIR-", "");
+      return "<b>" + esc(Router.SN[sk] || "Stairway") + "</b><br><span class=\"muted\">Inter-floor transit node</span>";
+    }
     var r = d.roomMap[code]; if (!r) return "<b>" + esc(code) + "</b>";
     var wf = wifiFor(code), n = d.reports.filter(function (x) { return x.room === code && x.floor === r.floor && x.status !== "Resolved"; }).length;
     return "<b>" + esc(code) + "</b> · " + esc(r.zone) + "<br>" + esc(r.assigned || "") + (wf ? '<br>Wi-Fi <span style="color:' + TO.speedColor(wf.mbps) + '">' + wf.mbps + " Mbps</span>" : "") + (n ? "<br>" + n + " open issue" + (n > 1 ? "s" : "") : "");
   }
 
-  /* ------------------------------------------------------------ team */
-  function stClass(s) { s = (s || "").toLowerCase(); return s.indexOf("avail") >= 0 ? "st-available" : s.indexOf("busy") >= 0 ? "st-busy" : s.indexOf("task") >= 0 ? "st-task" : "st-off"; }
+  /* ------------------------------------------------------------ Team & Ping System */
+  function stClass(s) {
+    s = (s || "").toLowerCase();
+    return s.indexOf("avail") >= 0 ? "st-available" : s.indexOf("busy") >= 0 ? "st-busy" : s.indexOf("task") >= 0 ? "st-task" : "st-off";
+  }
+
   function renderTeam() {
     var d = S.data;
     $("team-grid").innerHTML = d.team.map(function (t, i) {
-      return '<button class="card member" data-member="' + i + '" aria-label="Request a meetup with ' + esc(t.name) + '"><div class="row" style="flex-wrap:nowrap;gap:12px"><div class="avatar">' + esc(TO.initials(t.name)) + '</div><div><div class="name">' + esc(t.name) + '</div><div class="role">' + esc(t.role) + "</div></div></div>" +
-        '<div class="status ' + stClass(t.status) + '"><i></i>' + esc(t.status) + '</div><div class="loc">&#9679; ' + esc(t.floorName) + " · Room " + esc(t.room) + '</div><div class="muted" style="font-size:12px">' + esc(t.focus) + '</div><span class="btn small primary" style="align-self:flex-start">Request meetup</span></button>';
+      var isMe = S.me && t.name === S.me;
+      return '<button class="card member" data-member="' + i + '" aria-label="Ping ' + esc(t.name) + '">' +
+        '<div class="row" style="flex-wrap:nowrap;gap:12px">' +
+        '<div class="avatar">' + esc(TO.initials(t.name)) + '</div>' +
+        '<div><div class="name">' + esc(t.name) + (isMe ? ' <span class="badge b-prog">You</span>' : '') + '</div><div class="role">' + esc(t.role) + '</div></div>' +
+        '</div>' +
+        '<div class="status ' + stClass(t.status) + '"><i></i>' + esc(t.status) + '</div>' +
+        '<div class="loc">📍 ' + esc(t.floorName) + " · Room " + esc(t.room) + '</div>' +
+        '<div class="muted" style="font-size:12px">' + esc(t.focus) + '</div>' +
+        '<span class="btn small primary" style="align-self:flex-start">' + (isMe ? 'Update My Location' : 'Ping for Meetup') + '</span>' +
+        '</button>';
     }).join("");
 
+    /* My Location update card */
     var my = $("my-status"), meMember = S.me && d.team.filter(function (t) { return t.name === S.me; })[0];
     if (meMember) {
       my.hidden = false;
-      my.innerHTML = '<div class="row"><b>My location &amp; status</b><span class="muted" style="font-size:12.5px">Keeps your teammates informed.</span><span class="sp"></span>' +
-        '<select id="ms-floor" aria-label="My floor">' + floorOpts(meMember.floor) + '</select><select id="ms-room" aria-label="My room">' + roomOpts(meMember.floor, meMember.room) + '</select>' +
-        '<select id="ms-status" aria-label="My status">' + ["Available", "Busy", "On a task", "Off duty"].map(function (s) { return "<option" + (s === meMember.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select><button class="btn primary small" id="ms-save">Update</button></div>';
+      my.innerHTML = '<div class="row"><b>My Live Location &amp; Status</b><span class="muted" style="font-size:12.5px">Keep teammates updated so routing reaches your current spot.</span><span class="sp"></span>' +
+        '<select id="ms-floor" aria-label="My floor">' + floorOpts(meMember.floor) + '</select>' +
+        '<select id="ms-room" aria-label="My room">' + roomOpts(meMember.floor, meMember.room) + '</select>' +
+        '<select id="ms-status" aria-label="My status">' + ["Available", "Busy", "On a task", "Off duty"].map(function (s) { return "<option" + (s === meMember.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select>' +
+        '<button class="btn primary small" id="ms-save">Save Location</button></div>';
+      
       $("ms-floor").onchange = function () { $("ms-room").innerHTML = roomOpts($("ms-floor").value, ""); };
       $("ms-save").onclick = function () {
         Store.update("team", meMember.name, { floor: $("ms-floor").value, floorName: Store.FLOOR_NAMES[$("ms-floor").value], room: $("ms-room").value, status: $("ms-status").value });
-        TO.toast("Updated", "Your location and status were saved.", "ok"); load();
+        TO.toast("Location Saved", "Teammates can now navigate directly to your room.", "ok");
+        load();
       };
     } else my.hidden = true;
 
+    /* Meetup History */
     var list = d.meetups.slice().sort(function (a, b) { return (Store.parseStamp(b.ts) || 0) - (Store.parseStamp(a.ts) || 0); });
     $("meet-rows").innerHTML = list.length ? list.map(function (m) {
-      var cls = m.status === "Done" ? "b-done" : m.status === "On the way" ? "b-prog" : "b-ack";
-      var canAct = S.me && m.target === S.me && m.status !== "Done";
-      return '<div class="meet-item"><span class="badge ' + cls + '">' + esc(m.status) + '</span><div style="flex:1;min-width:230px"><b>' + esc(m.by) + "</b> &rarr; <b>" + esc(m.target) + '</b><div class="muted" style="font-size:12.5px">Meet at ' + esc(m.meetAt) + " · requester in " + esc(m.byRoom) + " (" + esc(m.byFloorName) + "), " + esc(m.target) + " in " + esc(m.targetRoom) + " (" + esc(m.targetFloorName) + ")" + (m.note ? " · " + esc(m.note) : "") + '</div></div><span class="muted" style="font-size:12px">' + esc(TO.ago(Store.parseStamp(m.ts))) + "</span>" +
-        (canAct ? (m.status === "Pending" ? '<button class="btn small accent" data-meet="' + esc(m.id) + '" data-st="On the way">On my way</button>' : "") + '<button class="btn small" data-meet="' + esc(m.id) + '" data-st="Done">Done</button>' : "") + "</div>";
-    }).join("") : '<div class="empty">No meetup requests yet.</div>';
+      var cls = m.status === "Done" ? "b-done" : (m.status === "Confirmed" || m.status === "On the way") ? "b-prog" : "b-ack";
+      var isTarget = S.me && m.target === S.me;
+      var canConfirm = isTarget && (m.status === "Pinged" || m.status === "Pending");
+      return '<div class="meet-item">' +
+        '<span class="badge ' + cls + '">' + esc(m.status) + '</span>' +
+        '<div style="flex:1;min-width:230px">' +
+        '<b>' + esc(m.by) + '</b> &rarr; <b>' + esc(m.target) + '</b>' +
+        '<div class="muted" style="font-size:12.5px">' +
+        (m.meetAt ? 'Meet at <b>' + esc(m.meetAt) + '</b> · ' : 'Location pending confirmation · ') +
+        'Requester in ' + esc(m.byRoom) + ' (' + esc(m.byFloorName) + ')' +
+        (m.targetRoom ? ', ' + esc(m.target) + ' in ' + esc(m.targetRoom) + ' (' + esc(m.targetFloorName) + ')' : '') +
+        (m.note ? ' · Note: ' + esc(m.note) : '') +
+        '</div>' +
+        '</div>' +
+        '<span class="muted" style="font-size:12px">' + esc(TO.ago(Store.parseStamp(m.ts))) + '</span>' +
+        (canConfirm ? '<button class="btn small accent" data-confirm-ping="' + esc(m.id) + '">Confirm My Room</button>' : '') +
+        (m.meetAt ? '<button class="btn small primary" data-route-to="' + esc(m.meetAt) + '">Route Here</button>' : '') +
+        ((m.by === S.me || isTarget) && m.status !== "Done" ? '<button class="btn small" data-meet="' + esc(m.id) + '" data-st="Done">Done</button>' : '') +
+        '</div>';
+    }).join("") : '<div class="empty">No meetup requests or pings yet.</div>';
   }
+
   function floorOpts(sel) { return D.FLOORS.map(function (f) { return '<option value="' + f.id + '"' + (f.id === sel ? " selected" : "") + ">" + f.name + "</option>"; }).join(""); }
   function roomOpts(floor, sel) {
     var list = S.data.rooms.filter(function (r) { return r.floor === floor; }).map(function (r) { return r.code; });
@@ -243,71 +515,181 @@
     return '<option value="">Select room…</option>' + list.map(function (c) { return '<option' + (c === sel ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("");
   }
 
-  var meetMap = null;
-  function openMeet(member) {
+  /* 1. SENDER: Ping a team member modal */
+  function openPingModal(member) {
     var d = S.data, meM = S.me && d.team.filter(function (t) { return t.name === S.me; })[0];
     var ov = document.createElement("div"); ov.className = "backdrop";
-    ov.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-label="Request meetup"><div class="mh"><div class="avatar" style="width:40px;height:40px;font-size:15px">' + esc(TO.initials(member.name)) + '</div><h3>Meet ' + esc(member.name) + '</h3><button class="x" aria-label="Close">&times;</button></div><div class="mb" id="meet-body"></div></div>';
+    ov.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-label="Ping Member">' +
+      '<div class="mh"><div class="avatar" style="width:40px;height:40px;font-size:15px">' + esc(TO.initials(member.name)) + '</div>' +
+      '<h3>Ping ' + esc(member.name) + ' for Meetup</h3>' +
+      '<button class="x" aria-label="Close">&times;</button></div>' +
+      '<div class="mb" id="ping-body"></div></div>';
     document.body.appendChild(ov);
-    function close() { ov.remove(); document.removeEventListener("keydown", esc_); }
-    function esc_(e) { if (e.key === "Escape") close(); }
-    document.addEventListener("keydown", esc_);
-    ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
-    ov.querySelector(".x").onclick = close;
 
-    var body = ov.querySelector("#meet-body");
+    function close() { ov.remove(); }
+    ov.querySelector(".x").onclick = close;
+    ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
+
+    var body = ov.querySelector("#ping-body");
     body.innerHTML =
-      '<label class="lbl" for="mt-by">Who is asking?</label><select id="mt-by" style="width:100%"><option value="">Select your name…</option>' + d.team.filter(function (t) { return t.name !== member.name; }).map(function (t) { return "<option" + (t.name === S.me ? " selected" : "") + ">" + esc(t.name) + "</option>"; }).join("") + "</select>" +
-      '<div class="two" style="margin-top:12px"><div class="col"><h4>Your current location</h4><label class="lbl" for="mt-bf">Floor</label><select id="mt-bf" style="width:100%">' + floorOpts(meM ? meM.floor : "F") + '</select><label class="lbl" for="mt-br">Room</label><select id="mt-br" style="width:100%">' + roomOpts(meM ? meM.floor : "F", meM ? meM.room : "") + "</select></div>" +
-      '<div class="col"><h4>' + esc(member.name.split(" ")[0]) + "'s current location</h4><label class=\"lbl\" for=\"mt-tf\">Floor</label><select id=\"mt-tf\" style=\"width:100%\">" + floorOpts(member.floor) + '</select><label class="lbl" for="mt-tr">Room</label><select id="mt-tr" style="width:100%">' + roomOpts(member.floor, member.room) + "</select></div></div>" +
-      '<label class="lbl">Where should you meet?</label><div class="radio-row"><label><input type="radio" name="mt-at" value="me" checked> At my room</label><label><input type="radio" name="mt-at" value="them"> At their room</label></div>' +
-      '<label class="lbl" for="mt-note">Message (optional)</label><textarea id="mt-note" maxlength="300" placeholder="e.g. Bring a spare HDMI cable"></textarea>' +
-      '<div class="note" id="mt-hint"></div><p id="mt-err" style="color:var(--bad);font-size:13px;margin-top:8px" hidden></p>' +
-      '<div class="mf" style="padding:14px 0 0"><a class="btn" href="tel:' + esc(member.phone.replace(/\s/g, "")) + '">Call ' + esc(member.phone) + '</a><button class="btn primary" id="mt-send">Send request</button></div>';
+      '<p class="muted" style="margin-bottom:12px">A ping notification will ask <b>' + esc(member.name) + '</b> to confirm their current room in case they moved. Once confirmed, you both get walking directions.</p>' +
+      '<label class="lbl" for="pt-by">Who is pinging?</label>' +
+      '<select id="pt-by" style="width:100%"><option value="">Select your name…</option>' + d.team.filter(function (t) { return t.name !== member.name; }).map(function (t) { return "<option" + (t.name === S.me ? " selected" : "") + ">" + esc(t.name) + "</option>"; }).join("") + '</select>' +
+      
+      '<div class="two" style="margin-top:12px">' +
+      '<div class="col"><h4>Your Current Spot</h4>' +
+      '<label class="lbl" for="pt-bf">Floor</label><select id="pt-bf" style="width:100%">' + floorOpts(meM ? meM.floor : "F") + '</select>' +
+      '<label class="lbl" for="pt-br">Room</label><select id="pt-br" style="width:100%">' + roomOpts(meM ? meM.floor : "F", meM ? meM.room : "") + '</select>' +
+      '</div>' +
+      '<div class="col"><h4>' + esc(member.name.split(" ")[0]) + '\'s Last Known Room</h4>' +
+      '<div style="font-size:13px;padding-top:10px">Room: <b>' + esc(member.room) + '</b></div>' +
+      '<div class="muted" style="font-size:12px">' + esc(member.floorName) + '</div>' +
+      '<div class="muted" style="font-size:11.5px;margin-top:6px">They will confirm their actual room when responding.</div>' +
+      '</div></div>' +
+
+      '<label class="lbl" for="pt-note">Message / Reason (optional)</label>' +
+      '<textarea id="pt-note" maxlength="300" placeholder="e.g. Need assistance with Wi-Fi router; please bring power strip"></textarea>' +
+      '<p id="pt-err" style="color:var(--bad);font-size:13px;margin-top:8px" hidden></p>' +
+      '<div class="mf" style="padding:14px 0 0">' +
+      '<button class="btn primary" id="pt-send" style="width:100%;padding:11px">Send Location Ping 🔔</button>' +
+      '</div>';
 
     var f = function (id) { return body.querySelector("#" + id); };
-    function hint() {
-      var a = f("mt-bf").value, b = f("mt-tf").value;
-      f("mt-hint").textContent = a === b ? "Same floor (" + Store.FLOOR_NAMES[a] + "): a direct walk." : "Different floors: " + Store.FLOOR_NAMES[a] + " \u2192 " + Store.FLOOR_NAMES[b] + ". Use the stairs.";
-    }
-    f("mt-bf").onchange = function () { f("mt-br").innerHTML = roomOpts(f("mt-bf").value, ""); hint(); };
-    f("mt-tf").onchange = function () { f("mt-tr").innerHTML = roomOpts(f("mt-tf").value, ""); hint(); };
-    hint();
-    f("mt-send").onclick = function () {
-      var by = f("mt-by").value, br = f("mt-br").value, tr = f("mt-tr").value, err = f("mt-err");
-      if (!by || !br || !tr) { err.hidden = false; err.textContent = "Please select your name, your room and their room."; return; }
-      var at = body.querySelector("input[name=mt-at]:checked").value;
-      var rec = { by: by, target: member.name, byFloor: f("mt-bf").value, byRoom: br, targetFloor: f("mt-tf").value, targetRoom: tr, meetAt: at === "me" ? br : tr, note: f("mt-note").value };
-      f("mt-send").disabled = true;
+    f("pt-bf").onchange = function () { f("pt-br").innerHTML = roomOpts(f("pt-bf").value, ""); };
+
+    f("pt-send").onclick = function () {
+      var by = f("pt-by").value, br = f("pt-br").value, err = f("pt-err");
+      if (!by || !br) {
+        err.hidden = false;
+        err.textContent = "Please select your name and current room.";
+        return;
+      }
+      f("pt-send").disabled = true;
+      f("pt-send").textContent = "Sending Ping…";
+
+      var rec = {
+        by: by,
+        target: member.name,
+        byFloor: f("pt-bf").value,
+        byRoom: br,
+        targetFloor: member.floor,
+        targetRoom: member.room,
+        meetAt: br, // default preference
+        note: f("pt-note").value.trim(),
+        status: "Pinged"
+      };
+
       Store.addMeetup(rec).then(function () {
         S.me = by; lset(ME_KEY, by);
-        showMeetResult(body, rec, member); load();
+        body.innerHTML = '<div class="success" style="padding-bottom:10px"><div class="tick">&#10003;</div>' +
+          '<h3>Ping Sent to ' + esc(member.name) + '!</h3>' +
+          '<p class="muted" style="margin-top:6px">They received a notification to confirm their current room. Once confirmed, you can click "Show Route" to walk straight to them.</p>' +
+          '<button class="btn primary" id="pt-done" style="margin-top:16px">Done</button></div>';
+        body.querySelector("#pt-done").onclick = function () { ov.remove(); };
+        load();
       });
     };
   }
-  function showMeetResult(body, rec, member) {
-    var meetFloor = rec.meetAt === rec.byRoom && rec.meetAt !== rec.targetRoom ? rec.byFloor : rec.meetAt === rec.targetRoom ? rec.targetFloor : rec.byFloor;
-    if (rec.byRoom === rec.targetRoom) meetFloor = rec.byFloor;
-    var atMine = rec.meetAt === rec.byRoom && rec.byFloor === meetFloor;
-    body.innerHTML = '<div class="success" style="padding-bottom:10px"><div class="tick">&#10003;</div><h3>Request sent to ' + esc(member.name) + '</h3><p class="muted" style="margin-top:6px">' + esc(member.name.split(" ")[0]) + " will see it on the TechOps dashboard" + (TechOpsStore.isLive() ? "." : " (demo mode: only in this browser).") + '</p><p style="margin-top:12px">Meet at <b>' + esc(rec.meetAt) + "</b> &middot; " + esc(Store.FLOOR_NAMES[meetFloor]) + "</p>" +
-      '<p class="muted" style="font-size:13px">' + (rec.byFloor === rec.targetFloor ? "Both of you are on the same floor." : esc(Store.FLOOR_NAMES[rec.byFloor]) + " \u2192 " + esc(Store.FLOOR_NAMES[rec.targetFloor]) + ": use the stairs.") + "</p></div>" +
-      '<div class="map" id="meet-map" style="height:260px;min-height:0"></div><div class="mf" style="padding:14px 0 0"><button class="btn primary" id="mt-done">Close</button></div>';
-    var mm = new FloorMap(body.querySelector("#meet-map"), {});
-    mm.setData(mapData()); mm.pins = false; mm.layer = "zones";
-    mm.setFloor(meetFloor);
-    var A = { floor: rec.byFloor, room: rec.byRoom, label: "YOU" }, B = { floor: rec.targetFloor, room: rec.targetRoom, label: member.name.split(" ")[0].toUpperCase() };
-    mm.highlight({ a: A, b: B });
-    setTimeout(function () { mm.fit(); mm.focus(rec.meetAt, 0.85); }, 30);
-    body.querySelector("#mt-done").onclick = function () { body.closest(".backdrop").remove(); };
+
+  /* 2. RECIPIENT: Confirm location and choose meeting point */
+  function openConfirmLocationModal(meetup) {
+    var d = S.data;
+    var meMember = d.team.filter(function (t) { return t.name === meetup.target; })[0] || {};
+    var ov = document.createElement("div"); ov.className = "backdrop";
+    ov.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-label="Confirm Location">' +
+      '<div class="mh"><h3>📍 Confirm Your Room for Meetup</h3><button class="x" aria-label="Close">&times;</button></div>' +
+      '<div class="mb" id="conf-body"></div></div>';
+    document.body.appendChild(ov);
+
+    function close() { ov.remove(); }
+    ov.querySelector(".x").onclick = close;
+    ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
+
+    var body = ov.querySelector("#conf-body");
+    body.innerHTML =
+      '<div style="background:var(--card-2);padding:12px;border-radius:10px;margin-bottom:14px;border:1px solid var(--line-strong)">' +
+      '<b>' + esc(meetup.by) + '</b> pinged you for a meetup!' +
+      (meetup.note ? '<div class="muted" style="font-size:12.5px;margin-top:4px">Reason: ' + esc(meetup.note) + '</div>' : '') +
+      '<div class="muted" style="font-size:12px;margin-top:2px">Their current location: <b>Room ' + esc(meetup.byRoom) + '</b> (' + esc(meetup.byFloorName) + ')</div>' +
+      '</div>' +
+
+      '<label class="lbl" style="font-size:13.5px;color:var(--ink-bright)">Where are you right now?</label>' +
+      '<div class="two">' +
+      '<div><label class="lbl" for="cf-floor">Floor</label><select id="cf-floor" style="width:100%">' + floorOpts(meMember.floor || "F") + '</select></div>' +
+      '<div><label class="lbl" for="cf-room">Room code</label><select id="cf-room" style="width:100%">' + roomOpts(meMember.floor || "F", meMember.room) + '</select></div>' +
+      '</div>' +
+
+      '<label class="lbl" style="margin-top:14px">Where should you meet?</label>' +
+      '<div class="radio-row">' +
+      '<label><input type="radio" name="cf-at" value="mine" checked> Meet at my current room</label>' +
+      '<label><input type="radio" name="cf-at" value="theirs"> Meet at ' + esc(meetup.by.split(" ")[0]) + '\'s room (' + esc(meetup.byRoom) + ')</label>' +
+      '</div>' +
+
+      '<p id="cf-err" style="color:var(--bad);font-size:13px;margin-top:8px" hidden></p>' +
+      '<div class="mf" style="padding:16px 0 0">' +
+      '<button class="btn primary" id="cf-confirm" style="width:100%;padding:11px">Confirm Location &amp; Meet</button>' +
+      '</div>';
+
+    var q = function (id) { return body.querySelector("#" + id); };
+    q("cf-floor").onchange = function () { q("cf-room").innerHTML = roomOpts(q("cf-floor").value, ""); };
+
+    q("cf-confirm").onclick = function () {
+      var fl = q("cf-floor").value, rm = q("cf-room").value, err = q("cf-err");
+      if (!fl || !rm) {
+        err.hidden = false;
+        err.textContent = "Please select your current floor and room.";
+        return;
+      }
+      q("cf-confirm").disabled = true;
+      q("cf-confirm").textContent = "Confirming…";
+
+      var atMine = body.querySelector("input[name=cf-at]:checked").value === "mine";
+      var meetAt = atMine ? rm : meetup.byRoom;
+
+      /* Update my live location in Team roster */
+      Store.update("team", meetup.target, {
+        floor: fl,
+        floorName: Store.FLOOR_NAMES[fl],
+        room: rm,
+        status: "Available"
+      });
+
+      /* Update meetup record */
+      Store.update("meetups", meetup.id, {
+        targetFloor: fl,
+        targetFloorName: Store.FLOOR_NAMES[fl],
+        targetRoom: rm,
+        meetAt: meetAt,
+        status: "Confirmed"
+      }).then(function () {
+        body.innerHTML = '<div class="success" style="padding-bottom:10px"><div class="tick">&#10003;</div>' +
+          '<h3>Location Confirmed!</h3>' +
+          '<p style="margin:8px 0">Meeting agreed at: <b style="color:var(--accent);font-size:16px">Room ' + esc(meetAt) + '</b></p>' +
+          '<p class="muted" style="font-size:12.5px">' + esc(meetup.by) + ' has been alerted. Follow the fastest route to get there.</p>' +
+          '<div class="row" style="margin-top:16px;justify-content:center;gap:10px">' +
+          '<button class="btn primary" id="cf-route-btn">🗺️ Open Walking Route</button>' +
+          '<button class="btn ghost" id="cf-close">Close</button>' +
+          '</div></div>';
+
+        body.querySelector("#cf-close").onclick = function () { ov.remove(); };
+        body.querySelector("#cf-route-btn").onclick = function () {
+          ov.remove();
+          setTab("maps");
+          planAndShowRoute(rm, meetAt);
+        };
+        load();
+      });
+    };
   }
 
-  /* ------------------------------------------------------------ inventory */
+  /* ------------------------------------------------------------ Inventory Tab */
   function renderInventory() {
     var d = S.data, items = {};
     d.inventory.forEach(function (r) {
       var k = r.item; items[k] = items[k] || { total: 0, lent: 0, cat: r.category };
       items[k].total += r.qty; if (r.status === "Lent out") items[k].lent += r.qty;
     });
+
     $("inv-summary").innerHTML = Object.keys(items).map(function (k) {
       var it = items[k], own = it.total - it.lent;
       return '<div class="card inv-sum"><div class="t">' + esc(k) + '</div><div class="m">' + it.total + " total &middot; " + own + " in hand &middot; " + it.lent + ' lent</div><div class="bar"><span class="own" style="width:' + (own / it.total * 100) + '%"></span><span class="lent" style="width:' + (it.lent / it.total * 100) + '%"></span></div></div>';
@@ -321,6 +703,7 @@
       return (!cat || r.category === cat) && (!h || r.holder === h) && (!st || r.status === st) &&
         (!q || (r.item + " " + r.team + " " + r.room + " " + r.holder + " " + r.id).toLowerCase().indexOf(q) >= 0);
     });
+
     var names = d.team.map(function (t) { return t.name; });
     $("inv-rows").innerHTML = rows.length ? rows.map(function (r) {
       var lent = r.status === "Lent out";
@@ -329,13 +712,15 @@
         "<td>" + (lent ? "<b>" + esc(r.team) + "</b><div class=\"muted\" style=\"font-size:12px\">Room " + esc(r.room) + " &middot; " + esc(r.floorName) + "</div>" : '<span class="muted">—</span>') + "</td>" +
         '<td><span class="badge ' + (lent ? "b-power" : "b-done") + '">' + esc(r.status) + "</span></td>" +
         "<td>" + (lent ? '<button class="btn small" data-return="' + esc(r.id) + '">Mark returned</button>' : '<button class="btn small" data-lend="' + esc(r.id) + '">Lend out…</button>') + "</td></tr>";
-    }).join("") : '<tr><td colspan="7" class="empty">No items match.</td></tr>';
+    }).join("") : '<tr><td colspan="7" class="empty">No items match this search.</td></tr>';
   }
+
   function uniq(a) { return a.filter(function (v, i) { return v && a.indexOf(v) === i; }).sort(); }
   function fillSelect(id, first, vals) {
     var el = $(id), cur = el.value;
     el.innerHTML = '<option value="">' + first + "</option>" + vals.map(function (v) { return "<option" + (v === cur ? " selected" : "") + ">" + esc(v) + "</option>"; }).join("");
   }
+
   function openLend(item) {
     var d = S.data;
     var ov = document.createElement("div"); ov.className = "backdrop";
@@ -352,36 +737,97 @@
     q("#ln-ok").onclick = function () {
       var t = q("#ln-team").value.trim(), r = q("#ln-r").value;
       if (!t || !r) { q("#ln-err").hidden = false; return; }
-      Store.update("inventory", item.id, { team: t, room: r, floor: q("#ln-f").value, floorName: Store.FLOOR_NAMES[q("#ln-f").value], status: "Lent out", updated: Store.stamp() }); close(); load();
+      Store.update("inventory", item.id, { team: t, room: r, floor: q("#ln-f").value, floorName: Store.FLOOR_NAMES[q("#ln-f").value], status: "Lent out", updated: Store.stamp() });
+      close(); load();
     };
   }
 
-  /* ------------------------------------------------------------ events */
+  /* ------------------------------------------------------------ Event Listeners */
   function bind() {
-    document.querySelector(".tabs").addEventListener("click", function (e) { var b = e.target.closest(".tab"); if (b) setTab(b.dataset.tab); });
+    /* Desktop Tab clicks */
+    document.querySelector(".tabs").addEventListener("click", function (e) {
+      var b = e.target.closest(".tab");
+      if (b) setTab(b.dataset.tab);
+    });
+
+    /* Mobile Bottom Navigation clicks */
+    document.querySelector(".mobile-nav").addEventListener("click", function (e) {
+      var b = e.target.closest(".mobile-nav-btn");
+      if (b && b.dataset.tab) setTab(b.dataset.tab);
+    });
+
     $("bell").onclick = function () { setTab("issues"); S.issueFilter = "New"; renderIssues(); };
     $("me").onchange = function () { S.me = this.value; lset(ME_KEY, S.me); renderHeader(); renderBanners(); renderTeam(); };
+    
     $("alerts-btn").onclick = function () {
       S.alertsOn = true; TO.beep();
       if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
       this.textContent = "Alerts on"; this.disabled = true;
-      TO.toast("Alerts enabled", "You will hear a sound and get a notification for new issues.", "ok");
+      TO.toast("Alerts enabled", "Sound and notifications enabled for incoming issues.", "ok");
     };
+
+    /* Routing UI */
+    $("rt-calc").onclick = function () { planAndShowRoute($("rt-from").value, $("rt-to").value); };
+    $("rt-clear").onclick = clearActiveRoute;
+    $("rt-swap").onclick = function () {
+      var tmp = $("rt-from").value;
+      $("rt-from").value = $("rt-to").value;
+      $("rt-to").value = tmp;
+      if ($("rt-from").value && $("rt-to").value) planAndShowRoute($("rt-from").value, $("rt-to").value);
+    };
+    $("rt-my-room").onclick = function () {
+      $("rt-from").value = myCurrentRoom();
+      TO.toast("Origin set", "Start location set to your current room (" + $("rt-from").value + ").", "ok");
+    };
+
+    /* Global dynamic click delegations */
     document.addEventListener("click", function (e) {
       var t;
       if ((t = e.target.closest("[data-if]"))) { S.issueFilter = t.dataset.if; renderIssues(); }
-      else if ((t = e.target.closest("[data-map]"))) { var r = S.data.reports.filter(function (x) { return x.id === t.dataset.map; })[0]; if (r) gotoIssueOnMap(r); }
       else if ((t = e.target.closest("[data-floor]"))) { S.floor = t.dataset.floor; S.selected = null; map.setFloor(S.floor); renderMapChrome(); renderSide(); }
       else if ((t = e.target.closest("[data-layer]"))) { S.layer = t.dataset.layer; map.setLayer(S.layer); renderMapChrome(); }
       else if ((t = e.target.closest("[data-zone]"))) { S.zone = S.zone === t.dataset.zone ? null : t.dataset.zone; map.setZoneFilter(S.zone); renderMapChrome(); }
-      else if ((t = e.target.closest("[data-member]"))) { openMeet(S.data.team[+t.dataset.member]); }
-      else if ((t = e.target.closest("[data-meet]"))) { Store.update("meetups", t.dataset.meet, { status: t.dataset.st }); load(); }
-      else if ((t = e.target.closest("[data-return]"))) { Store.update("inventory", t.dataset.return, { team: "", room: "", floor: "", floorName: "", status: "With member", updated: Store.stamp() }); load(); }
-      else if ((t = e.target.closest("[data-lend]"))) { openLend(S.data.inventory.filter(function (x) { return x.id === t.dataset.lend; })[0]); }
+      else if ((t = e.target.closest("[data-member]"))) {
+        var idx = +t.dataset.member;
+        var member = S.data.team[idx];
+        if (member.name === S.me) {
+          /* Self click: focus live location update */
+          var ms = $("my-status");
+          if (ms) { ms.scrollIntoView({ behavior: "smooth" }); }
+        } else {
+          openPingModal(member);
+        }
+      }
+      else if ((t = e.target.closest("[data-confirm-ping]"))) {
+        var meetId = t.dataset.confirmPing;
+        var m = S.data.meetups.filter(function (x) { return x.id === meetId; })[0];
+        if (m) openConfirmLocationModal(m);
+      }
+      else if ((t = e.target.closest("[data-route-to]"))) {
+        var destRoom = t.dataset.routeTo;
+        setTab("maps");
+        $("rt-to").value = destRoom;
+        var fromRoom = myCurrentRoom();
+        $("rt-from").value = fromRoom;
+        planAndShowRoute(fromRoom, destRoom);
+      }
+      else if ((t = e.target.closest("[data-meet]"))) {
+        Store.update("meetups", t.dataset.meet, { status: t.dataset.st });
+        load();
+      }
+      else if ((t = e.target.closest("[data-return]"))) {
+        Store.update("inventory", t.dataset.return, { team: "", room: "", floor: "", floorName: "", status: "With member", updated: Store.stamp() });
+        load();
+      }
+      else if ((t = e.target.closest("[data-lend]"))) {
+        openLend(S.data.inventory.filter(function (x) { return x.id === t.dataset.lend; })[0]);
+      }
     });
+
     $("pins-chip").onclick = function () { S.pins = !S.pins; map.setPins(S.pins); renderMapChrome(); };
     $("issue-search").oninput = function () { S.issueText = this.value; renderIssues(); };
     ["inv-search", "inv-cat", "inv-holder", "inv-status"].forEach(function (id) { $(id).addEventListener("input", renderInventory); });
+
     document.addEventListener("change", function (e) {
       var t = e.target;
       if (t.dataset.st && t.tagName === "SELECT") {
@@ -392,25 +838,53 @@
         var rep = S.data.reports.filter(function (x) { return x.id === t.dataset.as; })[0], f2 = { assigned: t.value };
         if (t.value && rep && rep.status === "New") f2.status = "Acknowledged";
         Store.update("reports", t.dataset.as, f2); load();
-      } else if (t.dataset.holder) { Store.update("inventory", t.dataset.holder, { holder: t.value, updated: Store.stamp() }); load(); }
+      } else if (t.dataset.holder) {
+        Store.update("inventory", t.dataset.holder, { holder: t.value, updated: Store.stamp() }); load();
+      }
     });
+
     Store.onChange(function () { load(); });
     document.addEventListener("techops-theme", function () { map.render(); });
   }
 
-  /* ------------------------------------------------------------ boot */
+  /* ------------------------------------------------------------ Boot */
   TO.initTheme();
-  map = new FloorMap($("map"), { onSelect: function (c) { selectRoom(c, false); }, tipHtml: tipHtml });
+  map = new FloorMap($("map"), {
+    onSelect: function (c) {
+      if (c && c.indexOf("STAIR-") === 0) {
+        var sk = c.replace("STAIR-", "");
+        TO.toast(Router.SN[sk] || "Stairs", "Inter-floor staircase connecting Levels 0, 1, and 2.");
+        return;
+      }
+      selectRoom(c, false);
+      /* Pre-fill destination field for route */
+      if (c && !/^wf:/i.test(c)) $("rt-to").value = c;
+    },
+    tipHtml: tipHtml
+  });
+
   map.setFloor("G");
   bind();
+
   load().then(function () {
     var q = new URLSearchParams(location.search);
-    if (q.get("floor") && D.FLOORS.some(function (f) { return f.id === q.get("floor"); })) { S.floor = q.get("floor"); map.setFloor(S.floor); }
+    if (q.get("floor") && D.FLOORS.some(function (f) { return f.id === q.get("floor"); })) {
+      S.floor = q.get("floor");
+      map.setFloor(S.floor);
+    }
     if (q.get("layer") === "heat") { S.layer = "heat"; map.setLayer("heat"); }
-    if (q.get("room")) { S.selected = q.get("room"); map.select(S.selected); }
-    renderMapChrome(); renderSide();
-    if (q.get("tab")) setTab(q.get("tab"));
+    if (q.get("room")) { S.selected = q.get("room"); map.select(S.selected); $("rt-to").value = S.selected; }
+    renderMapChrome();
+    renderSide();
+
+    if (q.get("routeTo")) {
+      setTab("maps");
+      planAndShowRoute(q.get("routeFrom") || myCurrentRoom(), q.get("routeTo"));
+    } else if (q.get("tab")) {
+      setTab(q.get("tab"));
+    }
     setTimeout(function () { map.fit(); }, 60);
   });
+
   setInterval(load, C.POLL_MS);
 })();

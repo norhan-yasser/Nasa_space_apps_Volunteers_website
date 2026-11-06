@@ -55,15 +55,22 @@
       var cx = 0, cy = 0;
       pts.forEach(function (p) { cx += p[0]; cy += p[1]; });
       cx = Math.round(cx / pts.length); cy = Math.round(cy / pts.length);
-      return { code: r[0], floor: id, pts: pts, cx: cx, cy: cy };
+      var xs = pts.map(function (p) { return p[0]; });
+      var ys = pts.map(function (p) { return p[1]; });
+      var bb = [Math.min.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, xs), Math.max.apply(null, ys)];
+      return { code: r[0], floor: id, pts: pts, cx: cx, cy: cy, bb: bb };
     });
     return { id: id, name: META[id].name, short: META[id].short, level: META[id].level, img: META[id].img, rooms: rooms };
   });
+
+  var ALL_ROOMS = [];
+  FLOORS.forEach(function (f) { ALL_ROOMS = ALL_ROOMS.concat(f.rooms); });
 
   window.TechOpsData = {
     W: 1673,
     H: 940,
     FLOORS: FLOORS,
+    ALL: ALL_ROOMS,
     ZONES: {
       Participants: { color: "#3d6bff", label: "Participants" },
       Volunteers: { color: "#10b981", label: "Volunteers" },

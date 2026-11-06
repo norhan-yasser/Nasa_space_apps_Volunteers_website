@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Room QR codes · TechOps · NASA Space Apps Cairo</title>
-  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Universal Venue QR Code · TechOps · NASA Space Apps Cairo</title>
+  <meta name="description" content="Official Universal QR Code for the NASA Space Apps Cairo venue. Scan to report any TechOps issue across all floors.">
   <link rel="icon" type="image/png" href="../assets/favicon.png">
   <link rel="stylesheet" href="css/techops.css">
   <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || 'dark'); } catch (e) {}</script>
@@ -12,28 +12,108 @@
 <body>
   <div class="bg" aria-hidden="true"></div>
   <div class="app">
-    <header class="top">
+    <header class="top noprint">
       <a class="brand" href="index.html">
         <img class="logo-dark" src="../assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
         <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
-        <span class="brand-text"><span class="brand-title">TECHOPS</span><span class="brand-sub">ROOM QR CODES</span></span>
+        <span class="brand-text">
+          <span class="brand-title">TECHOPS</span>
+          <span class="brand-sub">UNIVERSAL QR CODE</span>
+        </span>
       </a>
       <div class="sp"></div>
       <a class="btn" href="index.html">Dashboard</a>
-      <button class="btn primary" id="print">Print</button>
+      <a class="btn" href="report.html" target="_blank" rel="noopener">Open Form</a>
+      <button class="btn primary" id="print">🖨️ Print Poster</button>
       <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
     </header>
+
     <main>
-      <div class="page-title noprint"><h2>Room QR codes</h2><p>Print and stick one QR code in each room. Scanning opens the report form with the floor and room already selected.</p></div>
-      <div class="card panel noprint" style="margin-bottom:16px">
-        <label class="lbl" for="base" style="margin-top:0">Address the QR codes point to</label>
-        <div class="row"><input id="base" style="flex:1;min-width:260px" placeholder="https://…/techops/"><button class="btn" id="save-base">Apply</button><button class="btn ghost" id="reset-base">Use default</button></div>
-        <p class="muted" style="font-size:12.5px;margin-top:8px">The QR codes must point to the public address where this folder is hosted (for example GitHub Pages). Phones cannot open <code>file://</code> or <code>localhost</code> addresses.</p>
-        <div class="row" style="margin-top:12px" id="floor-filter"></div>
+      <!-- Base URL Setting (Collapsed on print) -->
+      <div class="card panel noprint" style="margin-bottom:20px">
+        <div class="row" style="align-items:center">
+          <b style="font-size:13.5px">Universal QR Destination URL:</b>
+          <input id="base" style="flex:1;min-width:260px" placeholder="https://norhan-yasser.github.io/Nasa_space_apps_Volunteers_website/techops/">
+          <button class="btn small" id="save-base">Update</button>
+          <button class="btn small ghost" id="reset-base">Default</button>
+          <button class="btn small primary" id="copy-link">Copy Link</button>
+        </div>
+        <p class="muted" style="font-size:12px;margin-top:6px">
+          This single QR code works everywhere in the venue. When participants or mentors scan it, they choose their floor &amp; room and report their problem.
+        </p>
       </div>
-      <div class="qr-grid" id="grid"></div>
+
+      <!-- HERO: THE UNIVERSAL QR CODE POSTER -->
+      <div class="universal-hero">
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px">
+          <img src="../assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge" class="logo-dark" style="height:38px">
+          <img src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge" class="logo-light" style="height:38px">
+        </div>
+        <h2>TECHOPS RAPID ASSISTANCE</h2>
+        <p class="sub">Official Technical Operations &amp; Support · NASA Space Apps Challenge Cairo</p>
+        
+        <div class="universal-qr-frame" id="universal-qr-box"></div>
+
+        <div style="font-family:var(--font-title);font-size:20px;letter-spacing:.05em;color:var(--accent);margin-bottom:4px">
+          SCAN TO REPORT ANY ISSUE
+        </div>
+        <p class="muted" style="font-size:13px;max-width:440px;margin:0 auto">
+          Internet lag, power / electricity outages, equipment needs, or general technical assistance in any room.
+        </p>
+
+        <div class="universal-steps">
+          <div class="u-step">
+            <b>1. Scan QR Code</b>
+            Open your phone camera or QR scanner.
+          </div>
+          <div class="u-step">
+            <b>2. Pick Floor &amp; Room</b>
+            Choose your current room from the dropdown.
+          </div>
+          <div class="u-step">
+            <b>3. Alert TechOps</b>
+            Select the issue. Our hardware &amp; network team is dispatched!
+          </div>
+        </div>
+
+        <div class="row noprint" style="justify-content:center;margin-top:22px;gap:12px">
+          <button class="btn primary" id="print-hero">🖨️ Print This Poster</button>
+          <a class="btn" href="report.html" target="_blank" rel="noopener">Test Scan on Browser ↗</a>
+        </div>
+      </div>
+
+      <!-- Optional Collapsible: Room-specific codes for organizers -->
+      <details class="noprint card panel" style="margin-top:20px">
+        <summary style="cursor:pointer;font-weight:700;padding:6px 0">Looking for individual room QR codes? (Optional)</summary>
+        <p class="muted" style="font-size:12px;margin:10px 0">
+          The single Universal QR Code above is recommended because participants can use it anywhere. If you also want pre-tagged stickers for each room door, they are generated below:
+        </p>
+        <div class="row" style="margin-bottom:14px" id="floor-filter"></div>
+        <div class="qr-grid" id="grid"></div>
+      </details>
     </main>
+
+    <!-- Mobile Nav -->
+    <nav class="mobile-nav" aria-label="Mobile navigation">
+      <a class="mobile-nav-btn" href="index.html?tab=issues">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Issues</span>
+      </a>
+      <a class="mobile-nav-btn" href="index.html?tab=maps">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        <span>Maps</span>
+      </a>
+      <a class="mobile-nav-btn" href="index.html?tab=team">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Team</span>
+      </a>
+      <a class="mobile-nav-btn on" href="qr-codes.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>QR Code</span>
+      </a>
+    </nav>
   </div>
+
   <script src="vendor/qrcode.js"></script>
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
