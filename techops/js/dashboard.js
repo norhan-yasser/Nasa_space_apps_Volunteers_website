@@ -89,7 +89,9 @@
     var d = S.data, m = d.meta;
     var pill = $("status-pill");
     pill.className = "pill-status " + (m.sheetOk ? "live" : "demo");
-    $("status-text").textContent = m.sheetOk ? "Live from Google Sheet" : "Demo data";
+    var statusLabel = m.sheetOk ? "Live from Google Sheet" : "Demo data";
+    var statusMobile = m.sheetOk ? "Live" : "Demo";
+    $("status-text").innerHTML = '<span class="status-text-full">' + esc(statusLabel) + '</span><span class="status-text-mobile">' + esc(statusMobile) + '</span>';
     pill.title = m.sheetOk ? "Reading TechOps backend sheet. Updated " + m.fetchedAt.toLocaleTimeString() : "Could not read sheet. Showing bundled dummy data.";
     
     var note = $("demo-note"), bits = [];
@@ -99,10 +101,12 @@
     note.innerHTML = esc(bits.join(" ")) + (!m.live ? ' <button class="btn small" id="reset-demo">Reset demo changes</button>' : "");
     var rb = $("reset-demo"); if (rb) rb.onclick = function () { Store.resetDemo(); load(); };
 
-    var sel = $("me"), cur = S.me;
-    sel.innerHTML = '<option value="">Not selected</option>' + d.team.map(function (t) {
+    var cur = S.me;
+    var teamOpts = '<option value="">Not selected</option>' + d.team.map(function (t) {
       return '<option value="' + esc(t.name) + '"' + (t.name === cur ? " selected" : "") + ">" + esc(t.name) + "</option>";
     }).join("");
+    if ($("me")) $("me").innerHTML = teamOpts;
+    if ($("me-mobile")) $("me-mobile").innerHTML = teamOpts;
 
     var openCount = d.reports.filter(function (r) { return r.status === "New"; }).length;
     var bc = $("bell-count"); bc.hidden = !openCount; bc.textContent = openCount;
@@ -199,13 +203,13 @@
     $("issue-rows").innerHTML = rows.map(function (r) {
       var when = Store.parseStamp(r.ts);
       return '<tr class="' + (r.status === "New" ? "is-new" : "") + '">' +
-        '<td><select data-st="' + esc(r.id) + '" aria-label="Status of ' + esc(r.id) + '">' + D.STATUSES.map(function (s) { return "<option" + (s === r.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></td>" +
-        '<td title="' + esc(r.ts) + '">' + esc(TO.ago(when)) + '<div class="muted" style="font-size:11.5px">' + esc(r.id) + "</div></td>" +
-        "<td><b>" + esc(r.room) + '</b><div class="muted" style="font-size:12px">' + esc(r.floorName) + "</div></td>" +
-        '<td><span class="badge ' + TO.issueClass(r.issue) + '">' + esc(r.issue) + "</span></td>" +
-        '<td style="max-width:280px">' + esc(r.details || "—") + "</td>" +
-        '<td><select data-as="' + esc(r.id) + '" aria-label="Assign ' + esc(r.id) + '"><option value="">Unassigned</option>' + names.map(function (n) { return "<option" + (n === r.assigned ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></td>" +
-        '<td><button class="btn small primary" data-route-to="' + esc(r.room) + '">Route Here</button></td></tr>';
+        '<td class="td-status"><select data-st="' + esc(r.id) + '" aria-label="Status of ' + esc(r.id) + '">' + D.STATUSES.map(function (s) { return "<option" + (s === r.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></td>" +
+        '<td class="td-meta" title="' + esc(r.ts) + '"><span class="issue-ago">' + esc(TO.ago(when)) + '</span><span class="muted issue-id">' + esc(r.id) + "</span></td>" +
+        '<td class="td-room"><div><b class="issue-room-code">' + esc(r.room) + '</b> <span class="muted issue-floor">(' + esc(r.floorName) + ')</span></div><span class="badge ' + TO.issueClass(r.issue) + ' mobile-only-badge">' + esc(r.issue) + '</span></td>' +
+        '<td class="td-badge desktop-only"><span class="badge ' + TO.issueClass(r.issue) + '">' + esc(r.issue) + "</span></td>" +
+        '<td class="td-desc">' + esc(r.details || "—") + "</td>" +
+        '<td class="td-assign"><select data-as="' + esc(r.id) + '" aria-label="Assign ' + esc(r.id) + '"><option value="">Unassigned</option>' + names.map(function (n) { return "<option" + (n === r.assigned ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></td>" +
+        '<td class="td-action"><button class="btn small primary" data-route-to="' + esc(r.room) + '">Route Here</button></td></tr>';
     }).join("");
   }
 
@@ -707,11 +711,14 @@
     var names = d.team.map(function (t) { return t.name; });
     $("inv-rows").innerHTML = rows.length ? rows.map(function (r) {
       var lent = r.status === "Lent out";
-      return "<tr><td>" + esc(r.id) + "</td><td><b>" + esc(r.item) + '</b><div class="muted" style="font-size:12px">' + esc(r.category) + '</div></td><td class="num">' + r.qty + "</td>" +
-        '<td><select data-holder="' + esc(r.id) + '" aria-label="Holder of ' + esc(r.id) + '">' + names.map(function (n) { return "<option" + (n === r.holder ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></td>" +
-        "<td>" + (lent ? "<b>" + esc(r.team) + "</b><div class=\"muted\" style=\"font-size:12px\">Room " + esc(r.room) + " &middot; " + esc(r.floorName) + "</div>" : '<span class="muted">—</span>') + "</td>" +
-        '<td><span class="badge ' + (lent ? "b-power" : "b-done") + '">' + esc(r.status) + "</span></td>" +
-        "<td>" + (lent ? '<button class="btn small" data-return="' + esc(r.id) + '">Mark returned</button>' : '<button class="btn small" data-lend="' + esc(r.id) + '">Lend out…</button>') + "</td></tr>";
+      return "<tr>" +
+        '<td class="td-inv-id"><span class="muted">' + esc(r.id) + "</span></td>" +
+        '<td class="td-inv-item"><div><b>' + esc(r.item) + '</b><div class="muted" style="font-size:12px">' + esc(r.category) + '</div></div><span class="badge ' + (lent ? "b-power" : "b-done") + ' mobile-only-badge">' + esc(r.status) + '</span></td>' +
+        '<td class="num td-inv-qty"><span class="mobile-only-lbl">Total Quantity: </span><b>' + r.qty + "</b></td>" +
+        '<td class="td-inv-holder"><span class="mobile-only-lbl">Held by: </span><select data-holder="' + esc(r.id) + '" aria-label="Holder of ' + esc(r.id) + '">' + names.map(function (n) { return "<option" + (n === r.holder ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></td>" +
+        '<td class="td-inv-lent">' + (lent ? '<span class="mobile-only-lbl">Lent to: </span><b>' + esc(r.team) + '</b> <span class="muted" style="font-size:12px">(Room ' + esc(r.room) + ' &middot; ' + esc(r.floorName) + ')</span>' : '<span class="muted">—</span>') + "</td>" +
+        '<td class="td-inv-status desktop-only"><span class="badge ' + (lent ? "b-power" : "b-done") + '">' + esc(r.status) + "</span></td>" +
+        '<td class="td-inv-action">' + (lent ? '<button class="btn small" data-return="' + esc(r.id) + '">Mark returned</button>' : '<button class="btn small primary" data-lend="' + esc(r.id) + '">Lend out…</button>') + "</td></tr>";
     }).join("") : '<tr><td colspan="7" class="empty">No items match this search.</td></tr>';
   }
 
@@ -757,14 +764,55 @@
     });
 
     $("bell").onclick = function () { setTab("issues"); S.issueFilter = "New"; renderIssues(); };
-    $("me").onchange = function () { S.me = this.value; lset(ME_KEY, S.me); renderHeader(); renderBanners(); renderTeam(); };
-    
-    $("alerts-btn").onclick = function () {
+
+    function setViewingAs(val) {
+      S.me = val;
+      lset(ME_KEY, S.me);
+      if ($("me")) $("me").value = val;
+      if ($("me-mobile")) $("me-mobile").value = val;
+      renderHeader();
+      renderBanners();
+      renderTeam();
+    }
+    if ($("me")) $("me").onchange = function () { setViewingAs(this.value); };
+    if ($("me-mobile")) $("me-mobile").onchange = function () { setViewingAs(this.value); };
+
+    /* Mobile drawer toggle */
+    var mToggle = $("mobile-menu-toggle");
+    var mDrawer = $("mobile-drawer");
+    if (mToggle && mDrawer) {
+      mToggle.onclick = function (e) {
+        e.stopPropagation();
+        var willOpen = mDrawer.hidden;
+        mDrawer.hidden = !willOpen;
+        mToggle.setAttribute("aria-expanded", willOpen);
+        mToggle.classList.toggle("is-open", willOpen);
+      };
+      document.addEventListener("click", function (e) {
+        if (!mDrawer.hidden && !mDrawer.contains(e.target) && !mToggle.contains(e.target)) {
+          mDrawer.hidden = true;
+          mToggle.setAttribute("aria-expanded", "false");
+          mToggle.classList.remove("is-open");
+        }
+      });
+      mDrawer.querySelectorAll("a, button:not(#mobile-alerts-btn)").forEach(function (el) {
+        el.addEventListener("click", function () {
+          mDrawer.hidden = true;
+          mToggle.setAttribute("aria-expanded", "false");
+          mToggle.classList.remove("is-open");
+        });
+      });
+    }
+
+    function enableAlerts() {
       S.alertsOn = true; TO.beep();
       if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
-      this.textContent = "Alerts on"; this.disabled = true;
+      if ($("alerts-btn")) { $("alerts-btn").textContent = "Alerts on"; $("alerts-btn").disabled = true; }
+      if ($("mobile-alerts-btn")) { $("mobile-alerts-btn").textContent = "🔔 Alerts On"; $("mobile-alerts-btn").disabled = true; }
       TO.toast("Alerts enabled", "Sound and notifications enabled for incoming issues.", "ok");
-    };
+    }
+    if ($("alerts-btn")) $("alerts-btn").onclick = enableAlerts;
+    if ($("mobile-alerts-btn")) $("mobile-alerts-btn").onclick = enableAlerts;
 
     /* Routing UI */
     $("rt-calc").onclick = function () { planAndShowRoute($("rt-from").value, $("rt-to").value); };
@@ -882,6 +930,11 @@
       planAndShowRoute(q.get("routeFrom") || myCurrentRoom(), q.get("routeTo"));
     } else if (q.get("tab")) {
       setTab(q.get("tab"));
+    }
+    if (q.get("drawer") === "open") {
+      var md = $("mobile-drawer"), mt = $("mobile-menu-toggle");
+      if (md) md.hidden = false;
+      if (mt) { mt.classList.add("is-open"); mt.setAttribute("aria-expanded", "true"); }
     }
     setTimeout(function () { map.fit(); }, 60);
   });

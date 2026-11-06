@@ -22,20 +22,64 @@
         </span>
       </a>
       <div class="sp"></div>
+
+      <!-- Live status indicator -->
       <span class="pill-status demo" id="status-pill" title=""><i></i><span id="status-text">Connecting…</span></span>
-      <div class="who">
-        <label for="me">Viewing as</label>
-        <select id="me" aria-label="Which TechOps member are you"><option value="">Not selected</option></select>
+
+      <!-- Desktop header controls -->
+      <div class="desktop-controls">
+        <div class="who">
+          <label for="me">Viewing as</label>
+          <select id="me" aria-label="Which TechOps member are you"><option value="">Not selected</option></select>
+        </div>
+        <button class="btn" id="alerts-btn" title="Enable sound and desktop notifications for new issues">Enable alerts</button>
+        <a class="btn" href="qr-codes.html" title="Universal Venue QR Code for issue reporting">Universal QR</a>
+        <a class="btn" href="report.html" target="_blank" rel="noopener" title="Open the public report form">Report form</a>
+        <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
       </div>
-      <button class="btn" id="alerts-btn" title="Enable sound and desktop notifications for new issues">Enable alerts</button>
-      <a class="btn" href="qr-codes.html" title="Universal Venue QR Code for issue reporting">Universal QR</a>
-      <a class="btn" href="report.html" target="_blank" rel="noopener" title="Open the public report form">Report form</a>
+
+      <!-- Always visible notification bell -->
       <button class="btn bell" id="bell" aria-label="Open issues">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
         <span class="count" id="bell-count" hidden>0</span>
       </button>
-      <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
+
+      <!-- Mobile hamburger toggle button -->
+      <button class="btn mobile-menu-btn" id="mobile-menu-toggle" aria-label="Toggle options menu" aria-expanded="false">
+        <svg class="icon-bars" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg class="icon-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" hidden><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </header>
+
+    <!-- Mobile Top Navigation Drawer -->
+    <div class="mobile-drawer" id="mobile-drawer" hidden>
+      <div class="mobile-drawer-body">
+        <div class="mobile-drawer-section">
+          <label class="mobile-drawer-label" for="me-mobile">Viewing as Team Member</label>
+          <select id="me-mobile" class="mobile-select" aria-label="Which TechOps member are you on mobile">
+            <option value="">Not selected</option>
+          </select>
+        </div>
+        <div class="mobile-drawer-actions">
+          <a class="btn mobile-drawer-btn" href="qr-codes.html">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Universal QR Poster</span>
+          </a>
+          <a class="btn mobile-drawer-btn" href="report.html" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span>Public Report Form ↗</span>
+          </a>
+          <button class="btn mobile-drawer-btn" id="mobile-theme-toggle">
+            <span class="theme-icon">🌓</span>
+            <span id="mobile-theme-text">Toggle Light / Dark</span>
+          </button>
+          <button class="btn mobile-drawer-btn" id="mobile-alerts-btn">
+            <span>🔔</span>
+            <span>Enable Sound Alerts</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <main>
       <div id="banners"></div>
@@ -54,13 +98,13 @@
           <h2>Reported issues</h2>
           <p>Scanned via Universal QR code. Real-time updates sync to the dummy Google Sheet.</p>
         </div>
-        <div class="row" style="margin-bottom:12px">
-          <span id="issue-filters" class="row" style="gap:6px"></span>
-          <span class="sp"></span>
-          <input id="issue-search" type="search" placeholder="Search room, team, or problem…" style="max-width:260px" aria-label="Search issues">
+        <div class="row issues-filter-row" style="margin-bottom:14px">
+          <div id="issue-filters" class="chips-scroll-row"></div>
+          <span class="sp desktop-only"></span>
+          <input id="issue-search" type="search" placeholder="Search room, team, or problem…" aria-label="Search issues">
         </div>
-        <div class="card table-wrap">
-          <table>
+        <div class="table-wrap">
+          <table class="issues-table">
             <thead>
               <tr><th>Status</th><th>Reported</th><th>Location</th><th>Issue</th><th>Details</th><th>Assigned to</th><th>Action</th></tr>
             </thead>
@@ -77,23 +121,33 @@
         </div>
 
         <!-- Wayfinding bar -->
-        <div class="card panel" id="route-bar" style="margin-bottom:14px;padding:12px 16px">
-          <div class="row" style="gap:10px;align-items:center">
-            <span style="font-weight:700;color:var(--accent);display:flex;align-items:center;gap:6px">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-              Fastest Route:
-            </span>
-            <div style="display:flex;gap:6px;align-items:center;flex:1;min-width:280px;flex-wrap:wrap">
-              <input id="rt-from" list="rooms-list" placeholder="From (e.g. B133, Entrance)" style="flex:1;min-width:130px;max-width:220px">
-              <button class="btn small" id="rt-swap" title="Swap From and To" aria-label="Swap directions">⇄</button>
-              <input id="rt-to" list="rooms-list" placeholder="To (e.g. H113, S016)" style="flex:1;min-width:130px;max-width:220px">
-              <datalist id="rooms-list"></datalist>
-              <button class="btn primary small" id="rt-calc">Find Route</button>
-              <button class="btn small ghost" id="rt-clear">Clear</button>
+        <div class="card panel route-bar-card" id="route-bar">
+          <div class="route-bar-inner">
+            <div class="route-header">
+              <span class="route-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                Fastest Route
+              </span>
+              <button class="btn small rt-btn-myroom" id="rt-my-room" title="Set Origin to my current room">From My Room</button>
             </div>
-            <button class="btn small" id="rt-my-room" title="Set Origin to my current room">From My Room</button>
+            
+            <div class="route-inputs-wrap">
+              <div class="route-field">
+                <input id="rt-from" list="rooms-list" placeholder="From (e.g. B133, Entrance)" class="rt-input">
+              </div>
+              <button class="btn small rt-swap-btn" id="rt-swap" title="Swap From and To" aria-label="Swap directions">⇄</button>
+              <div class="route-field">
+                <input id="rt-to" list="rooms-list" placeholder="To (e.g. H113, S016)" class="rt-input">
+              </div>
+              <datalist id="rooms-list"></datalist>
+            </div>
+
+            <div class="route-actions">
+              <button class="btn primary rt-btn-calc" id="rt-calc">Find Route</button>
+              <button class="btn ghost rt-btn-clear" id="rt-clear">Clear</button>
+            </div>
           </div>
-          <div id="route-output" hidden style="margin-top:10px"></div>
+          <div id="route-output" hidden></div>
         </div>
 
         <div class="map-tools">
@@ -141,14 +195,16 @@
           <p>Track hardware ownership, who holds each item, and lending status to specific teams and rooms.</p>
         </div>
         <div class="inv-summary" id="inv-summary"></div>
-        <div class="row" style="margin-bottom:12px">
-          <input id="inv-search" type="search" placeholder="Search equipment, team or room…" style="max-width:260px" aria-label="Search inventory">
-          <select id="inv-cat" aria-label="Category"></select>
-          <select id="inv-holder" aria-label="Held by"></select>
-          <select id="inv-status" aria-label="Status"><option value="">Any status</option><option>With member</option><option>Lent out</option></select>
+        <div class="row inv-filter-row" style="margin-bottom:14px">
+          <input id="inv-search" type="search" placeholder="Search equipment, team or room…" aria-label="Search inventory">
+          <div class="inv-selects-scroll">
+            <select id="inv-cat" aria-label="Category"></select>
+            <select id="inv-holder" aria-label="Held by"></select>
+            <select id="inv-status" aria-label="Status"><option value="">Any status</option><option>With member</option><option>Lent out</option></select>
+          </div>
         </div>
-        <div class="card table-wrap">
-          <table>
+        <div class="table-wrap">
+          <table class="inv-table">
             <thead>
               <tr><th>ID</th><th>Item</th><th class="num">Qty</th><th>Held by</th><th>Lent to</th><th>Status</th><th>Action</th></tr>
             </thead>

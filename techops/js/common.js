@@ -10,19 +10,24 @@
   function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t);
     var b = document.getElementById("theme-toggle");
-    if (b) b.querySelector(".btn-text").textContent = t === "dark" ? "Light" : "Dark";
+    if (b && b.querySelector(".btn-text")) b.querySelector(".btn-text").textContent = t === "dark" ? "Light" : "Dark";
+    var mb = document.getElementById("mobile-theme-text");
+    if (mb) mb.textContent = t === "dark" ? "Light Mode" : "Dark Mode";
+  }
+  function toggleTheme() {
+    var n = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    try { localStorage.setItem(THEME_KEY, n); } catch (e) {}
+    applyTheme(n);
+    document.dispatchEvent(new CustomEvent("techops-theme"));
   }
   function initTheme() {
     var t = "dark";
     try { t = localStorage.getItem(THEME_KEY) || "dark"; } catch (e) {}
     applyTheme(t);
     var b = document.getElementById("theme-toggle");
-    if (b) b.addEventListener("click", function () {
-      var n = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      try { localStorage.setItem(THEME_KEY, n); } catch (e) {}
-      applyTheme(n);
-      document.dispatchEvent(new CustomEvent("techops-theme"));
-    });
+    if (b) b.addEventListener("click", toggleTheme);
+    var mb = document.getElementById("mobile-theme-toggle");
+    if (mb) mb.addEventListener("click", toggleTheme);
   }
 
   function toast(title, body, kind, onClick, ms) {
