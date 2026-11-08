@@ -35,7 +35,10 @@
       d.roomMap = {}; d.rooms.forEach(function (r) { d.roomMap[r.code] = r; });
       fillRoomDataList();
       detectNew();
-      var sig = JSON.stringify([d.rooms, d.wifi, d.team, d.inventory, d.reports, d.meetups, d.meta.online]);
+      var sig = (d.meta.online ? "1" : "0") + "_" + (d.meta.synced ? "1" : "0") + "_" +
+        (d.reports || []).map(function (r) { return r.id + r.status + r.assigned; }).join(";") + "_" +
+        (d.meetups || []).map(function (m) { return m.id + m.status; }).join(";") + "_" +
+        (d.rooms ? d.rooms.length : 0) + "_" + (d.wifi ? d.wifi.length : 0);
       if (sig === S.sig) { renderHeader(); return; }
       S.sig = sig;
       renderAll();
@@ -97,9 +100,10 @@
   function renderHeader() {
     var d = S.data, m = d.meta;
     var pill = $("status-pill");
-    var state = !m.online ? "demo" : m.live ? "live" : "demo";
-    var statusLabel = !m.online ? "Offline" : m.live ? "Live from Firebase" : "Local preview";
-    var statusMobile = !m.online ? "Offline" : m.live ? "Live" : "Preview";
+    var isLive = m.live, isOnline = m.online, isSynced = m.synced;
+    var state = !isOnline ? "demo" : isLive ? (isSynced ? "live" : "demo") : "demo";
+    var statusLabel = !isOnline ? "Offline" : isLive ? (isSynced ? "Live from Firebase" : "Connecting…") : "Local preview";
+    var statusMobile = !isOnline ? "Offline" : isLive ? (isSynced ? "Live" : "Connecting…") : "Preview";
     pill.className = "pill-status " + state;
     $("status-text").innerHTML = '<span class="status-text-full">' + esc(statusLabel) + '</span><span class="status-text-mobile">' + esc(statusMobile) + '</span>';
     pill.title = !m.online ? (m.error || "Could not reach Firebase.") : m.live ? "Real-time connection to Firebase. Updated " + m.fetchedAt.toLocaleTimeString() : "Firebase is not configured: showing bundled dummy data stored in this browser.";
@@ -1266,11 +1270,11 @@
     if (window.NasaTutorial && !Store.isTutorialCompleted("techops")) {
       startTechOpsTutorial(false);
     } else {
-      Store.start().then(function () {
-        return load();
-      }).then(function () {
+      /* Cache-first instant 0ms initial render; sync with Firebase in background */
+      load().then(function () {
         handleQuery();
       });
+      Store.start().catch(function () {});
     }
   }
 

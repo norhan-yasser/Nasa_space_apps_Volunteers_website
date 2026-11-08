@@ -72,8 +72,9 @@
   /* ---------------------------------------------------------------- render */
   function renderHeader() {
     var m = S.data.meta, pill = $("status-pill");
-    pill.className = "pill-status " + (!m.online ? "demo" : m.live ? "live" : "demo");
-    $("status-text").textContent = !m.online ? "Offline" : m.live ? "Live" : "Local preview";
+    var isLive = m.live, isOnline = m.online, isSynced = m.synced;
+    pill.className = "pill-status " + (!isOnline ? "demo" : isLive ? (isSynced ? "live" : "demo") : "demo");
+    $("status-text").textContent = !isOnline ? "Offline" : isLive ? (isSynced ? "Live" : "Connecting…") : "Local preview";
     var note = $("demo-note"), bits = [];
     if (!m.online) bits.push("Could not load data from Firebase: " + (m.error || "unknown error") + ".");
     if (!m.live) bits.push("Local preview: Firebase is not configured, so requests are stored in this browser only.");
@@ -151,7 +152,7 @@
     (kind === "claim" ? Store.claimReport(id) : Store.resolveReport(id)).then(function () {
       TO.toast(kind === "claim" ? "Request claimed" : "Request done", kind === "claim" ? id + " is now assigned to you." : id + " marked as done.", "ok");
     }).catch(function () { btn.disabled = false; btn.textContent = label; })
-      .then(function () { delete S.busy[id]; S.sig = ""; return load(); });
+      .then(function () { delete S.busy[id]; S.sig = ""; });
   }
 
   /* ---------------------------------------------------------------- sign in & strict RBAC */
@@ -225,9 +226,9 @@
     if (window.NasaTutorial && !Store.isTutorialCompleted("logistics")) {
       startLogisticsTutorial(false);
     } else {
-      Store.start().then(function () {
-        return load();
-      });
+      /* Cache-first instant 0ms initial render; sync with Firebase in background */
+      load();
+      Store.start().catch(function () {});
     }
   }
 

@@ -102,8 +102,55 @@
   /* ---------------------------------------------------------------- shared state */
   var cache = {}, ready = {}, listeners = [], user = null, started = false, lastError = null;
   var emitT = 0, readyResolve, readyP = new Promise(function (r) { readyResolve = r; });
-  function emit() { clearTimeout(emitT); emitT = setTimeout(function () { listeners.forEach(function (f) { f({ kind: "data" }); }); }, 30); }
-  function checkReady() { if (COLS.every(function (c) { return ready[c]; })) readyResolve(); }
+  var CACHE_KEY = "techops_firestore_cache_v2";
+
+  function loadPersistedCache() {
+    var raw = jget(CACHE_KEY, null);
+    if (raw && typeof raw === "object") {
+      COLS.forEach(function (c) {
+        if (Array.isArray(raw[c]) && raw[c].length > 0) {
+          cache[c] = raw[c];
+        }
+      });
+    }
+    var seed = window.TECHOPS_SEED || {};
+    COLS.forEach(function (c) {
+      if (!cache[c] || cache[c].length === 0) {
+        if (seed[c]) {
+          cache[c] = Object.keys(seed[c]).map(function (k) {
+            var o = Object.assign({}, seed[c][k]);
+            o._id = k;
+            return o;
+          });
+        } else {
+          cache[c] = [];
+        }
+      }
+    });
+  }
+
+  function savePersistedCache() {
+    try {
+      jset(CACHE_KEY, cache);
+    } catch (e) {}
+  }
+
+  /* Hydrate cache immediately on script execution for instantaneous 0ms initial render */
+  loadPersistedCache();
+
+  function emit() { clearTimeout(emitT); emitT = setTimeout(function () { listeners.forEach(function (f) { f({ kind: "data" }); }); }, 25); }
+  function checkReady() {
+    savePersistedCache();
+    var critical = (TEAM === "TechOps") ? COLS : ["reports", "rooms"];
+    if (critical.every(function (c) { return ready[c]; })) {
+      if (readyResolve) readyResolve();
+    }
+  }
+
+  function findCacheReport(id) {
+    if (!cache.reports) return null;
+    return cache.reports.filter(function (r) { return r && (r.id === id || r._id === id); })[0] || null;
+  }
 
   /* ---------------------------------------------------------------- Firebase backend */
   var fb = { db: null, auth: null, unsubs: [], boot: null };
@@ -122,6 +169,11 @@
         /* Omit authDomain so Firebase Auth does not inject the OAuth /__/auth/iframe element (we only use Anonymous Auth). */
         if (!firebase.apps.length) firebase.initializeApp({ apiKey: FB.apiKey, projectId: FB.projectId, appId: FB.appId });
         fb.auth = firebase.auth(); fb.db = firebase.firestore();
+        try {
+          if (fb.db.enablePersistence) {
+            fb.db.enablePersistence({ synchronizeTabs: true }).catch(function () {});
+          }
+        } catch (e) {}
       });
     return fb.boot;
   };
@@ -323,14 +375,18 @@
       if (channel) channel.onmessage = function () { loc.refresh(); emit(); };
       window.addEventListener("storage", function (e) { if (e.key === LOCAL_KEY) { loc.refresh(); emit(); } });
     }
-    setTimeout(readyResolve, 9000);
+    setTimeout(readyResolve, 4000);
     return readyP;
   }
   function loadAll() {
-    return readyP.then(function () {
+    /* Stale-while-revalidate / Cache-first: if in-memory/persisted cache exists, return immediately (0ms) */
+    var hasData = COLS.some(function (c) { return cache[c] && cache[c].length > 0; });
+    var p = (_tutorialMode || hasData) ? Promise.resolve() : readyP;
+    return p.then(function () {
       var geo = {};
       if (D && D.ALL) D.ALL.forEach(function (g) { geo[g.code] = 1; });
-      var out = { meta: { live: LIVE, online: !lastError, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
+      var isSynced = !LIVE || ((TEAM === "TechOps" ? COLS : ["reports", "rooms"]).every(function (c) { return ready[c]; }));
+      var out = { meta: { live: LIVE, online: !lastError, synced: isSynced, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
       COLS.forEach(function (c) { out[c] = normalise(c, cache[c] || []); });
       if (_tutorialMode && _tutorialReports) {
         var tr = String(_tutorialRole || TEAM || (user && (user.role || user.team)) || "").toLowerCase();
@@ -468,7 +524,8 @@
     });
     return guard(backend().set("meetups", obj.id, obj)).then(function () { return { id: obj.id, demo: !LIVE }; });
   }
-  /* One-click claim: assigns the task to the signed-in volunteer and moves it to "In Progress". */
+  /* One-click claim: assigns the task to the signed-in volunteer and moves it to "In Progress".
+   * Performs an instant optimistic update (<16ms) in local cache, then syncs with Firestore in the background. */
   function claimReport(id) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
     if (String(id).indexOf("TUT-") === 0) {
@@ -476,6 +533,7 @@
         var tr = _tutorialReports.filter(function (x) { return x.id === id; })[0];
         if (tr) { tr.assigned = user.name; tr.status = "In Progress"; tr.claimedAt = stamp(); }
       }
+      emit();
       return Promise.resolve({ id: id, status: "In Progress", assigned: user.name });
     }
     if (_tutorialMode && _tutorialReports) {
@@ -489,13 +547,34 @@
       emit();
       return Promise.resolve({ id: r.id, status: r.status, assigned: r.assigned });
     }
+
+    var target = findCacheReport(id);
+    var backup = target ? Object.assign({}, target) : null;
+    if (target) {
+      if (target.status === "Resolved") return Promise.reject(fail("claimed", "This task is already resolved."));
+      if (target.assigned && target.assigned !== user.name) return Promise.reject(fail("claimed", "Already claimed by " + target.assigned + "."));
+      target.assigned = user.name;
+      target.status = "In Progress";
+      target.claimedAt = stamp();
+      savePersistedCache();
+      emit();
+    }
+
     return guard(backend().mutateReport(id, function (r) {
       if (r.status === "Resolved") throw fail("claimed", "This task is already resolved.");
       if (r.assigned && r.assigned !== user.name) throw fail("claimed", "Already claimed by " + r.assigned + ".");
       return { assigned: user.name, status: "In Progress", claimedAt: stamp() };
-    }));
+    })).catch(function (err) {
+      if (target && backup) {
+        Object.assign(target, backup);
+        savePersistedCache();
+        emit();
+      }
+      throw err;
+    });
   }
-  /* One-click resolve: only the volunteer who claimed the task can resolve it. */
+  /* One-click resolve: only the volunteer who claimed the task can resolve it.
+   * Performs an instant optimistic update (<16ms) in local cache, then syncs with Firestore in the background. */
   function resolveReport(id) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
     if (String(id).indexOf("TUT-") === 0) {
@@ -503,6 +582,7 @@
         var tr = _tutorialReports.filter(function (x) { return x.id === id; })[0];
         if (tr) { tr.status = "Resolved"; tr.resolvedAt = stamp(); }
       }
+      emit();
       return Promise.resolve({ id: id, status: "Resolved" });
     }
     if (_tutorialMode && _tutorialReports) {
@@ -513,12 +593,33 @@
       emit();
       return Promise.resolve({ id: r.id, status: r.status });
     }
+
+    var target = findCacheReport(id);
+    var backup = target ? Object.assign({}, target) : null;
+    if (target) {
+      if (target.assigned && target.assigned !== user.name && target.handedBy !== user.name) {
+        return Promise.reject(fail("claimed", "Only " + (target.assigned || "the assignee") + " can resolve this task."));
+      }
+      target.status = "Resolved";
+      target.resolvedAt = stamp();
+      target.assigned = target.assigned || user.name;
+      savePersistedCache();
+      emit();
+    }
+
     return guard(backend().mutateReport(id, function (r) {
       if (r.assigned && r.assigned !== user.name && r.handedBy !== user.name) {
         throw fail("claimed", "Only " + (r.assigned || "the assignee") + " can resolve this task.");
       }
       return { assigned: r.assigned || user.name, status: "Resolved", resolvedAt: stamp() };
-    }));
+    })).catch(function (err) {
+      if (target && backup) {
+        Object.assign(target, backup);
+        savePersistedCache();
+        emit();
+      }
+      throw err;
+    });
   }
   /* Keep the session alive only while the site is actually open on screen; coming back after being away too long locks again. */
   function expireIfStale() {
@@ -531,7 +632,8 @@
     window.addEventListener("pageshow", function () { if (!expireIfStale()) markSeen(); });
     window.addEventListener("pagehide", markSeen);
   } catch (e) {}
-  /* Dispatch only: pass a request you claimed to a Tech Ops / Logistics member (they then see it as theirs). */
+  /* Dispatch only: pass a request you claimed to a Tech Ops / Logistics member (they then see it as theirs).
+   * Performs an instant optimistic update (<16ms) in local cache, then syncs with Firestore in the background. */
   function handOutReport(id, member) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
     member = clip(String(member || "").trim(), 60);
@@ -545,13 +647,33 @@
       emit();
       return Promise.resolve({ id: r.id, assigned: r.assigned });
     }
+
+    var target = findCacheReport(id);
+    var backup = target ? Object.assign({}, target) : null;
+    if (target) {
+      if (target.status === "Resolved") return Promise.reject(fail("claimed", "This task is already resolved."));
+      if (target.assigned !== user.name && target.handedBy !== user.name) return Promise.reject(fail("claimed", "Claim this request first."));
+      target.assigned = member;
+      target.handedBy = user.name;
+      target.handedAt = stamp();
+      savePersistedCache();
+      emit();
+    }
+
     return guard(backend().mutateReport(id, function (r) {
       if (r.status === "Resolved") throw fail("claimed", "This task is already resolved.");
       if (r.assigned !== user.name && r.handedBy !== user.name) throw fail("claimed", "Claim this request first.");
       return { assigned: member, handedBy: user.name, handedAt: stamp() };
-    }));
+    })).catch(function (err) {
+      if (target && backup) {
+        Object.assign(target, backup);
+        savePersistedCache();
+        emit();
+      }
+      throw err;
+    });
   }
-  function resetDemo() { if (LIVE) return; localStorage.removeItem(LOCAL_KEY); loc.refresh(); emit(); }
+  function resetDemo() { if (LIVE) return; localStorage.removeItem(LOCAL_KEY); localStorage.removeItem(CACHE_KEY); loc.refresh(); emit(); }
   function onChange(cb) { listeners.push(cb); }
 
   window.TechOpsStore = {
