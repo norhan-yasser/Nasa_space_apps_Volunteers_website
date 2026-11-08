@@ -21,11 +21,12 @@
       </a>
       <div class="sp"></div>
       <a class="btn" href="../index.html">Overview</a>
+      <a class="btn" href="../maps.html">Maps</a>
       <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
     </header>
 
     <!-- Volunteers only: the poster page needs a volunteer code (the QR itself is what participants scan) -->
-    <section class="card form-card gate-card" id="gate">
+    <section class="card form-card gate-card" id="gate" hidden>
       <h2>Volunteer code</h2>
       <p class="form-sub">This page is for volunteers. Enter your code to open the participant QR poster.</p>
       <form id="gate-form" autocomplete="off" novalidate>
@@ -76,13 +77,13 @@
     </main>
   </div>
 
-  <script src="../techops/vendor/qrcode.js"></script>
-  <script src="../techops/js/config.js"></script>
-  <script src="../techops/js/firebase-config.js"></script>
-  <script src="../techops/js/seed-data.js"></script>
-  <script src="../techops/js/data.js"></script>
-  <script src="../techops/js/common.js"></script>
-  <script src="../techops/js/store.js"></script>
+  <script src="../scripts/vendor/qrcode.js"></script>
+  <script src="../scripts/services/config.js"></script>
+  <script src="../scripts/services/firebase-config.js"></script>
+  <script src="../scripts/services/seed-data.js"></script>
+  <script src="../scripts/services/data.js"></script>
+  <script src="../scripts/services/common.js"></script>
+  <script src="../scripts/services/store.js"></script>
   <script src="poster.js"></script>
 </body>
 </html>

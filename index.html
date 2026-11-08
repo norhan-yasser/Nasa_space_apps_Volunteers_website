@@ -4,9 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Operations · NASA Space Apps Challenge Cairo</title>
-  <meta name="description" content="Operations hub for NASA Space Apps Challenge Cairo volunteers: venue maps, the Logistics team and the Tech Ops team.">
+  <meta name="description" content="Operations hub for NASA Space Apps Challenge Cairo volunteers: venue maps, the Logistics team, the Competition Team and the Tech Ops team.">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="stylesheet" href="landing.css">
+  <link rel="stylesheet" href="styles/components/tutorial.css">
   <script>
     try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || localStorage.getItem('nasa_theme') || 'dark'); } catch (e) {}
   </script>
@@ -19,43 +20,71 @@
 
   <div class="page">
     <header class="portal-top">
-      <div class="portal-brand">
+      <a class="portal-brand" href="index.html">
         <img class="logo-dark" src="assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
         <img class="logo-light" src="assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
-        <span class="portal-brand-text">OPERATIONS · CAIRO</span>
-      </div>
+        <span class="portal-brand-text-wrap">
+          <span class="portal-brand-title">OVERVIEW</span>
+          <span class="portal-brand-sub">OPERATIONS · CAIRO</span>
+        </span>
+      </a>
       <div class="sp"></div>
-      <button class="portal-theme-btn" id="theme-toggle" aria-label="Toggle theme"><span>🌓 Theme</span></button>
+      <span class="pill-status" id="overview-status-pill"><i></i><span id="overview-status-text">Live</span></span>
+      <button class="portal-theme-btn" id="theme-toggle" aria-label="Toggle theme"><span class="btn-text">Light</span></button>
+      <div class="portal-user-chip" id="user-chip" hidden>
+        <span class="portal-avatar" id="user-avatar" aria-hidden="true"></span>
+        <span class="portal-meta"><b id="user-name"></b><small id="user-team"></small></span>
+        <button class="portal-btn-sm" id="logout-btn" type="button">Sign out</button>
+      </div>
     </header>
 
     <main class="intro">
       <h1>Overview</h1>
       <p class="sub">NASA Space Apps Challenge Cairo</p>
-      <p class="desc">Choose where you are going. Each page asks for your volunteer code first.</p>
+      <p class="desc" id="overview-desc">Sign in with your volunteer code or select an authorized module below. Modules outside your assigned role are restricted.</p>
 
-      <div class="hub-grid">
-        <a class="hub-card" href="maps.html">
+      <!-- Quick Volunteer Code Sign-In Bar (shown when signed out) -->
+      <div class="access-bar" id="overview-login-bar">
+        <div class="access-bar-info">
+          <b>Volunteer Role Sign-In</b>
+          <span>Enter your code to highlight your assigned workspaces.</span>
+        </div>
+        <form class="access-form" id="overview-login-form" autocomplete="off" novalidate>
+          <input id="overview-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Volunteer code" aria-label="Volunteer code">
+          <button type="submit" id="overview-login-btn">Sign in</button>
+        </form>
+        <div class="access-err" id="overview-login-err" role="alert" hidden></div>
+      </div>
+
+      <!-- Active Role Banner (shown when signed in) -->
+      <div class="role-banner" id="overview-role-banner" hidden>
+        <i></i>
+        <span id="overview-role-text"></span>
+      </div>
+
+      <div class="hub-grid" id="hub-grid">
+        <a class="hub-card" data-module="maps" data-label="Open Maps →" data-role-label="All Volunteers" href="maps.html">
           <span class="hub-icon" aria-hidden="true">🗺️</span>
           <span class="hub-who">All volunteers</span>
           <h2>Maps</h2>
-          <p>Venue floor maps, room finder and walking routes between any two rooms. Uses the common volunteer code.</p>
+          <p>Venue floor maps, room finder and walking routes between any two rooms. Available to all volunteers.</p>
           <span class="hub-go">Open Maps &rarr;</span>
         </a>
-        <a class="hub-card" href="logistics/index.html">
+        <a class="hub-card" data-module="logistics" data-label="Open Logistics →" data-role-label="Logistics Team" href="logistics/index.html">
           <span class="hub-icon" aria-hidden="true">📍</span>
           <span class="hub-who">Logistics team</span>
           <h2>Logistics</h2>
-          <p>Requests from members: go to a place, prayer requests and help requests. Claim a task and mark it done.</p>
+          <p>Requests from members: go to a place, prayer requests and help requests. Claim a task, view its route and mark it done.</p>
           <span class="hub-go">Open Logistics &rarr;</span>
         </a>
-        <a class="hub-card" href="dispatch/index.html">
+        <a class="hub-card" data-module="competition" data-label="Open Competition Team →" data-role-label="Competition Team" href="dispatch/index.html">
           <span class="hub-icon" aria-hidden="true">📡</span>
           <span class="hub-who">Competition Team</span>
           <h2>Competition Team</h2>
-          <p>Monitor and alarm for every request, including Discord issues. Claim it and hand it out remotely; no room visits.</p>
+          <p>Monitor and alarm for every request, including Discord issues. Claim it, inspect room routes and hand it out remotely.</p>
           <span class="hub-go">Open Competition Team &rarr;</span>
         </a>
-        <a class="hub-card" href="techops/index.html">
+        <a class="hub-card" data-module="techops" data-label="Open Tech Ops →" data-role-label="Tech Ops Team" href="techops/index.html">
           <span class="hub-icon" aria-hidden="true">🚀</span>
           <span class="hub-who">Tech Ops team</span>
           <h2>Tech Ops</h2>
@@ -66,15 +95,129 @@
     </main>
   </div>
 
+  <script src="scripts/services/config.js"></script>
+  <script src="scripts/services/firebase-config.js"></script>
+  <script src="scripts/services/seed-data.js"></script>
+  <script src="scripts/services/common.js"></script>
+  <script src="scripts/services/store.js"></script>
+  <script src="scripts/components/tutorial.js"></script>
   <script>
     (function () {
-      var b = document.getElementById('theme-toggle');
-      if (!b) return;
-      b.onclick = function () {
-        var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', next);
-        try { localStorage.setItem('techops_theme', next); localStorage.setItem('nasa_theme', next); } catch (e) {}
-      };
+      var Store = window.TechOpsStore, TO = window.TO;
+      var $ = function (id) { return document.getElementById(id); };
+      if (TO && TO.initTheme) TO.initTheme();
+
+      var cards = Array.prototype.slice.call(document.querySelectorAll(".hub-card[data-module]"));
+      cards.forEach(function (c) {
+        if (!c.getAttribute("data-href")) c.setAttribute("data-href", c.getAttribute("href") || "");
+      });
+
+      /* Capture-phase guard: strictly block any click or keyboard activation on locked cards */
+      document.addEventListener("click", function (e) {
+        var locked = e.target && e.target.closest ? e.target.closest(".hub-card.is-locked") : null;
+        if (locked) { e.preventDefault(); e.stopPropagation(); }
+      }, true);
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        var locked = e.target && e.target.closest ? e.target.closest(".hub-card.is-locked") : null;
+        if (locked) { e.preventDefault(); e.stopPropagation(); }
+      }, true);
+
+      function renderAccess(user) {
+        var chip = $("user-chip");
+        var loginBar = $("overview-login-bar");
+        var banner = $("overview-role-banner");
+        var statusTxt = $("overview-status-text");
+        if (statusTxt && Store) statusTxt.textContent = Store.isLive() ? "Live" : "Local preview";
+
+        if (!user) {
+          if (chip) chip.hidden = true;
+          if (loginBar) loginBar.hidden = false;
+          if (banner) banner.hidden = true;
+          cards.forEach(function (c) {
+            c.classList.remove("is-locked", "is-authorized");
+            c.removeAttribute("aria-disabled");
+            c.removeAttribute("tabindex");
+            var orig = c.getAttribute("data-href");
+            if (orig) c.setAttribute("href", orig);
+            var goEl = c.querySelector(".hub-go");
+            if (goEl) goEl.textContent = c.getAttribute("data-label") || "Open →";
+          });
+          return;
+        }
+
+        var roleName = Store.teamDisplayName(user);
+        if (chip) {
+          chip.hidden = false;
+          $("user-name").textContent = user.name;
+          $("user-team").textContent = roleName + " · " + user.code;
+          $("user-avatar").textContent = TO ? TO.initials(user.name) : user.name.slice(0, 2).toUpperCase();
+        }
+        if (loginBar) loginBar.hidden = true;
+        if (banner) {
+          banner.hidden = false;
+          $("overview-role-text").innerHTML = "Signed in as <b>" + (TO ? TO.esc(user.name) : user.name) + "</b> (" + (TO ? TO.esc(roleName) : roleName) + ") — authorized modules are highlighted in full color; unauthorized modules are locked.";
+        }
+
+        cards.forEach(function (c) {
+          var mod = c.getAttribute("data-module");
+          var allowed = Store.canAccess(user, mod);
+          var goEl = c.querySelector(".hub-go");
+          var orig = c.getAttribute("data-href");
+          if (allowed) {
+            c.classList.add("is-authorized");
+            c.classList.remove("is-locked");
+            c.removeAttribute("aria-disabled");
+            c.removeAttribute("tabindex");
+            if (orig) c.setAttribute("href", orig);
+            if (goEl) goEl.textContent = c.getAttribute("data-label") || "Open →";
+          } else {
+            c.classList.add("is-locked");
+            c.classList.remove("is-authorized");
+            c.setAttribute("aria-disabled", "true");
+            c.setAttribute("tabindex", "-1");
+            c.removeAttribute("href");
+            if (goEl) goEl.textContent = "🔒 Restricted · " + (c.getAttribute("data-role-label") || "Authorized Role") + " Only";
+          }
+        });
+      }
+
+      function showErr(m) {
+        var el = $("overview-login-err");
+        if (!el) return;
+        el.textContent = m || "";
+        el.hidden = !m;
+      }
+
+      if ($("overview-login-form") && Store) {
+        $("overview-login-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var code = ($("overview-code").value || "").trim();
+          if (!code) { showErr("Please enter your volunteer code."); return; }
+          var btn = $("overview-login-btn");
+          btn.disabled = true; btn.textContent = "Checking…"; showErr("");
+          Store.login(code).then(function (u) {
+            btn.disabled = false; btn.textContent = "Sign in";
+            $("overview-code").value = "";
+            renderAccess(u);
+          }).catch(function (err) {
+            btn.disabled = false; btn.textContent = "Sign in";
+            showErr(err && err.message ? err.message : "Invalid volunteer code.");
+          });
+        });
+      }
+
+      if ($("logout-btn") && Store) {
+        $("logout-btn").onclick = function () {
+          Store.logout().then(function () { renderAccess(null); });
+        };
+      }
+
+      if (Store) {
+        var fast = Store.peekUser ? Store.peekUser() : null;
+        if (fast) renderAccess(fast);
+        Store.restore().then(function (u) { renderAccess(u); });
+      }
     })();
   </script>
 </body>

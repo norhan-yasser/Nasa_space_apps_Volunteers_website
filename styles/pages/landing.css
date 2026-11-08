@@ -1,0 +1,523 @@
+/* NASA Space Apps Cairo · Operations Overview Hub
+   Global Custom Typography: Munake & abeatbyKai */
+@font-face {
+  font-family: 'Munake';
+  src: url('assets/fonts/Munake-Demo.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'abeatbyKai';
+  src: url('assets/fonts/abeatbyKaiRegular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg: #090d18;
+  --surface: #0f1628;
+  --ink: #e8edf8;
+  --ink-bright: #ffffff;
+  --mut: #a9b6cf;
+  --line: rgba(255, 255, 255, 0.20);
+  --line-strong: rgba(255, 255, 255, 0.34);
+  --panel: rgba(15, 22, 40, 0.78);
+  --panel-hover: rgba(18, 28, 54, 0.94);
+  --accent: #fb9746;
+  --pri: #2548e6;
+  --pri-hover: #3a5df0;
+  --ok: #10b981;
+  --bad: #ef4444;
+  --shade-a: rgba(9, 13, 24, 0.52);
+  --shade-b: rgba(9, 13, 24, 0.90);
+  --bg-img-opacity: 0.36;
+  --bg-img-blur: 3px;
+  --bg-overlay: radial-gradient(circle at 50% 25%, rgba(9, 13, 24, 0.52) 0%, rgba(9, 13, 24, 0.90) 100%);
+  --font-title: 'Munake', 'abeatbyKai', sans-serif;
+  --font-body: 'abeatbyKai', sans-serif;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --ink: #152036;
+  --ink-bright: #030712;
+  --mut: #4a5975;
+  --line: rgba(3, 35, 178, 0.20);
+  --line-strong: rgba(3, 35, 178, 0.36);
+  --panel: rgba(255, 255, 255, 0.88);
+  --panel-hover: rgba(255, 255, 255, 0.98);
+  --accent: #d96a14;
+  --pri: #0323b2;
+  --pri-hover: #021a8a;
+  --ok: #047857;
+  --bad: #dc2626;
+  --shade-a: rgba(245, 247, 251, 0.65);
+  --shade-b: rgba(245, 247, 251, 0.93);
+  --bg-img-opacity: 0.18;
+  --bg-img-blur: 3px;
+  --bg-overlay: radial-gradient(circle at 50% 25%, rgba(245, 247, 251, 0.65) 0%, rgba(245, 247, 251, 0.93) 100%);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; overflow-x: hidden; max-width: 100vw; }
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.6 var(--font-body);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+[hidden] { display: none !important; }
+a { color: inherit; }
+button, input, select, textarea { font: inherit; font-family: var(--font-body); color: inherit; }
+
+/* Background */
+.bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.bg-image {
+  position: absolute;
+  top: -12px; left: -12px; right: -12px; bottom: -12px;
+  background: url('assets/images/hero-optimized.jpg') center / cover no-repeat;
+  filter: blur(var(--bg-img-blur));
+  transform: scale(1.02);
+  opacity: var(--bg-img-opacity);
+  transition: opacity 0.3s ease;
+}
+.bg-shade {
+  position: absolute; inset: 0;
+  background: var(--bg-overlay);
+  transition: background 0.3s ease;
+}
+
+.page {
+  position: relative; z-index: 1;
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;
+}
+
+/* ------------------------------------------------------------
+   Unified Top Portal Header
+   ------------------------------------------------------------ */
+.portal-top {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px clamp(16px, 4vw, 40px);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.portal-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+.portal-brand img {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+.portal-brand img.logo-light { display: none; }
+:root[data-theme="light"] .portal-brand img.logo-dark { display: none; }
+:root[data-theme="light"] .portal-brand img.logo-light { display: block; }
+.portal-brand-text-wrap {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  border-left: 1px solid var(--line-strong);
+  padding-left: 12px;
+}
+.portal-brand-title {
+  font-family: var(--font-title);
+  font-size: 15px;
+  color: var(--ink-bright);
+  letter-spacing: .08em;
+}
+.portal-brand-sub {
+  font-size: 10.5px;
+  color: var(--accent);
+  letter-spacing: .12em;
+  font-weight: 700;
+}
+.sp { flex: 1; }
+
+.pill-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  color: var(--mut);
+  white-space: nowrap;
+}
+.pill-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  display: inline-block;
+}
+
+.portal-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.portal-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--pri), var(--accent));
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.portal-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  text-align: left;
+}
+.portal-meta b { font-size: 12.5px; color: var(--ink-bright); }
+.portal-meta small { font-size: 10.5px; color: var(--mut); }
+
+.portal-btn-sm {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+:root[data-theme="light"] .portal-btn-sm { background: rgba(3, 35, 178, 0.06); }
+.portal-btn-sm:hover { border-color: var(--accent); color: var(--ink-bright); }
+
+.portal-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: border-color .15s ease;
+}
+.portal-theme-btn:hover { border-color: var(--accent); color: var(--ink-bright); }
+
+/* ------------------------------------------------------------
+   Main Intro & Overview Hub
+   ------------------------------------------------------------ */
+.intro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 36px clamp(16px, 4vw, 40px) 52px;
+}
+h1 {
+  font-family: var(--font-title);
+  font-weight: normal;
+  font-size: clamp(38px, 6vw, 72px);
+  line-height: 1.04;
+  letter-spacing: 0.02em;
+  color: var(--ink-bright);
+}
+.sub {
+  margin-top: 8px;
+  font-family: var(--font-title);
+  font-size: clamp(15px, 1.9vw, 20px);
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+.desc {
+  margin-top: 14px;
+  max-width: 68ch;
+  font-size: clamp(14px, 1.3vw, 16px);
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------
+   Overview Volunteer Sign-In / Role Status Bar
+   ------------------------------------------------------------ */
+.access-bar {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  max-width: 780px;
+}
+.access-bar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.access-bar-info b {
+  font-size: 13.5px;
+  color: var(--ink-bright);
+}
+.access-bar-info span {
+  font-size: 12.5px;
+  color: var(--mut);
+}
+.access-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.access-form input {
+  width: 185px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  background: rgba(9, 13, 24, 0.65);
+  color: var(--ink-bright);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+:root[data-theme="light"] .access-form input {
+  background: #ffffff;
+}
+.access-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(251, 151, 70, 0.24);
+}
+.access-form button {
+  padding: 9px 16px;
+  border-radius: 9px;
+  border: 1px solid var(--pri);
+  background: var(--pri);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.access-form button:hover { background: var(--pri-hover); }
+.access-form button:disabled { opacity: .6; cursor: wait; }
+.access-err {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: #f87171;
+}
+
+.role-banner {
+  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.38);
+  color: var(--ink-bright);
+  font-size: 13.5px;
+}
+.role-banner i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+/* ------------------------------------------------------------
+   Overview Module Hub Cards (Full Brand Colors vs Greyed/Locked)
+   ------------------------------------------------------------ */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-top: 26px;
+  width: 100%;
+}
+.hub-card {
+  --mod-color: #2548e6;
+  --mod-soft: rgba(37, 72, 230, 0.16);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-decoration: none;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--mod-color) 52%, var(--line));
+  border-top: 4px solid var(--mod-color);
+  border-radius: 18px;
+  padding: 24px 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.30);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+/* Module-specific NASA Space Apps Brand Palettes */
+.hub-card[data-module="maps"] {
+  --mod-color: #0ea5e9;
+  --mod-soft: rgba(14, 165, 233, 0.16);
+}
+.hub-card[data-module="logistics"] {
+  --mod-color: #fb9746;
+  --mod-soft: rgba(251, 151, 70, 0.18);
+}
+.hub-card[data-module="competition"] {
+  --mod-color: #8b5cf6;
+  --mod-soft: rgba(139, 92, 246, 0.18);
+}
+.hub-card[data-module="techops"] {
+  --mod-color: #2548e6;
+  --mod-soft: rgba(37, 72, 230, 0.22);
+}
+
+.hub-card:not(.is-locked):hover,
+.hub-card:not(.is-locked):focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--mod-color);
+  background: var(--panel-hover);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42), 0 0 0 1px var(--mod-color);
+  outline: none;
+}
+
+.hub-card.is-authorized {
+  border-color: var(--mod-color);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.36), 0 0 22px var(--mod-soft);
+}
+
+.hub-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--mod-soft);
+  border: 1px solid color-mix(in srgb, var(--mod-color) 55%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  line-height: 1;
+}
+.hub-who {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--mod-soft);
+  border: 1px solid color-mix(in srgb, var(--mod-color) 45%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--mod-color);
+}
+:root[data-theme="light"] .hub-card[data-module="logistics"] .hub-who { color: #b45309; }
+:root[data-theme="light"] .hub-card[data-module="maps"] .hub-who { color: #0369a1; }
+:root[data-theme="light"] .hub-card[data-module="competition"] .hub-who { color: #6d28d9; }
+:root[data-theme="light"] .hub-card[data-module="techops"] .hub-who { color: #0323b2; }
+
+.hub-card h2 {
+  font-family: var(--font-title);
+  font-size: 22px;
+  letter-spacing: .04em;
+  color: var(--ink-bright);
+  margin-top: 2px;
+}
+.hub-card p {
+  font-size: 13.5px;
+  color: var(--mut);
+  flex: 1;
+  line-height: 1.5;
+}
+.hub-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--ink-bright);
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* Unauthorized / Locked Module State (Strict RBAC Visual Indicator) */
+.hub-card.is-locked {
+  filter: grayscale(100%);
+  opacity: 0.38;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  user-select: none;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  border-top-color: rgba(148, 163, 184, 0.32) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.hub-card.is-locked .hub-go {
+  color: var(--mut);
+}
+
+@media (max-width: 1100px) { .hub-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) {
+  .portal-top { padding: 10px 14px; gap: 8px; flex-wrap: wrap; }
+  .portal-brand-logo { height: 28px; }
+  .portal-brand-text-wrap { display: none; }
+  .portal-user-chip { padding: 3px 8px 3px 5px; gap: 6px; }
+  .portal-user-meta small { display: none; }
+  .hero { padding: 20px 14px 10px; }
+  .access-bar { flex-direction: column; align-items: stretch; padding: 14px; gap: 12px; }
+  .access-form { width: 100%; }
+  .access-form input { flex: 1; min-width: 0; width: auto; min-height: 42px; }
+  .access-form .btn { min-height: 42px; }
+  .hub-wrap { padding: 6px 14px 32px; }
+  .hub-grid { grid-template-columns: 1fr; gap: 12px; }
+  .hub-card { padding: 18px 16px 16px; min-height: 0; }
+}

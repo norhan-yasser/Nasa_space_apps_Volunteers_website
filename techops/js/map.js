@@ -23,7 +23,7 @@
     var self = this, el = this.el;
     el.innerHTML =
       '<div class="stage"><img class="plan" alt="Floor plan" draggable="false"><svg viewBox="0 0 ' + D.W + " " + D.H + '"></svg></div>' +
-      '<div class="map-zoom"><button class="btn" data-z="in" aria-label="Zoom in">+</button><button class="btn" data-z="out" aria-label="Zoom out">&minus;</button><button class="btn" data-z="fit" aria-label="Reset view" title="Reset view">&#8634;</button></div>' +
+      '<div class="map-zoom"><button class="btn" data-z="in" aria-label="Zoom in">+</button><button class="btn" data-z="out" aria-label="Zoom out">-</button><button class="btn" data-z="fit" aria-label="Reset view" title="Reset view">&#8634;</button></div>' +
       '<div class="map-tip"></div>';
     this.stage = el.querySelector(".stage");
     this.img = el.querySelector("img.plan");
@@ -100,8 +100,13 @@
   P.fit = function () {
     var cw = this.el.clientWidth, ch = this.el.clientHeight;
     if (!cw || !ch) return;
-    var k = Math.min(cw / D.W, ch / D.H) * 0.98;
-    this.V = { k: k, x: (cw - D.W * k) / 2, y: (ch - D.H * k) / 2 };
+    if (cw < 640) {
+      var k = Math.max(cw / (D.W * 0.88), ch / (D.H * 0.78));
+      this.V = { k: k, x: cw / 2 - (D.W * 0.50) * k, y: ch / 2 - (D.H * 0.46) * k };
+    } else {
+      var k = Math.min(cw / D.W, ch / D.H) * 0.98;
+      this.V = { k: k, x: (cw - D.W * k) / 2, y: (ch - D.H * k) / 2 };
+    }
     this._apply();
   };
   P.zoomAt = function (f, px, py) {

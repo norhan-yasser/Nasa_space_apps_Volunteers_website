@@ -8,12 +8,12 @@ const line = (pass, name, extra) => { if (!pass) failed++; console.log((pass ? "
 /* ---------- A. logic tests in a fake browser ---------- */
 function mem() { const m = {}; return { getItem: k => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; } }; }
 const win = { localStorage: mem(), sessionStorage: mem(), TECHOPS_FIREBASE: {}, TECHOPS_CONFIG: { SESSION_GRACE_MS: 5 * 60 * 1000 } };
-win.window = win; win.document = { hidden: false, addEventListener() {}, getElementById() { return null; } };
-win.addEventListener = () => {}; win.location = { reload() {} };
-win.setInterval = () => 0; win.setTimeout = setTimeout; win.clearTimeout = clearTimeout; win.Promise = Promise;
-const ctx = vm.createContext(Object.assign(win, { console, Date, Math, JSON, Object, Array, String, Number, Error, URLSearchParams }));
+win.window = win; win.document = { hidden: false, documentElement: { setAttribute() {}, getAttribute() { return "dark"; } }, addEventListener() {}, getElementById() { return null; }, dispatchEvent() {} };
+win.addEventListener = () => {}; win.location = { origin: "http://localhost", pathname: "/tests/", reload() {} };
+win.setInterval = () => 0; win.setTimeout = setTimeout; win.clearTimeout = clearTimeout; win.Promise = Promise; win.CustomEvent = function (n) { this.type = n; };
+const ctx = vm.createContext(Object.assign(win, { console, Date, Math, JSON, Object, Array, String, Number, Error, URLSearchParams, encodeURIComponent }));
 ctx.localStorage = win.localStorage; ctx.sessionStorage = win.sessionStorage;
-for (const f of ["techops/js/seed-data.js", "techops/js/data.js", "techops/js/store.js", "tests/selftest.js"]) vm.runInContext(read(f), ctx, { filename: f });
+for (const f of ["scripts/services/config.js", "scripts/services/seed-data.js", "scripts/services/data.js", "scripts/services/common.js", "scripts/services/store.js", "tests/selftest.js"]) vm.runInContext(read(f), ctx, { filename: f });
 console.log("\nA. Routing and sign-in");
 win.runSelfTest().then((res) => {
   res.forEach((r) => line(r.pass, r.name, r.extra));
@@ -30,13 +30,27 @@ win.runSelfTest().then((res) => {
   line(/dispatch\/index\.html/.test(read("index.html")), "Overview has a Competition Team card");
   line(/Competition Team/.test(read("index.html")) && /COMPETITION TEAM/.test(read("dispatch/index.html")), "Dispatch team is named Competition Team");
   line(form.indexOf('id="grp-Competition"') > -1 && /Competition Team/.test(read("request/form.js")), "QR form has the Competition Team and its requests");
-  line(/Discord issue/.test(read("techops/js/data.js")), "QR form offers a Discord issue request");
+  line(/Discord issue/.test(read("scripts/services/data.js")), "QR form offers a Discord issue request");
   line(/hidden = tm === "Competition"/.test(read("request/form.js")), "room details are hidden for the Competition Team (remote)");
   line(/'Competition'\]/.test(read("techops/firebase/firestore.rules")), "Firestore rules accept Competition requests");
   line(/noindex/.test(form), "participant form is hidden from search engines");
   ["techops/report.html", "logistics/help.html"].forEach((f) => line(/request\/form\.html/.test(read(f)), f + " forwards to the one form"));
   ["techops/qr-codes.html", "logistics/qr-codes.html"].forEach((f) => line(/request\/poster\.html/.test(read(f)), f + " forwards to the one poster"));
-  line(/location\.replace\("\.\.\/logistics\/index\.html"\)/.test(read("techops/js/dashboard.js")), "Tech Ops -> Logistics redirect opens index.html (the folder-listing bug)");
+  ["techops/js/dashboard.js", "logistics/js/dashboard.js", "dispatch/js/dashboard.js"].forEach((f) => {
+    const js = read(f);
+    line(!/location\.replace\(/.test(js), f + " strictly blocks unauthorized roles instead of redirecting");
+    line(/Store\.canAccess\(/.test(js), f + " enforces Store.canAccess RBAC check");
+  });
+  ["techops/index.html", "logistics/index.html", "dispatch/index.html"].forEach((f) => {
+    line(/id="access-denied"/.test(read(f)), f + " has unified #access-denied block screen");
+  });
+  line(/TO\.routeHref/.test(read("logistics/js/dashboard.js")) && /Show Route/.test(read("logistics/js/dashboard.js")), "Logistics request cards have Show Route integration");
+  line(/TO\.routeHref/.test(read("dispatch/js/dashboard.js")) && /Show Route/.test(read("dispatch/js/dashboard.js")), "Competition Team request cards have Show Route integration");
+  line(/applyUrlRoute/.test(read("app.js")), "Venue Maps app.js handles incoming Show Route URL parameters");
+  ["landing.css", "styles.css", "techops/css/techops.css"].forEach((f) => {
+    const css = read(f);
+    line(/Munake-Demo\.ttf/.test(css) && /abeatbyKaiRegular\.otf/.test(css) && /--font-body:\s*'abeatbyKai'/.test(css), f + " loads custom Munake & abeatbyKai fonts as default");
+  });
   const bare = [];
   (function walk(d) { for (const n of fs.readdirSync(path.join(ROOT, d))) { const p = d ? d + "/" + n : n; const st = fs.statSync(path.join(ROOT, p));
     if (st.isDirectory()) { if (!/node_modules|\.git|vendor|tools/.test(n)) walk(p); }

@@ -22,6 +22,8 @@
   /* ------------------------------------------------------------ Data Loading */
   function load() {
     return Store.loadAll().then(function (d) {
+      /* Strict role isolation: TechOps ONLY sees requests categorized for TechOps */
+      d.reports = (d.reports || []).filter(function (r) { return r && (!r.team || r.team === "TechOps"); });
       S.data = d;
       /* shared places (prayer rooms, cafeteria, break areas) have no sheet row: add a plain one so they can be selected, routed to and used in meetups */
       D.FLOORS.forEach(function (f) {
@@ -213,23 +215,42 @@
     }).sort(function (a, b) { return (Store.parseStamp(b.ts) || 0) - (Store.parseStamp(a.ts) || 0); });
 
     if (!rows.length) {
-      $("issue-rows").innerHTML = '<tr><td colspan="7" class="empty">' + esc(q ? "No tasks match your search." : EMPTY[S.issueFilter] || EMPTY.all) + '</td></tr>';
+      $("issue-rows").innerHTML = '<div class="req-empty">' + esc(q ? "No requests match your search." : EMPTY[S.issueFilter] || EMPTY.all) + '</div>';
       return;
     }
 
     $("issue-rows").innerHTML = rows.map(function (r) {
-      var when = Store.parseStamp(r.ts), mine = isMine(r), free = isUnassigned(r);
+      var when = Store.parseStamp(r.ts), mine = isMine(r), free = isUnassigned(r), done = r.status === "Resolved";
+      var floorLabel = r.floorName || Store.FLOOR_NAMES[r.floor] || "";
       var action = free
         ? '<button class="btn small primary claim-btn" data-claim="' + esc(r.id) + '">Claim</button>'
         : mine ? '<button class="btn small ok resolve-btn" data-resolve="' + esc(r.id) + '">Mark as Resolved</button>' : "";
-      return '<tr class="' + (free ? "is-new" : mine ? "is-mine" : "") + '">' +
-        '<td class="td-status"><span class="badge ' + TO.statusClass(r.status) + '">' + esc(r.status) + '</span></td>' +
-        '<td class="td-meta" title="' + esc(r.ts) + '"><span class="issue-ago">' + esc(TO.ago(when)) + '</span><span class="muted issue-id">' + esc(r.id) + "</span></td>" +
-        '<td class="td-room"><div><b class="issue-room-code">' + esc(r.room) + '</b> <span class="muted issue-floor">(' + esc(r.floorName) + ')</span></div><span class="badge ' + TO.issueClass(r.issue) + ' mobile-only-badge">' + esc(r.issue) + '</span></td>' +
-        '<td class="td-badge desktop-only"><span class="badge ' + TO.issueClass(r.issue) + '">' + esc(r.issue) + "</span></td>" +
-        '<td class="td-desc">' + esc(r.details || "—") + "</td>" +
-        '<td class="td-assign">' + (r.assigned ? '<span class="assignee' + (mine ? " me" : "") + '">' + esc(mine ? "You" : r.assigned) + '</span>' : '<span class="muted">Unassigned</span>') + "</td>" +
-        '<td class="td-action"><div class="action-stack">' + action + '<button class="btn small" data-route-to="' + esc(r.room) + '">Route Here</button></div></td></tr>';
+      var who = done ? "✓ Resolved" + (r.assigned ? " · <b>" + esc(r.assigned) + "</b>" : "")
+        : r.handedBy ? "➡️ Handed to <b>" + esc(mine ? "You" : r.assigned) + "</b> by " + esc(r.handedBy)
+        : r.assigned ? '<span class="assignee' + (mine ? " me" : "") + '">' + (mine ? "Assigned to <b>You</b>" : "Assigned to <b>" + esc(r.assigned) + "</b>") + "</span>"
+        : "Unclaimed — awaiting Tech Ops";
+      var routeBtn = r.room
+        ? '<button type="button" class="btn small route-btn" data-route-to="' + esc(r.room) + '">🗺️ Show Route</button>'
+        : '<button type="button" class="btn small route-btn is-disabled" disabled>🗺️ Show Route</button>';
+
+      return '<article class="req-card' + (free ? " is-new" : mine ? " is-mine" : done ? " is-done" : "") + '">' +
+        '<div class="req-card-head">' +
+          '<div class="req-card-badges">' +
+            '<span class="team-pill t-TechOps">Tech Ops</span>' +
+            '<span class="badge ' + TO.statusClass(r.status) + '">' + esc(r.status) + "</span>" +
+          "</div>" +
+          '<span class="req-card-id" title="' + esc(r.ts) + '">' + esc(TO.ago(when)) + " · " + esc(r.id) + "</span>" +
+        "</div>" +
+        '<div class="req-card-title">' + esc(r.issue) + "</div>" +
+        (r.room
+          ? '<div class="req-card-loc">📍 <b>' + esc(r.room) + "</b>" + (floorLabel ? " · " + esc(floorLabel) : "") + "</div>"
+          : '<div class="req-card-loc is-remote">🌐 Location not specified</div>') +
+        '<div class="req-card-desc">' + esc(r.details || "—") +
+          (r.reporter ? '<span class="req-from">From: ' + esc(r.reporter) + "</span>" : "") +
+        "</div>" +
+        '<div class="req-card-who">' + who + "</div>" +
+        '<div class="req-card-actions">' + action + routeBtn + "</div>" +
+      "</article>";
     }).join("");
   }
 
@@ -528,11 +549,7 @@
           }).join("") + '</div>'
         : '<div class="muted" style="font-size:13px;margin-bottom:12px">No active issues reported.</div>';
 
-      bEl.innerHTML = wifiCard + assignedRow + issueCard +
-        '<div style="display:flex;gap:8px;margin-top:8px">' +
-        '<a class="btn small" style="flex:1;justify-content:center;height:42px" href="' + esc(url) + '" target="_blank" rel="noopener">Direct Form</a>' +
-        '<a class="btn small" style="flex:1;justify-content:center;height:42px" href="../request/poster.html">Participant QR</a>' +
-        '</div>';
+      bEl.innerHTML = wifiCard + assignedRow + issueCard;
 
       btnHere.style.display = "flex";
       btnFrom.style.display = "flex";
@@ -969,6 +986,13 @@
         showLoginError("");
         Store.login(code).then(function (user) {
           btn.disabled = false; btn.textContent = "Sign in";
+          if (!Store.canAccess(user, "techops")) {
+            var teamLabel = Store.teamDisplayName(user);
+            return Store.logout().then(function () {
+              applyUser(null);
+              showLoginError("Access denied: code " + user.code + " belongs to " + teamLabel + " and is not authorized to open the Tech Ops panel.");
+            });
+          }
           applyUser(user);
         }).catch(function (err) {
           btn.disabled = false; btn.textContent = "Sign in";
@@ -983,6 +1007,7 @@
     }
     if ($("logout-btn")) $("logout-btn").onclick = doLogout;
     if ($("mobile-logout-btn")) $("mobile-logout-btn").onclick = doLogout;
+    if ($("denied-logout-btn")) $("denied-logout-btn").onclick = doLogout;
 
     /* Mobile drawer toggle */
     var mToggle = $("mobile-menu-toggle");
@@ -1108,6 +1133,7 @@
 
     Store.onChange(function () { load(); });
     document.addEventListener("techops-theme", function () { map.render(); });
+    bindTutorial();
   }
 
   function showLoginError(msg) {
@@ -1170,17 +1196,21 @@
     var chip = $("user-chip");
     var mobUser = $("mobile-user");
     var loginScreen = $("login-screen");
+    var deniedScreen = $("access-denied");
     var bell = $("bell");
     var techOnly = document.querySelectorAll(".tech-only");
 
     if (!user) {
       if (loginScreen) loginScreen.hidden = false;
+      if (deniedScreen) deniedScreen.hidden = true;
       if (main) main.hidden = true;
       if (nav) nav.hidden = true;
       if (chip) chip.hidden = true;
       if (mobUser) mobUser.hidden = true;
       if (bell) bell.hidden = true;
       techOnly.forEach(function (el) { el.hidden = true; });
+      if ($("status-pill")) $("status-pill").className = "pill-status demo";
+      if ($("status-text")) $("status-text").textContent = Store.isLive() ? "Sign in required" : "Local preview";
 
       var ln = $("login-note");
       if (ln && !Store.isLive()) {
@@ -1192,44 +1222,77 @@
       return;
     }
 
+    var roleText = Store.teamDisplayName(user) + " · " + user.code;
     if (chip) {
       chip.hidden = false;
       if ($("user-name")) $("user-name").textContent = user.name;
-      if ($("user-team")) $("user-team").textContent = user.team + " · " + user.code;
+      if ($("user-team")) $("user-team").textContent = roleText;
       if ($("user-avatar")) $("user-avatar").textContent = user.initials || TO.initials(user.name);
     }
     if (mobUser) {
       mobUser.hidden = false;
       if ($("mobile-user-name")) $("mobile-user-name").textContent = user.name;
-      if ($("mobile-user-team")) $("mobile-user-team").textContent = user.team + " · " + user.code;
+      if ($("mobile-user-team")) $("mobile-user-team").textContent = roleText;
       if ($("mobile-user-avatar")) $("mobile-user-avatar").textContent = user.initials || TO.initials(user.name);
     }
 
-    /* Logistics volunteers have their own workspace */
-    if (user.team === "Dispatch" || user.team === "Competition") { location.replace("../dispatch/index.html"); return; }
-    if (user.team === "Logistics") { location.replace("../logistics/index.html"); return; }
-
-    /* Only TechOps volunteer codes open this dashboard (the common Maps code does not) */
-    if (user.team !== "TechOps") {
-      Store.logout().then(function () {
-        applyUser(null);
-        showLoginError("This dashboard is for the Tech Ops team. Your code opens the Maps page from the Operations home.");
-      });
+    /* STRICT RBAC: Never redirect to another dashboard. Strictly block unauthorized roles. */
+    if (!Store.canAccess(user, "techops")) {
+      S.user = null;
+      S.me = "";
+      if (loginScreen) loginScreen.hidden = true;
+      if (main) main.hidden = true;
+      if (nav) nav.hidden = true;
+      if (bell) bell.hidden = true;
+      techOnly.forEach(function (el) { el.hidden = true; });
+      if (deniedScreen) deniedScreen.hidden = false;
+      if ($("status-pill")) $("status-pill").className = "pill-status demo";
+      if ($("status-text")) $("status-text").textContent = "Restricted";
+      if ($("denied-msg")) {
+        $("denied-msg").innerHTML = "Signed in as <b>" + esc(user.name) + "</b> (" + esc(Store.teamDisplayName(user)) + " · " + esc(user.code) + "). Your assigned role does not have permission to access the <b>Tech Ops</b> module.";
+      }
       return;
     }
 
-    /* TechOps user */
+    /* Authorized TechOps user */
     if (loginScreen) loginScreen.hidden = true;
+    if (deniedScreen) deniedScreen.hidden = true;
     if (main) main.hidden = false;
     if (nav) nav.hidden = false;
     if (bell) bell.hidden = false;
     techOnly.forEach(function (el) { el.hidden = false; });
 
-    Store.start().then(function () {
-      return load();
-    }).then(function () {
-      handleQuery();
+    if (window.NasaTutorial && !Store.isTutorialCompleted("techops")) {
+      startTechOpsTutorial(false);
+    } else {
+      Store.start().then(function () {
+        return load();
+      }).then(function () {
+        handleQuery();
+      });
+    }
+  }
+
+  function startTechOpsTutorial(isManual) {
+    if (window.TO && window.TO.closeMobileDrawer) window.TO.closeMobileDrawer();
+    Store.enterTutorialMode("techops");
+    S.sig = "";
+    load().then(function () {
+      if (window.NasaTutorial) {
+        window.NasaTutorial.start("techops", function () {
+          Store.start().then(function () {
+            S.sig = "";
+            load();
+          });
+        });
+      }
     });
+  }
+
+  function bindTutorial() {
+    var tb = $("tutorial-btn"), mtb = $("mobile-tutorial-btn");
+    if (tb) tb.onclick = function () { startTechOpsTutorial(true); };
+    if (mtb) mtb.onclick = function () { startTechOpsTutorial(true); };
   }
 
   /* ------------------------------------------------------------ Boot */
@@ -1259,7 +1322,7 @@
   map.setFloor("G");
   bind();
 
-  Store.restore().then(function (user) {
-    applyUser(user);
-  });
+  var fast = Store.peekUser ? Store.peekUser() : null;
+  if (fast) applyUser(fast);
+  else Store.restore().then(function (user) { applyUser(user); });
 })();

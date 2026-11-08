@@ -1,4 +1,4 @@
-/* Shared helpers: theme, escaping, toasts, time formatting, status styling */
+/* Shared helpers: theme, escaping, toasts, time formatting, status styling, map route links, mobile drawer */
 (function () {
   var THEME_KEY = "techops_theme";
 
@@ -9,20 +9,21 @@
   }
   function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t);
+    var label = t === "dark" ? "Light" : "Dark";
     var b = document.getElementById("theme-toggle");
-    if (b && b.querySelector(".btn-text")) b.querySelector(".btn-text").textContent = t === "dark" ? "Light" : "Dark";
+    if (b && b.querySelector(".btn-text")) b.querySelector(".btn-text").textContent = label;
     var mb = document.getElementById("mobile-theme-text");
-    if (mb) mb.textContent = t === "dark" ? "Light Mode" : "Dark Mode";
+    if (mb) mb.textContent = label;
   }
   function toggleTheme() {
     var n = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    try { localStorage.setItem(THEME_KEY, n); } catch (e) {}
+    try { localStorage.setItem(THEME_KEY, n); localStorage.setItem("nasa_theme", n); } catch (e) {}
     applyTheme(n);
     document.dispatchEvent(new CustomEvent("techops-theme"));
   }
   function initTheme() {
     var t = "dark";
-    try { t = localStorage.getItem(THEME_KEY) || "dark"; } catch (e) {}
+    try { t = localStorage.getItem(THEME_KEY) || localStorage.getItem("nasa_theme") || "dark"; } catch (e) {}
     applyTheme(t);
     var b = document.getElementById("theme-toggle");
     if (b) b.addEventListener("click", toggleTheme);
@@ -72,6 +73,7 @@
     if (i.indexOf("go to") >= 0) return "b-net";
     if (i.indexOf("prayer") >= 0) return "b-power";
     if (i.indexOf("help request") >= 0) return "b-help";
+    if (i.indexOf("discord") >= 0 || i.indexOf("submission") >= 0 || i.indexOf("competition") >= 0) return "b-help";
     return "b-other";
   }
   function initials(n) {
@@ -106,8 +108,80 @@
     return b + "form.html?floor=" + encodeURIComponent(floor) + "&room=" + encodeURIComponent(room);
   }
 
+  /* Resolve optimal { from, to } map routing endpoints for any volunteer request */
+  function routeTarget(r) {
+    if (!r || !r.room) return null;
+    var rm = String(r.room || "").trim().toUpperCase();
+    if (!rm) return null;
+    var details = String(r.details || "");
+    var issue = String(r.issue || "");
+
+    /* "Go to a place" request: route from participant's current room to their chosen destination */
+    var placeMatch = details.match(/Wants to go to:\s*(Main Entrance|[A-Z0-9_-]+)/i);
+    if (placeMatch) {
+      var rawDest = placeMatch[1].trim().toUpperCase();
+      var dest = rawDest === "MAIN ENTRANCE" ? "ENTRANCE" : rawDest;
+      if (dest && dest !== rm) return { from: rm, to: dest };
+    }
+
+    /* "Prayer" request: route from participant's current room to Men's (PR-M) or Women's (PR-F) Prayer Room */
+    var prayerMatch = details.match(/Prayer area:\s*(Men|Women)/i);
+    if (prayerMatch || /prayer/i.test(issue)) {
+      var gender = prayerMatch ? prayerMatch[1].toLowerCase() : (/women|female/i.test(details) ? "women" : "men");
+      var prCode = gender === "women" ? "PR-F" : "PR-M";
+      if (prCode !== rm) return { from: rm, to: prCode };
+    }
+
+    /* Standard room assistance request: route from ENTRANCE to the participant's room */
+    return { from: rm === "ENTRANCE" ? "C026" : "ENTRANCE", to: rm };
+  }
+
+  function routeHref(r, mapsPage) {
+    var rt = routeTarget(r);
+    if (!rt) return "";
+    var base = mapsPage || "../maps.html";
+    return base + "?from=" + encodeURIComponent(rt.from) + "&to=" + encodeURIComponent(rt.to);
+  }
+
+  function bindMobileDrawer() {
+    var mToggle = document.getElementById("mobile-menu-toggle");
+    var mDrawer = document.getElementById("mobile-drawer");
+    var mClose = document.getElementById("mobile-menu-close");
+    if (!mToggle || !mDrawer || mToggle.__bound) return;
+    mToggle.__bound = true;
+    function setDrawer(open) {
+      mDrawer.hidden = !open;
+      mToggle.setAttribute("aria-expanded", String(open));
+      mToggle.classList.toggle("is-open", open);
+    }
+    mToggle.onclick = function (e) {
+      e.stopPropagation();
+      setDrawer(mDrawer.hidden);
+    };
+    if (mClose) {
+      mClose.onclick = function (e) {
+        e.stopPropagation();
+        setDrawer(false);
+      };
+    }
+    mDrawer.addEventListener("click", function (e) {
+      if (e.target === mDrawer) setDrawer(false);
+    });
+    document.addEventListener("click", function (e) {
+      if (!mDrawer.hidden && !mDrawer.contains(e.target) && !mToggle.contains(e.target)) {
+        setDrawer(false);
+      }
+    });
+    mDrawer.querySelectorAll("a, button:not(#mobile-alerts-btn):not(#mobile-theme-toggle)").forEach(function (el) {
+      el.addEventListener("click", function () {
+        setDrawer(false);
+      });
+    });
+  }
+
   window.TO = {
     esc: esc, initTheme: initTheme, toast: toast, beep: beep, ago: ago, statusClass: statusClass, issueClass: issueClass,
-    initials: initials, speedColor: speedColor, speedLabel: speedLabel, qrSvg: qrSvg, baseUrl: baseUrl, reportUrl: reportUrl
+    initials: initials, speedColor: speedColor, speedLabel: speedLabel, qrSvg: qrSvg, baseUrl: baseUrl, reportUrl: reportUrl,
+    routeTarget: routeTarget, routeHref: routeHref, bindMobileDrawer: bindMobileDrawer
   };
 })();

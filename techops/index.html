@@ -7,9 +7,10 @@
   <meta name="description" content="TechOps team operations dashboard: fastest route navigation, universal QR issue alerts, floor maps, Wi-Fi heatmap, team pings and equipment inventory.">
   <link rel="icon" type="image/png" href="../assets/favicon.png">
   <link rel="stylesheet" href="css/techops.css">
-  <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || 'dark'); } catch (e) {}</script>
+  <link rel="stylesheet" href="../styles/components/tutorial.css">
+  <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || localStorage.getItem('nasa_theme') || 'dark'); } catch (e) {}</script>
 </head>
-<body>
+<body class="has-mobile-nav">
   <div class="bg" aria-hidden="true"></div>
   <div class="app">
     <header class="top">
@@ -28,10 +29,9 @@
 
       <!-- Desktop header controls -->
       <div class="desktop-controls">
-        <a class="btn" href="../index.html" title="Operations Home"><span>Operations</span></a>
+        <a class="btn" href="../index.html" title="Overview"><span>Overview</span></a>
+        <button class="btn tech-only btn-tutorial" id="tutorial-btn" title="Start Interactive Training"><span>Tutorial 🎮</span></button>
         <button class="btn tech-only" id="alerts-btn" title="Enable sound and desktop notifications for new tasks">Enable alerts</button>
-        <a class="btn tech-only" href="../request/poster.html" title="Participant QR poster">Participant QR</a>
-        <a class="btn tech-only" href="../request/form.html" target="_blank" rel="noopener" title="Open the public report form">Participant form</a>
         <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
         <div class="user-chip" id="user-chip" hidden>
           <span class="user-avatar" id="user-avatar" aria-hidden="true"></span>
@@ -53,38 +53,22 @@
       </button>
     </header>
 
-    <!-- Mobile Top Navigation Drawer -->
+    <!-- Standardized Right Slide-Over Navigation Drawer -->
     <div class="mobile-drawer" id="mobile-drawer" hidden>
-      <div class="mobile-drawer-body">
-        <div class="mobile-drawer-section mobile-user" id="mobile-user" hidden>
-          <span class="user-avatar" id="mobile-user-avatar" aria-hidden="true"></span>
-          <span class="user-meta"><b id="mobile-user-name"></b><small id="mobile-user-team"></small></span>
+      <div class="mobile-drawer-card" role="dialog" aria-modal="true" aria-label="Navigation menu">
+        <div class="mobile-drawer-head">
+          <div class="user-chip mobile-user-chip" id="mobile-user" hidden>
+            <span class="user-avatar" id="mobile-user-avatar" aria-hidden="true"></span>
+            <span class="user-meta"><b id="mobile-user-name"></b><small id="mobile-user-team"></small></span>
+          </div>
+          <button class="btn icon-btn mobile-drawer-close" id="mobile-menu-close" type="button" aria-label="Close menu">&times;</button>
         </div>
         <div class="mobile-drawer-actions">
-          <a class="btn mobile-drawer-btn" href="../index.html">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-            <span>Operations Home</span>
-          </a>
-          <a class="btn mobile-drawer-btn tech-only" href="../request/poster.html">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            <span>Participant QR Poster</span>
-          </a>
-          <a class="btn mobile-drawer-btn tech-only" href="../request/form.html" target="_blank" rel="noopener">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            <span>Participant Form ↗</span>
-          </a>
-          <button class="btn mobile-drawer-btn" id="mobile-theme-toggle">
-            <span class="theme-icon">🌓</span>
-            <span id="mobile-theme-text">Toggle Light / Dark</span>
-          </button>
-          <button class="btn mobile-drawer-btn tech-only" id="mobile-alerts-btn">
-            <span>🔔</span>
-            <span>Enable Sound Alerts</span>
-          </button>
-          <button class="btn mobile-drawer-btn" id="mobile-logout-btn">
-            <span>⎋</span>
-            <span>Sign out</span>
-          </button>
+          <a class="btn mobile-drawer-btn" href="../index.html"><span>Overview</span></a>
+          <button class="btn mobile-drawer-btn tech-only btn-tutorial" id="mobile-tutorial-btn"><span>Tutorial 🎮</span></button>
+          <button class="btn mobile-drawer-btn tech-only" id="mobile-alerts-btn"><span>Enable alerts</span></button>
+          <button class="btn mobile-drawer-btn" id="mobile-theme-toggle"><span id="mobile-theme-text">Light</span></button>
+          <button class="btn mobile-drawer-btn bad" id="mobile-logout-btn"><span>Sign out</span></button>
         </div>
       </div>
     </div>
@@ -96,8 +80,9 @@
           <img class="logo-dark" src="../assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
           <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
         </div>
-        <div class="form-header-badge">Volunteer portal · Cairo</div>
-        <h1>Welcome, volunteer</h1>
+        <div class="form-header-badge">Tech Ops Team · Cairo</div>
+        <h1>Tech Ops Sign In</h1>
+        <p class="form-sub">Enter an authorized Tech Ops volunteer code to open this workspace.</p>
         <form id="login-form" autocomplete="off" novalidate>
           <label class="lbl" for="login-code">Volunteer Code</label>
           <input id="login-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="e.g. TO-001" aria-describedby="login-error">
@@ -105,39 +90,47 @@
           <button class="btn primary login-btn" id="login-btn" type="submit">Sign in</button>
         </form>
         <p class="login-note" id="login-note" hidden></p>
+        <p style="margin-top:16px"><a href="../index.html" class="muted" style="font-size:13px">&larr; Back to Overview</a></p>
       </div>
     </section>
 
-    <main>
+    <!-- STRICT RBAC BLOCK: Shown when signed in with an unauthorized role (never redirects) -->
+    <section class="denied-screen" id="access-denied" hidden>
+      <div class="denied-card" role="alert">
+        <div class="denied-icon" aria-hidden="true">🔒</div>
+        <div class="denied-badge">Access Restricted · Tech Ops Only</div>
+        <h1>Unauthorized Module</h1>
+        <p id="denied-msg">Your volunteer role does not have permission to access the Tech Ops panel.</p>
+        <div class="denied-actions">
+          <a class="btn primary" href="../index.html">&larr; Return to Overview</a>
+          <button class="btn" id="denied-logout-btn" type="button">Switch Volunteer Code</button>
+        </div>
+      </div>
+    </section>
+
+    <main hidden>
       <div id="banners"></div>
 
       <!-- Desktop Tabs -->
       <nav class="tabs" role="tablist" aria-label="TechOps sections">
-        <button class="tab on" role="tab" data-tab="issues">Issues <span class="n" id="n-issues">0</span></button>
+        <button class="tab on" role="tab" data-tab="issues">Requests <span class="n" id="n-issues">0</span></button>
         <button class="tab" role="tab" data-tab="maps">Floor maps &amp; routing</button>
         <button class="tab" role="tab" data-tab="team">Team &amp; pings <span class="n" id="n-meet" hidden>0</span></button>
         <button class="tab" role="tab" data-tab="inventory">Inventory</button>
       </nav>
 
-      <!-- ISSUES -->
+      <!-- ISSUES / REQUESTS -->
       <section id="tab-issues">
         <div class="page-title">
-          <h2>Task Queue</h2>
+          <h2>Tech Ops Requests</h2>
           <span class="greeting" id="greeting"></span>
         </div>
-        <div class="row issues-filter-row" style="margin-bottom:14px">
+        <div class="row issues-filter-row" style="margin-bottom:16px">
           <div id="issue-filters" class="chips-scroll-row"></div>
           <span class="sp desktop-only"></span>
           <input id="issue-search" type="search" placeholder="Search room, team, or problem…" aria-label="Search issues">
         </div>
-        <div class="table-wrap">
-          <table class="issues-table">
-            <thead>
-              <tr><th>Status</th><th>Reported</th><th>Location</th><th>Issue</th><th>Details</th><th>Assigned to</th><th>Action</th></tr>
-            </thead>
-            <tbody id="issue-rows"></tbody>
-          </table>
-        </div>
+        <div class="req-grid" id="issue-rows"></div>
       </section>
 
       <!-- MAPS & ROUTING -->
@@ -285,15 +278,16 @@
     </nav>
   </div>
 
-  <script src="vendor/qrcode.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/firebase-config.js"></script>
-  <script src="js/seed-data.js"></script>
-  <script src="js/data.js"></script>
+  <script src="../scripts/vendor/qrcode.js"></script>
+  <script src="../scripts/services/config.js"></script>
+  <script src="../scripts/services/firebase-config.js"></script>
+  <script src="../scripts/services/seed-data.js"></script>
+  <script src="../scripts/services/data.js"></script>
   <script src="js/router.js"></script>
-  <script src="js/common.js"></script>
-  <script src="js/store.js"></script>
+  <script src="../scripts/services/common.js"></script>
+  <script src="../scripts/services/store.js"></script>
   <script src="js/map.js"></script>
+  <script src="../scripts/components/tutorial.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>

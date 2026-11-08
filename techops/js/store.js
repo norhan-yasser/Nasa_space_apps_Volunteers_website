@@ -12,25 +12,32 @@
  */
 (function () {
   var FB = window.TECHOPS_FIREBASE || {}, D = window.TechOpsData;
-  var LIVE = !!(FB.apiKey && FB.projectId);
+  /* Firebase Auth requires http/https; when opened directly via file://, run cleanly against bundled local data with zero console errors. */
+  var IS_FILE = typeof location !== "undefined" && location.protocol === "file:";
+  var LIVE = !!(FB.apiKey && FB.projectId && !IS_FILE);
   var SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
   var COLS = ["rooms", "wifi", "team", "inventory", "reports", "meetups"];
   var KEYFIELD = { rooms: "code", wifi: "id", team: "name", inventory: "id", reports: "id", meetups: "id" };
   var NUMERIC = { capacity: 1, x: 1, y: 1, mbps: 1, latency: 1, qty: 1 };
   var FLOOR_NAMES = { B: "Basement", G: "Ground Floor", F: "First Floor", S: "Second Floor" };
   var TYPE_LABEL = { "chairs": "Classroom", "small lecture": "Small Lecture Hall", "bring your device": "Bring Your Own Device", "lecture": "Lecture Hall" };
-  var SESSION_KEY = "techops_volunteer_code", SESSION_SEEN = "techops_session_seen", LOCAL_KEY = "techops_local_db_v1";
+  var SESSION_KEY = "techops_volunteer_code", SESSION_SEEN = "techops_session_seen", SESSION_USER = "techops_volunteer_user", LOCAL_KEY = "techops_local_db_v1";
   /* SECURITY: the volunteer login lives in sessionStorage (it dies with the tab, never survives a browser restart) and
    * also expires when the person was away from the site for longer than SESSION_GRACE_MS (default 5 min). */
   var GRACE = Number((window.TECHOPS_CONFIG || {}).SESSION_GRACE_MS) || 5 * 60 * 1000;
   function sget(k) { try { return sessionStorage.getItem(k) || ""; } catch (e) { return ""; } }
   function sset(k, v) { try { v ? sessionStorage.setItem(k, v) : sessionStorage.removeItem(k); } catch (e) {} }
-  try { localStorage.removeItem(SESSION_KEY); } catch (e) {}          /* old permanent logins stop working */
+  try { localStorage.removeItem(SESSION_KEY); localStorage.removeItem(SESSION_USER); } catch (e) {} /* old permanent logins stop working */
+  function clearSessionStorage() { sset(SESSION_KEY, ""); sset(SESSION_SEEN, ""); sset(SESSION_USER, ""); }
   function markSeen() { if (sget(SESSION_KEY)) sset(SESSION_SEEN, String(Date.now())); }
   function sessionFresh() { var t = Number(sget(SESSION_SEEN)) || 0; return !!t && Date.now() - t <= GRACE; }
-  /* Which task queue this browser reads: "TechOps" or "Logistics" (set from the volunteer's Team at sign-in). */
+  /* Which task queue this browser reads: "TechOps", "Logistics", or "Competition" (strictly isolated per role). */
   var TEAM = "TechOps";
-  function setTeam(u) { TEAM = u && (u.team === "Competition" || u.team === "Dispatch") ? "ALL" : u && u.team === "Logistics" ? "Logistics" : "TechOps"; }   /* "ALL" = Dispatch sees both queues */
+  function setTeam(u) {
+    if (u && (u.team === "Competition" || u.team === "Dispatch")) TEAM = "Competition";
+    else if (u && u.team === "Logistics") TEAM = "Logistics";
+    else TEAM = "TechOps";
+  }
 
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
   function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -58,7 +65,7 @@
   function fail(code, msg) { var e = new Error(msg || code); e.code = code; return e; }
   function friendly(e) {
     var c = e && e.code || "";
-    if (c === "claimed" || c === "invalid" || c === "missing" || c === "sdk") return e.message;
+    if (c === "claimed" || c === "invalid" || c === "missing" || c === "sdk" || c === "forbidden") return e.message;
     if (c === "permission-denied") return "Your volunteer account is not allowed to do that.";
     if (c === "auth/operation-not-allowed") return "Anonymous sign-in is disabled in the Firebase console (Authentication > Sign-in method).";
     if (c === "unavailable" || c === "auth/network-request-failed") return "No connection to Firebase. Check your internet and try again.";
@@ -85,7 +92,8 @@
     fb.boot = loadScript(SDK + "firebase-app-compat.js")
       .then(function () { return Promise.all([loadScript(SDK + "firebase-auth-compat.js"), loadScript(SDK + "firebase-firestore-compat.js")]); })
       .then(function () {
-        if (!firebase.apps.length) firebase.initializeApp(FB);
+        /* Omit authDomain so Firebase Auth does not inject the OAuth /__/auth/iframe element (we only use Anonymous Auth). */
+        if (!firebase.apps.length) firebase.initializeApp({ apiKey: FB.apiKey, projectId: FB.projectId, appId: FB.appId });
         fb.auth = firebase.auth(); fb.db = firebase.firestore();
       });
     return fb.boot;
@@ -106,10 +114,11 @@
     return fb.signedIn().then(function (u) { return fb.db.collection("sessions").doc(u.uid).set({ code: code, at: stamp() }); });
   };
   fb.start = function () {
-    return fb.signedIn().then(function () {
+    var prep = (user && user.code) ? fb.bindSession(user.code) : fb.signedIn();
+    return prep.then(function () {
       COLS.forEach(function (col) {
         var ref = fb.db.collection(col);
-        if (col === "reports" && TEAM !== "ALL") ref = ref.where("team", "==", TEAM);
+        if (col === "reports") ref = ref.where("team", "==", TEAM);
         fb.unsubs.push(ref.onSnapshot(function (snap) {
           cache[col] = snap.docs.map(function (d) { var o = d.data(); o._id = d.id; return o; });
           ready[col] = true; checkReady(); emit();
@@ -139,7 +148,14 @@
   var loc = {
     db: function () {
       var d = jget(LOCAL_KEY, null);
-      if (!d) { d = JSON.parse(JSON.stringify(window.TECHOPS_SEED || {})); jset(LOCAL_KEY, d); }
+      var seed = window.TECHOPS_SEED || {};
+      if (!d) {
+        d = JSON.parse(JSON.stringify(seed));
+        jset(LOCAL_KEY, d);
+      } else if (seed.volunteers) {
+        /* Auto-sync new volunteers from seed into existing cached localStorage */
+        d.volunteers = Object.assign({}, seed.volunteers, d.volunteers || {});
+      }
       return d;
     },
     save: function (d) { jset(LOCAL_KEY, d); if (channel) channel.postMessage({ at: Date.now() }); },
@@ -149,10 +165,14 @@
         cache[c] = Object.keys(d[c] || {}).map(function (k) { var o = Object.assign({}, d[c][k]); o._id = k; return o; });
         ready[c] = true;
       });
-      if (TEAM !== "ALL") cache.reports = cache.reports.filter(function (r) { return r.team === TEAM; });
+      cache.reports = cache.reports.filter(function (r) { return (r.team || "TechOps") === TEAM; });
       checkReady();
     },
-    getVolunteer: function (code) { return Promise.resolve(loc.db().volunteers[code] || null); },
+    getVolunteer: function (code) {
+      var d = loc.db();
+      var seedV = (window.TECHOPS_SEED && window.TECHOPS_SEED.volunteers) || {};
+      return Promise.resolve((d.volunteers && d.volunteers[code]) || seedV[code] || null);
+    },
     set: function (col, id, obj) { var d = loc.db(); (d[col] = d[col] || {})[id] = obj; loc.save(d); loc.refresh(); emit(); return Promise.resolve(); },
     update: function (col, id, fields) {
       var d = loc.db(); if (!d[col] || !d[col][id]) return Promise.reject(fail("missing", "Record not found."));
@@ -202,6 +222,69 @@
     return obj;
   }
 
+  /* ---------------------------------------------------------------- Tutorial / Sandbox Mode */
+  var TUTORIAL_KEY_PREFIX = "nasa_tutorial_done_";
+  var _tutorialMode = false;
+  var _tutorialRole = null;
+  var _tutorialReports = null;
+
+  function initTutorialReports() {
+    return [
+      { id: "TUT-TO-01", ts: stamp(), floor: "G", floorName: "Ground Floor", room: "C026", issue: "Internet is lagging", details: "[Training Ticket] Wi-Fi speed dropping intermittently for Team Aurora during presentation setup.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Aurora · Practice", team: "TechOps" },
+      { id: "TUT-TO-02", ts: stamp(), floor: "F", floorName: "First Floor", room: "B133", issue: "Need TechOps assistance", details: "[Training Ticket] Projector HDMI resolution is not detected by presenter laptop.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Judges Panel 1", team: "TechOps" },
+      { id: "TUT-TO-03", ts: stamp(), floor: "F", floorName: "First Floor", room: "C139", issue: "Electricity / Power problem", details: "[Training Ticket] Outlet tripped at back desk, requesting power extension strip.", status: "In Progress", assigned: "Mohamed Khairy", claimedAt: stamp(), resolvedAt: "", reporter: "Team Nova", team: "TechOps" },
+
+      { id: "TUT-LG-01", ts: stamp(), floor: "S", floorName: "Second Floor", room: "C231", issue: "Help request", details: "[Training Ticket] Lost participant badge, requesting replacement lanyard and badge.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Vega", team: "Logistics" },
+      { id: "TUT-LG-02", ts: stamp(), floor: "F", floorName: "First Floor", room: "H113", issue: "Prayer request", details: "[Training Ticket] Nearest direction to Women prayer hall.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Participant Sarah", team: "Logistics" },
+      { id: "TUT-LG-03", ts: stamp(), floor: "G", floorName: "Ground Floor", room: "S016", issue: "Go to a place", details: "[Training Ticket] Guidance escort from entrance to main auditorium.", status: "In Progress", assigned: "Norhan Yasser", claimedAt: stamp(), resolvedAt: "", reporter: "Guest Speaker", team: "Logistics" },
+
+      { id: "TUT-CMP-01", ts: stamp(), floor: "", floorName: "", room: "", issue: "Discord issue", details: "[Training Ticket] Discord server invite link expired for two teammates joining late.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Orion · @mariam_a", team: "Competition" },
+      { id: "TUT-CMP-02", ts: stamp(), floor: "", floorName: "", room: "", issue: "Submission help", details: "[Training Ticket] GitHub repository link validation warning on Space Apps challenge portal.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Nebula · @youssef_dev", team: "Competition" },
+      { id: "TUT-CMP-03", ts: stamp(), floor: "F", floorName: "First Floor", room: "B130", issue: "Competition question", details: "[Training Ticket] Can our 240-second demo include open-source NASA imagery?", status: "In Progress", assigned: "Competition Lead", claimedAt: stamp(), resolvedAt: "", reporter: "Team Horizon", team: "Competition" }
+    ];
+  }
+
+  function isTutorialCompleted(roleOrCode) {
+    try {
+      var r = String(roleOrCode || (user && (user.role || user.team)) || "general").toLowerCase();
+      return localStorage.getItem(TUTORIAL_KEY_PREFIX + r) === "true";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setTutorialCompleted(roleOrCode, val) {
+    try {
+      var r = String(roleOrCode || (user && (user.role || user.team)) || "general").toLowerCase();
+      localStorage.setItem(TUTORIAL_KEY_PREFIX + r, val ? "true" : "false");
+    } catch (e) {}
+  }
+
+  function isTutorialMode() {
+    return _tutorialMode;
+  }
+
+  function enterTutorialMode(role) {
+    _tutorialMode = true;
+    _tutorialRole = role || (user && (user.role || user.team)) || "techops";
+    _tutorialReports = initTutorialReports();
+    COLS.forEach(function (c) { ready[c] = true; });
+    if (readyResolve) readyResolve();
+    emit();
+  }
+
+  function exitTutorialMode() {
+    _tutorialMode = false;
+    _tutorialRole = null;
+    _tutorialReports = null;
+    if (!LIVE) {
+      loc.refresh();
+      COLS.forEach(function (c) { ready[c] = true; });
+      if (readyResolve) readyResolve();
+    }
+    emit();
+  }
+
   /* ---------------------------------------------------------------- real-time read */
   function start() {
     if (started) return readyP;
@@ -222,6 +305,16 @@
       if (D && D.ALL) D.ALL.forEach(function (g) { geo[g.code] = 1; });
       var out = { meta: { live: LIVE, online: !lastError, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
       COLS.forEach(function (c) { out[c] = normalise(c, cache[c] || []); });
+      if (_tutorialMode && _tutorialReports) {
+        var tr = String(_tutorialRole || TEAM || (user && (user.role || user.team)) || "").toLowerCase();
+        out.reports = _tutorialReports.filter(function (r) {
+          if (tr.indexOf("logistics") >= 0) return r.team === "Logistics";
+          if (tr.indexOf("comp") >= 0 || tr.indexOf("dispatch") >= 0) return r.team === "Competition";
+          return r.team === "TechOps";
+        });
+      } else {
+        out.reports = (out.reports || []).filter(function (r) { return (r.team || "TechOps") === TEAM; });
+      }
       /* only rooms that exist on the floor plans can be drawn / routed to */
       if (D && D.ALL) out.rooms = out.rooms.filter(function (r) { return geo[r.code]; });
       /* Wi-Fi readings only count when the point is physically INSIDE a room: corridor / hall / outer-stage points are erased */
@@ -230,7 +323,7 @@
     });
   }
 
-  /* ---------------------------------------------------------------- auth */
+  /* ---------------------------------------------------------------- auth & RBAC */
   function normalizeCode(c) { return String(c || "").trim().toUpperCase().replace(/\s+/g, ""); }
   function toUser(v) {
     if (!v || !v.Name) return null;
@@ -238,33 +331,92 @@
     var role = String(v.Role || (team.toLowerCase() === "admin" ? "Admin" : team));
     return { name: String(v.Name), code: String(v["Volunteer Code"] || ""), team: team, role: role };
   }
+  function saveSessionUser(code, u) {
+    sset(SESSION_KEY, code);
+    sset(SESSION_USER, u ? JSON.stringify(u) : "");
+    markSeen();
+  }
+  function peekUser() {
+    var code = sget(SESSION_KEY);
+    if (!code || !sessionFresh()) return null;
+    if (user && user.code === code) { markSeen(); return user; }
+    var raw = sget(SESSION_USER);
+    if (!raw) return null;
+    try {
+      var parsed = JSON.parse(raw);
+      if (parsed && parsed.name && parsed.code === code) {
+        user = parsed;
+        setTeam(user);
+        markSeen();
+        return user;
+      }
+    } catch (e) {}
+    return null;
+  }
+  function canAccess(u, moduleId) {
+    var who = u === undefined ? user : u;
+    if (!who || !who.team) return false;
+    var t = String(who.team || "").trim();
+    var r = String(who.role || "").trim();
+    if (t === "Admin" || r === "Admin") return true;
+    var m = String(moduleId || "").trim().toLowerCase();
+    if (m === "poster" || m === "overview") return true;
+    /* Tech Ops has its own dedicated Maps & Route tab inside Tech Ops, so they do not use the external Maps module */
+    if (m === "maps") return t !== "TechOps";
+    if (m === "logistics") return t === "Logistics";
+    if (m === "competition" || m === "dispatch") return t === "Competition" || t === "Dispatch";
+    if (m === "techops") return t === "TechOps";
+    return false;
+  }
+  function teamDisplayName(u) {
+    var who = u === undefined ? user : u;
+    var t = who && who.team ? String(who.team) : "";
+    if (t === "TechOps") return "Tech Ops";
+    if (t === "Competition" || t === "Dispatch") return "Competition Team";
+    if (t === "Logistics") return "Logistics";
+    if (t === "Volunteers") return "All Volunteers";
+    return t || "Volunteer";
+  }
+  function workspaceFor(u) {
+    var who = u === undefined ? user : u;
+    if (!who || !who.team) return null;
+    if (who.team === "Logistics") return { module: "logistics", label: "Logistics", path: "logistics/index.html" };
+    if (who.team === "Competition" || who.team === "Dispatch") return { module: "competition", label: "Competition Team", path: "dispatch/index.html" };
+    if (who.team === "TechOps") return { module: "techops", label: "Tech Ops", path: "techops/index.html" };
+    return null;
+  }
   function login(code) {
     code = normalizeCode(code);
     if (!/^[A-Z0-9_-]{2,40}$/.test(code)) return Promise.reject(fail("invalid", "That volunteer code is not valid."));
     return backend().getVolunteer(code).then(function (v) {
       var u = toUser(v);
       if (!u) throw fail("invalid", "We couldn't find that volunteer code. Check it and try again.");
-      return (LIVE ? fb.bindSession(code) : Promise.resolve()).then(function () { user = u; setTeam(u); sset(SESSION_KEY, code); markSeen(); return u; });
+      return (LIVE ? fb.bindSession(code) : Promise.resolve()).then(function () { user = u; setTeam(u); saveSessionUser(code, u); return u; });
     });
   }
   function restore() {
     var code = sget(SESSION_KEY);
-    if (!code) return Promise.resolve(null);
-    if (!sessionFresh()) { sset(SESSION_KEY, ""); sset(SESSION_SEEN, ""); if (LIVE) fb.signOut().catch(function () {}); return Promise.resolve(null); }
+    if (!code) { clearSessionStorage(); return Promise.resolve(null); }
+    if (!sessionFresh()) { clearSessionStorage(); if (LIVE) fb.signOut().catch(function () {}); return Promise.resolve(null); }
+    var cached = peekUser();
+    if (cached) {
+      if (LIVE) fb.bindSession(code).catch(function () {});
+      return Promise.resolve(cached);
+    }
     var check = LIVE ? fb.getVolunteer(code) : loc.getVolunteer(code);
     return check.then(function (v) {
       user = toUser(v); setTeam(user);
       if (!user) {
-        sset(SESSION_KEY, "");
+        clearSessionStorage();
       } else {
-        sset(SESSION_KEY, code); markSeen();
+        saveSessionUser(code, user);
         if (LIVE) fb.bindSession(code).catch(function () {});
       }
       return user;
     }, function () { return null; });
   }
   function logout() {
-    user = null; sset(SESSION_KEY, ""); sset(SESSION_SEEN, ""); TEAM = "TechOps";
+    user = null; clearSessionStorage(); TEAM = "TechOps";
     started = false; ready = {}; cache = {}; readyP = new Promise(function (r) { readyResolve = r; });
     if (LIVE) { fb.stop(); return fb.signOut().catch(function () {}); }
     return Promise.resolve();
@@ -292,6 +444,17 @@
   /* One-click claim: assigns the task to the signed-in volunteer and moves it to "In Progress". */
   function claimReport(id) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
+    if (_tutorialMode && _tutorialReports) {
+      var r = _tutorialReports.filter(function (x) { return x.id === id; })[0];
+      if (!r) return Promise.reject(fail("missing", "Training task not found."));
+      if (r.status === "Resolved") return Promise.reject(fail("claimed", "This practice task is already resolved."));
+      if (r.assigned && r.assigned !== user.name) return Promise.reject(fail("claimed", "Already claimed by " + r.assigned + "."));
+      r.assigned = user.name;
+      r.status = "In Progress";
+      r.claimedAt = stamp();
+      emit();
+      return Promise.resolve({ id: r.id, status: r.status, assigned: r.assigned });
+    }
     return guard(backend().mutateReport(id, function (r) {
       if (r.status === "Resolved") throw fail("claimed", "This task is already resolved.");
       if (r.assigned && r.assigned !== user.name) throw fail("claimed", "Already claimed by " + r.assigned + ".");
@@ -301,6 +464,14 @@
   /* One-click resolve: only the volunteer who claimed the task can resolve it. */
   function resolveReport(id) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
+    if (_tutorialMode && _tutorialReports) {
+      var r = _tutorialReports.filter(function (x) { return x.id === id; })[0];
+      if (!r) return Promise.reject(fail("missing", "Training task not found."));
+      r.status = "Resolved";
+      r.resolvedAt = stamp();
+      emit();
+      return Promise.resolve({ id: r.id, status: r.status });
+    }
     return guard(backend().mutateReport(id, function (r) {
       if (r.assigned !== user.name && r.handedBy !== user.name) throw fail("claimed", "Only " + (r.assigned || "the assignee") + " can resolve this task.");
       return { status: "Resolved", resolvedAt: stamp() };
@@ -322,6 +493,15 @@
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
     member = clip(String(member || "").trim(), 60);
     if (!member) return Promise.reject(fail("invalid", "Choose who should take this request."));
+    if (_tutorialMode && _tutorialReports) {
+      var r = _tutorialReports.filter(function (x) { return x.id === id; })[0];
+      if (!r) return Promise.reject(fail("missing", "Training task not found."));
+      r.assigned = member;
+      r.handedBy = user.name;
+      r.handedAt = stamp();
+      emit();
+      return Promise.resolve({ id: r.id, assigned: r.assigned });
+    }
     return guard(backend().mutateReport(id, function (r) {
       if (r.status === "Resolved") throw fail("claimed", "This task is already resolved.");
       if (r.assigned !== user.name && r.handedBy !== user.name) throw fail("claimed", "Claim this request first.");
@@ -333,8 +513,11 @@
 
   window.TechOpsStore = {
     FLOOR_NAMES: FLOOR_NAMES, isLive: function () { return LIVE; }, floorId: floorId, stamp: stamp, parseStamp: parseStamp, friendly: friendly,
-    login: login, restore: restore, logout: logout, currentUser: function () { return user; }, sessionGraceMs: GRACE,
+    login: login, restore: restore, peekUser: peekUser, logout: logout, currentUser: function () { return user; }, sessionGraceMs: GRACE,
+    canAccess: canAccess, teamDisplayName: teamDisplayName, workspaceFor: workspaceFor,
     start: start, loadAll: loadAll, onChange: onChange,
-    addReport: addReport, addMeetup: addMeetup, update: update, claimReport: claimReport, resolveReport: resolveReport, handOutReport: handOutReport, resetDemo: resetDemo
+    addReport: addReport, addMeetup: addMeetup, update: update, claimReport: claimReport, resolveReport: resolveReport, handOutReport: handOutReport, resetDemo: resetDemo,
+    isTutorialCompleted: isTutorialCompleted, setTutorialCompleted: setTutorialCompleted,
+    isTutorialMode: isTutorialMode, enterTutorialMode: enterTutorialMode, exitTutorialMode: exitTutorialMode
   };
 })();

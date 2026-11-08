@@ -134,7 +134,7 @@ const color = r => r.type == "T" ? "#14b8a6" : r.type == "P" ? "#8b5cf6" : r.typ
 
 /* Theme handling */
 function initTheme() {
-  const saved = localStorage.getItem("nasa_theme") || "dark";
+  const saved = localStorage.getItem("techops_theme") || localStorage.getItem("nasa_theme") || "dark";
   document.documentElement.setAttribute("data-theme", saved);
   updateThemeButton(saved);
 }
@@ -143,16 +143,23 @@ function toggleTheme() {
   const current = document.documentElement.getAttribute("data-theme") || "dark";
   const next = current == "dark" ? "light" : "dark";
   document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("nasa_theme", next);
+  try {
+    localStorage.setItem("techops_theme", next);
+    localStorage.setItem("nasa_theme", next);
+  } catch (e) {}
   updateThemeButton(next);
 }
 
 function updateThemeButton(theme) {
+  const label = theme == "dark" ? "Light" : "Dark";
   const btn = $("theme-toggle");
-  if (!btn) return;
-  btn.innerHTML = theme == "dark" 
-    ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span class="btn-text">Light</span>'
-    : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span class="btn-text">Dark</span>';
+  if (btn) {
+    btn.innerHTML = theme == "dark" 
+      ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span class="btn-text">Light</span>'
+      : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span class="btn-text">Dark</span>';
+  }
+  const mText = $("mobile-theme-text");
+  if (mText) mText.textContent = label;
 }
 
 /* Google Sheets Realtime Database Engine */
@@ -310,7 +317,15 @@ async function syncFromGoogleSheet(urlOrId, silent = false) {
       statusEl.textContent = `✓ Synced: ${updatedCount} rooms updated from Google Sheets`;
     }
 
-    if (floor) draw(); else home();
+    if (floor) {
+      draw();
+    } else if (!ROUTE) {
+      const prevFrom = $("qw-from") ? $("qw-from").value : "";
+      const prevTo = $("qw-to") ? $("qw-to").value : "";
+      home();
+      if ($("qw-from") && prevFrom) $("qw-from").value = prevFrom;
+      if ($("qw-to") && prevTo) $("qw-to").value = prevTo;
+    }
     return true;
   } catch (err) {
     console.warn("Google Sheet sync error:", err);
@@ -327,7 +342,12 @@ function home() {
   floor = null;
   $("home").hidden = false;
   $("fv").hidden = true;
-  $("crumb").innerHTML = '<span class="crumb-active">Overview</span>';
+  if ($("crumb")) {
+    $("crumb").hidden = false;
+    $("crumb").innerHTML = '<span class="crumb-active">Overview</span>';
+  }
+  if ($("map-filter-panel")) $("map-filter-panel").hidden = true;
+  if ($("filter-toggle")) $("filter-toggle").setAttribute("aria-expanded", "false");
 
   const quickWayfindHtml = `
     <div class="quick-wayfind-card">
@@ -432,9 +452,15 @@ function apply() {
 }
 
 function reset() {
-  const cw = map.clientWidth, ch = map.clientHeight;
-  const k = Math.min(cw / W, ch / H);
-  V = { k, x: (cw - W * k) / 2, y: (ch - H * k) / 2 };
+  const cw = map.clientWidth || 360, ch = map.clientHeight || 280;
+  if (cw < 640) {
+    /* Mobile portrait fit: fill the map frame cleanly without top/bottom black bars */
+    const k = Math.max(cw / (W * 0.88), ch / (H * 0.78));
+    V = { k, x: cw / 2 - (W * 0.50) * k, y: ch / 2 - (H * 0.46) * k };
+  } else {
+    const k = Math.min(cw / W, ch / H);
+    V = { k, x: (cw - W * k) / 2, y: (ch - H * k) / 2 };
+  }
   apply();
 }
 
@@ -444,14 +470,17 @@ function open(id, focus) {
   $("fv").hidden = false;
   $("img").src = IMG[id];
 
-  $("crumb").innerHTML = `<a id="bc">Overview</a> <span class="crumb-sep">›</span> <span class="crumb-active">${floor.name}</span>`;
-  $("bc").onclick = home;
+  if ($("crumb")) {
+    $("crumb").hidden = true;
+    $("crumb").innerHTML = `<a id="bc">Overview</a> <span class="crumb-sep">›</span> <span class="crumb-active">${floor.name}</span>`;
+    if ($("bc")) $("bc").onclick = home;
+  }
 
   $("tabs").innerHTML = FLOORS.map(f => `
     <button class="btn ${f.id == id ? "on" : ""}" data-f="${f.id}">
       ${f.name.replace(" Floor", "")}
     </button>
-  `).join(" ");
+  `).join("");
 
   $("tabs").querySelectorAll("button").forEach(b => b.onclick = () => open(b.dataset.f));
   draw();
@@ -556,7 +585,58 @@ function draw() {
   + (floor.id == "G" ? `<span><i class="leg-exit"></i>Exits (5)</span><span><i class="leg-stage"></i>Outer Stage</span><span><i style="background:#d97706"></i>Cafeteria</span>` : "");
 }
 
-["ft", "fa", "fs"].forEach(i => $(i).onchange = draw);
+function updateFilterBadge() {
+  const count = [$("ft").value, $("fa").value, $("fs").value].filter(Boolean).length;
+  const badge = $("filter-badge");
+  const toggleBtn = $("filter-toggle");
+  if (badge) {
+    badge.textContent = String(count);
+    badge.hidden = count === 0;
+  }
+  if (toggleBtn) {
+    toggleBtn.classList.toggle("on", count > 0);
+  }
+}
+
+["ft", "fa", "fs"].forEach(i => $(i).onchange = () => {
+  updateFilterBadge();
+  draw();
+});
+
+const filterToggle = $("filter-toggle");
+const filterPanel = $("map-filter-panel");
+const filterClose = $("filter-close");
+const filterReset = $("filter-reset");
+
+if (filterToggle && filterPanel) {
+  filterToggle.onclick = e => {
+    e.stopPropagation();
+    const openState = filterPanel.hidden;
+    filterPanel.hidden = !openState;
+    filterToggle.setAttribute("aria-expanded", openState ? "true" : "false");
+  };
+  document.addEventListener("click", e => {
+    if (!filterPanel.hidden && !e.target.closest(".filter-wrap")) {
+      filterPanel.hidden = true;
+      filterToggle.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+if (filterClose && filterPanel) {
+  filterClose.onclick = () => {
+    filterPanel.hidden = true;
+    if (filterToggle) filterToggle.setAttribute("aria-expanded", "false");
+  };
+}
+if (filterReset) {
+  filterReset.onclick = () => {
+    $("ft").value = "";
+    $("fa").value = "";
+    $("fs").value = "";
+    updateFilterBadge();
+    if (floor) draw();
+  };
+}
 
 /* Zoom & Pan Handlers */
 let moved = 0, g0 = null;
@@ -1256,7 +1336,7 @@ function exitsSvg() {
   if (!floor || floor.id != "G") return "";
   return EXITS.map(e => {
     const cx = (e.bb[0] + e.bb[2]) / 2, cy = (e.bb[1] + e.bb[3]) / 2, w = e.main ? 64 : 40;
-    return `<g class="exit-mk" data-exit="${e.id}" transform="translate(${cx},${cy})" tabindex="0" aria-label="${esc(e.label)} (exit)"><circle r="15" fill="#22c55e" stroke="#ffffff" stroke-width="2.5"/><path d="M-5 -5 L5 -5 L5 5 M5 -5 L-6 6" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="${-w / 2}" y="18" width="${w}" height="14" rx="3" fill="rgba(9,13,24,.9)" stroke="#22c55e" stroke-width="1"/><text y="28.5" text-anchor="middle" font-size="9" font-weight="800" fill="#4ade80" font-family="'Inter', system-ui, sans-serif">${e.main ? "MAIN EXIT" : "EXIT"}</text></g>`;
+    return `<g class="exit-mk" data-exit="${e.id}" transform="translate(${cx},${cy})" tabindex="0" aria-label="${esc(e.label)} (exit)"><circle r="15" fill="#22c55e" stroke="#ffffff" stroke-width="2.5"/><path d="M-5 -5 L5 -5 L5 5 M5 -5 L-6 6" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="${-w / 2}" y="18" width="${w}" height="14" rx="3" fill="rgba(9,13,24,.9)" stroke="#22c55e" stroke-width="1"/><text y="28.5" text-anchor="middle" font-size="9" font-weight="800" fill="#4ade80" font-family="'abeatbyKai', sans-serif">${e.main ? "MAIN EXIT" : "EXIT"}</text></g>`;
   }).join("");
 }
 
@@ -1264,7 +1344,7 @@ function bathsSvg() {
   if (!floor) return "";
   return BATH_ALL.filter(b => b.floor == floor.id).map(b => {
     const [x1, y1, x2, y2] = b.bb, cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-    return `<g class="wc" data-wc="${b.id}" tabindex="0" aria-label="${esc(b.label)}"><rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="4" fill="#ec4899" fill-opacity=".34" stroke="#ec4899" stroke-width="2.5"/><g transform="translate(${cx},${cy})"><circle r="13" fill="#ec4899" stroke="#ffffff" stroke-width="2"/><text y="4" text-anchor="middle" font-size="10" font-weight="800" fill="#ffffff" font-family="'Inter', system-ui, sans-serif">WC</text></g></g>`;
+    return `<g class="wc" data-wc="${b.id}" tabindex="0" aria-label="${esc(b.label)}"><rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="4" fill="#ec4899" fill-opacity=".34" stroke="#ec4899" stroke-width="2.5"/><g transform="translate(${cx},${cy})"><circle r="13" fill="#ec4899" stroke="#ffffff" stroke-width="2"/><text y="4" text-anchor="middle" font-size="10" font-weight="800" fill="#ffffff" font-family="'abeatbyKai', sans-serif">WC</text></g></g>`;
   }).join("");
 }
 
@@ -1282,7 +1362,7 @@ function stairsSvg() {
           <circle cx="0" cy="0" r="14" fill="#10b981" stroke="#ffffff" stroke-width="1.5"/>
           <path d="M-6 4 L-6 1 L-2 1 L-2 -2 L2 -2 L2 -5 L6 -5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           <rect x="-24" y="17" width="48" height="15" rx="3" fill="rgba(9, 13, 24, 0.9)" stroke="#10b981" stroke-width="1"/>
-          <text x="0" y="28" text-anchor="middle" font-size="9" font-weight="800" fill="#10b981" font-family="'Inter', system-ui, sans-serif">STAIRS</text>
+          <text x="0" y="28" text-anchor="middle" font-size="9" font-weight="800" fill="#10b981" font-family="'abeatbyKai', sans-serif">STAIRS</text>
         </g></g>
       `;
     }
@@ -1297,7 +1377,7 @@ function stairsSvg() {
         <line x1="-12" y1="-12" x2="12" y2="12" stroke="#2548e6" stroke-width="3.5" stroke-linecap="round"/>
         <line x1="12" y1="-12" x2="-12" y2="12" stroke="#2548e6" stroke-width="3.5" stroke-linecap="round"/>
         <rect x="-22" y="20" width="44" height="14" rx="3" fill="rgba(9, 13, 24, 0.9)" stroke="#2548e6" stroke-width="1"/>
-        <text x="0" y="30" text-anchor="middle" font-size="8.5" font-weight="900" fill="#60a5fa" font-family="'Inter', system-ui, sans-serif">CLOSED</text>
+        <text x="0" y="30" text-anchor="middle" font-size="8.5" font-weight="900" fill="#60a5fa" font-family="'abeatbyKai', sans-serif">CLOSED</text>
       </g></g>
     `;
   });
@@ -1315,7 +1395,7 @@ function routeSvg() {
         <polyline class="rt" points="${p}" fill="none" stroke="${COL.sel}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
         ${l.m.map(([q, t]) => `
           <circle cx="${q[0]}" cy="${q[1]}" r="12" fill="${t == "s" ? COL.ok : t == "e" ? COL.no : "#fb9746"}" stroke="#ffffff" stroke-width="2.5"/>
-          <text x="${q[0]}" y="${q[1] + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff" font-family="'Inter', sans-serif">${t == "s" ? "A" : t == "e" ? "B" : "▲"}</text>
+          <text x="${q[0]}" y="${q[1] + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff" font-family="'abeatbyKai', sans-serif">${t == "s" ? "A" : t == "e" ? "B" : "▲"}</text>
         `).join("")}
       </g>
     `;
@@ -1571,11 +1651,58 @@ if (gsheetOpenBtn) {
 initTheme();
 home();
 
-// Auto-sync from Google Sheet once the volunteer code gate is open (never while the page is locked)
-function startSheetSync() {
-  if (window.__sheetSyncStarted || !GSHEET_URL) return;
-  window.__sheetSyncStarted = true;
-  syncFromGoogleSheet(GSHEET_URL, true);
+// Auto-sync from Google Sheet and apply any URL route parameters once the volunteer code gate is open
+function applyUrlRoute() {
+  if (window.__urlRouteApplied) return;
+  const params = new URLSearchParams(location.search);
+  const rawTo = (params.get("to") || params.get("routeTo") || params.get("room") || "").trim();
+  const rawFrom = (params.get("from") || params.get("routeFrom") || "").trim();
+  if (!rawTo) return;
+  window.__urlRouteApplied = true;
+
+  const norm = s => {
+    const u = String(s || "").trim().toUpperCase();
+    return u === "MAIN ENTRANCE" ? "ENTRANCE" : u;
+  };
+  const toCode = norm(rawTo);
+  const destLoc = loc(toCode);
+  if (!destLoc) return;
+
+  let fromCode = norm(rawFrom);
+  if (!fromCode || !loc(fromCode) || fromCode === toCode) {
+    fromCode = toCode === "ENTRANCE" ? "C026" : "ENTRANCE";
+  }
+
+  $("dir").style.display = "block";
+  $("dir").classList.remove("min");
+  fillDL();
+  $("df").value = fromCode;
+  $("dt").value = toCode;
+  go();
 }
-if (window.MapsGate && window.MapsGate.isUnlocked()) startSheetSync();
-else document.addEventListener("maps:unlocked", startSheetSync);
+
+function onMapsUnlocked() {
+  if (!window.__sheetSyncStarted && GSHEET_URL) {
+    window.__sheetSyncStarted = true;
+    syncFromGoogleSheet(GSHEET_URL, true);
+  }
+  applyUrlRoute();
+  if (window.NasaTutorial && window.TechOpsStore && !window.TechOpsStore.isTutorialCompleted("maps")) {
+    if (typeof open === "function") { try { open("G"); } catch (e) {} }
+    window.NasaTutorial.start("maps");
+  }
+}
+if (window.MapsGate && window.MapsGate.isUnlocked()) onMapsUnlocked();
+else document.addEventListener("maps:unlocked", onMapsUnlocked);
+
+function bindMapsTutorial() {
+  const tb = document.getElementById("tutorial-btn");
+  const mtb = document.getElementById("mobile-tutorial-btn");
+  const launch = () => {
+    if (typeof open === "function") { try { open("G"); } catch (e) {} }
+    if (window.NasaTutorial) window.NasaTutorial.start("maps");
+  };
+  if (tb) tb.onclick = launch;
+  if (mtb) mtb.onclick = launch;
+}
+bindMapsTutorial();

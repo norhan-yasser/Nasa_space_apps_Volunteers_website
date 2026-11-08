@@ -4,36 +4,44 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Venue Maps · NASA Space Apps Cairo Operations</title>
-  <meta name="description" content="Official NASA Space Apps Challenge Floor Management and Navigation System with Realtime Google Sheets Sync.">
+  <meta name="description" content="Official NASA Space Apps Challenge Floor Management and Navigation System.">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles/components/tutorial.css">
+  <script>
+    try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || localStorage.getItem('nasa_theme') || 'dark'); } catch (e) {}
+  </script>
   <style>
     .gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,9,18,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-    .gate[hidden]{display:none}
-    .gate-card{width:100%;max-width:400px;background:var(--bg-surface,#0f1628);color:var(--ink,#e8edf8);border:1px solid var(--line-strong,rgba(255,255,255,.3));border-radius:18px;padding:26px 22px;text-align:center}
-    .gate-card img{height:38px;margin-bottom:10px}
-    .gate-card h1{font-size:22px;margin:4px 0 6px}
-    .gate-card p{font-size:13.5px;color:var(--mut,#a9b6cf);margin-bottom:16px}
-    .gate-card input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line-strong,rgba(255,255,255,.3));background:transparent;color:inherit;font:inherit;text-align:center;letter-spacing:.08em;text-transform:uppercase}
-    .gate-card button{width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;background:#2548e6;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+    .gate[hidden]{display:none !important}
+    .gate-card{width:100%;max-width:420px;background:var(--bg-surface,#0f1628);color:var(--ink,#e8edf8);border:1px solid var(--line-bright,#314470);border-radius:18px;padding:30px 26px;text-align:center;box-shadow:0 16px 44px rgba(0,0,0,.45)}
+    .gate-card img{height:38px;margin:0 auto 12px}
+    .gate-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);background:rgba(251,151,70,.12);border:1px solid rgba(251,151,70,.35);padding:4px 10px;border-radius:999px;margin-bottom:10px}
+    .gate-card h1{font-size:24px;margin:4px 0 8px;color:var(--ink-bright)}
+    .gate-card p{font-size:13.5px;color:var(--mut,#a9b6cf);margin-bottom:18px}
+    .gate-card input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line-bright,#314470);background:var(--card);color:var(--ink-bright);font:inherit;text-align:center;letter-spacing:.08em;text-transform:uppercase}
+    .gate-card input:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,72,230,.25)}
+    .gate-card button{width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;background:var(--pri,#2548e6);color:#fff;font:inherit;font-weight:700;cursor:pointer;transition:background .15s}
+    .gate-card button:hover{background:var(--pri-hover,#385df0)}
     .gate-card button:disabled{opacity:.6;cursor:wait}
-    .gate-err{color:#ff8a8a;font-size:13px;font-weight:600;margin-top:10px}
-    .gate-back{display:inline-block;margin-top:14px;font-size:13px;color:var(--mut,#a9b6cf)}
+    .gate-err{color:#ff8a8a;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:8px;padding:8px 10px;font-size:12.5px;font-weight:600;margin-top:10px}
+    .gate-back{display:inline-block;margin-top:16px;font-size:13px;color:var(--mut,#a9b6cf)}
     body.locked{overflow:hidden}
     body.locked > *:not(.gate){visibility:hidden}
     :root[data-theme="light"] .gate{background:rgba(245,247,251,.85)}
   </style>
 </head>
 <body class="locked">
-  <!-- Code gate: every volunteer enters the common code (or their team code) once -->
-  <div class="gate" id="gate">
+  <!-- Code gate: hidden initially so already-authenticated volunteers unlock in 0ms without any modal flash -->
+  <div class="gate" id="gate" hidden>
     <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="gate-title">
       <img src="assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge" class="logo-dark">
       <img src="assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge" class="logo-light">
+      <div class="gate-badge">All Volunteers · Cairo</div>
       <h1 id="gate-title">Venue Maps</h1>
-      <p>Enter the volunteer code to open the maps.</p>
+      <p>Enter your volunteer code to open floor blueprints and wayfinding.</p>
       <form id="gate-form" autocomplete="off" novalidate>
-        <input id="gate-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Volunteer code" aria-label="Volunteer code">
+        <input id="gate-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="VOLUNTEER CODE" aria-label="Volunteer code">
         <div class="gate-err" id="gate-err" role="alert" hidden></div>
         <button type="submit" id="gate-btn">Open Maps</button>
       </form>
@@ -48,18 +56,15 @@
   </div>
 
   <!-- =======================================================================
-       Header / Navigation Bar
+       Unified Top Navigation Bar (Consistent across Overview, Maps, Logistics, Competition, TechOps)
        ======================================================================= -->
   <header>
-    <div class="brand" id="brand-home" title="Return to Overview">
+    <div class="brand" id="brand-home" title="Venue Maps Home">
       <img src="assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge" class="brand-logo-img logo-dark">
       <img src="assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge" class="brand-logo-img logo-light">
       <div class="brand-text">
         <span class="brand-title">VENUE MAPS</span>
-        <span class="brand-sub">
-          <span class="live-beacon"></span>
-          FOR ALL VOLUNTEERS · CAIRO
-        </span>
+        <span class="brand-sub">OPERATIONS · CAIRO</span>
       </div>
     </div>
 
@@ -71,51 +76,90 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
       </span>
-      <input id="q" placeholder="Search room, team, challenge, manager…" autocomplete="off" aria-label="Search rooms, teams, or managers">
+      <input id="q" placeholder="Search room, team, challenge…" autocomplete="off" aria-label="Search rooms, teams, or managers">
       <span class="search-kbd">Ctrl K</span>
       <div class="res" id="res" hidden></div>
     </div>
 
-    <a class="btn" href="index.html" id="ops-back" aria-label="Back to Operations home" title="Back to Operations home">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-      <span class="btn-text">Operations</span>
-    </a>
-
     <div class="sp"></div>
 
-    <!-- Clean Action Toolbar -->
-    <button class="btn" id="dirb" aria-label="Toggle Directions">
+    <span class="pill-status" id="maps-status-pill"><i></i><span>Live</span></span>
+
+    <!-- Clean Action Toolbar: Directions always accessible -->
+    <button class="btn" id="dirb" aria-label="Toggle Directions" title="Wayfinding &amp; Directions">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polygon points="3 11 22 2 13 21 11 13 3 11"/>
       </svg>
       <span class="btn-text">Directions</span>
     </button>
 
-    <!-- Google Sheet Realtime Database Button -->
-    <button class="btn btn-sheet" id="gsheet-btn" style="display:none" aria-label="Configure Google Sheet Database">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="8" y1="13" x2="16" y2="13"/>
-        <line x1="8" y1="17" x2="16" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
-      </svg>
-      <span class="btn-text">Google Sheet</span>
-    </button>
+    <div class="desktop-controls">
+      <button class="btn btn-tutorial" id="tutorial-btn" title="Start Interactive Training"><span>Tutorial 🎮</span></button>
+      <a class="btn" href="index.html" id="ops-back" aria-label="Back to Overview" title="Back to Overview">
+        <span>Overview</span>
+      </a>
 
-    <button class="btn" id="maps-signout" aria-label="Sign out" title="Use a different code" hidden>
-      <span class="btn-text">Sign out</span>
-    </button>
+      <a class="btn primary" href="index.html" id="team-workspace-btn" hidden title="Return to your assigned team workspace">
+        <span id="team-workspace-label">Workspace</span>
+      </a>
 
-    <!-- Theme Toggle Button -->
-    <button class="btn" id="theme-toggle" aria-label="Toggle Theme">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="5"/>
-        <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+      <!-- Google Sheet Realtime Database Button -->
+      <button class="btn btn-sheet" id="gsheet-btn" style="display:none" aria-label="Configure Google Sheet Database">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="8" y1="13" x2="16" y2="13"/>
+          <line x1="8" y1="17" x2="16" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        <span class="btn-text">Google Sheet</span>
+      </button>
+
+      <!-- Theme Toggle Button -->
+      <button class="btn" id="theme-toggle" aria-label="Toggle Theme">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <span class="btn-text">Light</span>
+      </button>
+
+      <!-- Unified User Chip -->
+      <div class="user-chip" id="user-chip" hidden>
+        <span class="user-avatar" id="user-avatar" aria-hidden="true"></span>
+        <span class="user-meta"><b id="user-name"></b><small id="user-team"></small></span>
+        <button class="btn small" id="maps-signout" aria-label="Sign out" title="Sign out">Sign out</button>
+      </div>
+    </div>
+
+    <button class="btn icon-btn mobile-menu-btn" id="mobile-menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-drawer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="4" y1="7" x2="20" y2="7"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="17" x2="20" y2="17"/>
       </svg>
-      <span class="btn-text">Light</span>
     </button>
   </header>
+
+  <div class="mobile-drawer-backdrop" id="mobile-drawer" hidden>
+    <div class="mobile-drawer-card" role="dialog" aria-modal="true" aria-label="Navigation menu">
+      <div class="mobile-drawer-head">
+        <div class="user-chip mobile-user-chip" id="mobile-user-chip">
+          <span class="user-avatar" id="mobile-user-avatar" aria-hidden="true"></span>
+          <span class="user-meta"><b id="mobile-user-name">Volunteer</b><small id="mobile-user-team">Venue Maps</small></span>
+        </div>
+        <button class="btn icon-btn" id="mobile-menu-close" aria-label="Close menu">&times;</button>
+      </div>
+      <div class="mobile-drawer-actions">
+        <a class="btn primary" href="index.html" id="mobile-team-workspace-btn" hidden>Workspace</a>
+        <a class="btn" href="index.html">Overview</a>
+        <button class="btn btn-tutorial" type="button" id="mobile-tutorial-btn">Tutorial 🎮</button>
+        <button class="btn" type="button" id="mobile-dir-btn">Wayfinding &amp; Directions</button>
+        <button class="btn" type="button" id="mobile-theme-btn"><span id="mobile-theme-text">Light</span></button>
+        <button class="btn bad" type="button" id="mobile-signout-btn">Sign out</button>
+      </div>
+    </div>
+  </div>
 
   <!-- =======================================================================
        Main Viewport
@@ -123,44 +167,77 @@
   <main>
     <div class="crumb" id="crumb"></div>
 
-    <!-- Floor Cards Overview (Direct Clean Grid, 4 top boxes removed) -->
+    <!-- Floor Cards Overview -->
     <div id="home"></div>
 
     <!-- Floor Blueprint Map View -->
     <div id="fv" hidden>
-      <div class="tools">
-        <button class="btn" id="back">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="19" y1="12" x2="5" y2="12"/>
-            <polyline points="12 19 5 12 12 5"/>
-          </svg>
-          Overview
-        </button>
-        <span id="tabs"></span>
-        <span class="sp"></span>
-        <select id="ft" aria-label="Filter by space type">
-          <option value="">All Space Types</option>
-          <option value="B">Bring Your Own Device</option>
-          <option value="H">Lecture Hall</option>
-          <option value="S">Small Lecture Hall</option>
-          <option value="C">Classroom</option>
-          <option value="X">Inaccessible</option>
-          <option value="T">Outer Stage</option>
-          <option value="P">Prayer Room</option>
-          <option value="A">Cafeteria</option>
-          <option value="K">Break Area</option>
-        </select>
-        <select id="fa" aria-label="Filter by access level">
-          <option value="">All Access Levels</option>
-          <option value="ok">Accessible</option>
-          <option value="no">Restricted</option>
-        </select>
-        <select id="fs" aria-label="Filter by team assignment">
-          <option value="">Any Assignment</option>
-          <option value="Participants">Participants</option>
-          <option value="Volunteers">Volunteers</option>
-          <option value="Unassigned">Unassigned</option>
-        </select>
+      <div class="tools map-toolbar">
+        <div class="floor-switcher" role="navigation" aria-label="Floor switcher">
+          <button class="btn floor-all-btn" id="back" title="Back to all floors overview">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            <span class="all-floors-full">All Floors</span>
+            <span class="all-floors-short">All</span>
+          </button>
+          <span id="tabs"></span>
+        </div>
+
+        <div class="filter-wrap">
+          <button class="btn filter-toggle-btn" id="filter-toggle" type="button" aria-expanded="false" aria-controls="map-filter-panel" title="Filter map rooms">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+            </svg>
+            <span>Filters</span>
+            <span class="filter-badge" id="filter-badge" hidden>0</span>
+          </button>
+
+          <div class="map-filter-panel" id="map-filter-panel" hidden>
+            <div class="mfp-head">
+              <b>Filter Rooms</b>
+              <div class="mfp-head-actions">
+                <button type="button" class="btn small" id="filter-reset">Reset</button>
+                <button type="button" class="x" id="filter-close" aria-label="Close filters">&times;</button>
+              </div>
+            </div>
+            <div class="mfp-grid">
+              <label class="mfp-field">
+                <span>Space Type</span>
+                <select id="ft" aria-label="Filter by space type">
+                  <option value="">All Space Types</option>
+                  <option value="B">Bring Your Own Device</option>
+                  <option value="H">Lecture Hall</option>
+                  <option value="S">Small Lecture Hall</option>
+                  <option value="C">Classroom</option>
+                  <option value="X">Inaccessible</option>
+                  <option value="T">Outer Stage</option>
+                  <option value="P">Prayer Room</option>
+                  <option value="A">Cafeteria</option>
+                  <option value="K">Break Area</option>
+                </select>
+              </label>
+              <label class="mfp-field">
+                <span>Access Level</span>
+                <select id="fa" aria-label="Filter by access level">
+                  <option value="">All Access Levels</option>
+                  <option value="ok">Accessible</option>
+                  <option value="no">Restricted</option>
+                </select>
+              </label>
+              <label class="mfp-field">
+                <span>Assignment</span>
+                <select id="fs" aria-label="Filter by team assignment">
+                  <option value="">Any Assignment</option>
+                  <option value="Participants">Participants</option>
+                  <option value="Volunteers">Volunteers</option>
+                  <option value="Unassigned">Unassigned</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Map Canvas & SVG Overlay -->
@@ -171,7 +248,7 @@
         </div>
         <div class="zc">
           <button class="btn" id="zi" aria-label="Zoom in" title="Zoom in">+</button>
-          <button class="btn" id="zo" aria-label="Zoom out" title="Zoom out">−</button>
+          <button class="btn" id="zo" aria-label="Zoom out" title="Zoom out">-</button>
           <button class="btn" id="zr" aria-label="Reset zoom" title="Reset view">⟲</button>
         </div>
         <div class="tip" id="tip"></div>
@@ -277,11 +354,13 @@
     <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
   </div>
 
-  <script src="techops/js/config.js"></script>
-  <script src="techops/js/firebase-config.js"></script>
-  <script src="techops/js/seed-data.js"></script>
-  <script src="techops/js/store.js"></script>
-  <script src="maps-gate.js"></script>
+  <script src="scripts/services/config.js"></script>
+  <script src="scripts/services/firebase-config.js"></script>
+  <script src="scripts/services/seed-data.js"></script>
+  <script src="scripts/services/common.js"></script>
+  <script src="scripts/services/store.js"></script>
+  <script src="scripts/components/tutorial.js"></script>
+  <script src="scripts/auth/maps-gate.js"></script>
   <script src="app.js"></script>
   <script>
     const brandHome = document.getElementById("brand-home");

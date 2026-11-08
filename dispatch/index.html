@@ -7,8 +7,9 @@
   <title>Competition Team · NASA Space Apps Challenge Cairo</title>
   <link rel="icon" type="image/png" href="../assets/favicon.png">
   <link rel="stylesheet" href="../techops/css/techops.css">
+  <link rel="stylesheet" href="../styles/components/tutorial.css">
   <link rel="stylesheet" href="css/dispatch.css">
-  <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || 'dark'); } catch (e) {}</script>
+  <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || localStorage.getItem('nasa_theme') || 'dark'); } catch (e) {}</script>
 </head>
 <body>
   <div class="bg" aria-hidden="true"></div>
@@ -19,17 +20,57 @@
         <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
         <span class="brand-text">
           <span class="brand-title">COMPETITION TEAM</span>
-          <span class="brand-sub">TEAM MONITOR · CAIRO</span>
+          <span class="brand-sub">OPERATIONS · CAIRO</span>
         </span>
       </a>
       <div class="sp"></div>
+
       <span class="pill-status demo" id="status-pill"><i></i><span id="status-text">Connecting…</span></span>
-      <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
+
+      <div class="desktop-controls">
+        <a class="btn" href="../index.html">Overview</a>
+        <a class="btn" href="../maps.html">Maps</a>
+        <button class="btn auth-only btn-tutorial" id="tutorial-btn" title="Start Interactive Training" hidden><span>Tutorial 🎮</span></button>
+        <button class="btn auth-only" id="alerts-btn" title="Sound and desktop notifications for new requests" hidden>Enable alerts</button>
+        <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
+        <div class="user-chip" id="user-chip" hidden>
+          <span class="user-avatar" id="user-avatar" aria-hidden="true"></span>
+          <span class="user-meta"><b id="user-name"></b><small id="user-team"></small></span>
+          <button class="btn small" id="logout-btn" aria-label="Sign out">Sign out</button>
+        </div>
+      </div>
+
       <button class="icon-btn bell" id="bell" aria-label="Show unclaimed requests" hidden>
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
         <span class="count" id="bell-count" hidden>0</span>
       </button>
+
+      <button class="icon-btn mobile-menu-btn" id="mobile-menu-toggle" aria-label="Toggle options menu" aria-expanded="false">
+        <svg class="icon-bars" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg class="icon-close" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" hidden><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </header>
+
+    <!-- Standardized Right Slide-Over Navigation Drawer -->
+    <div class="mobile-drawer" id="mobile-drawer" hidden>
+      <div class="mobile-drawer-card" role="dialog" aria-modal="true" aria-label="Navigation menu">
+        <div class="mobile-drawer-head">
+          <div class="user-chip mobile-user-chip" id="mobile-user" hidden>
+            <span class="user-avatar" id="mobile-user-avatar" aria-hidden="true"></span>
+            <span class="user-meta"><b id="mobile-user-name"></b><small id="mobile-user-team"></small></span>
+          </div>
+          <button class="btn icon-btn mobile-drawer-close" id="mobile-menu-close" type="button" aria-label="Close menu">&times;</button>
+        </div>
+        <div class="mobile-drawer-actions">
+          <a class="btn mobile-drawer-btn" href="../index.html"><span>Overview</span></a>
+          <a class="btn mobile-drawer-btn" href="../maps.html"><span>Maps</span></a>
+          <button class="btn mobile-drawer-btn auth-only btn-tutorial" id="mobile-tutorial-btn" hidden><span>Tutorial 🎮</span></button>
+          <button class="btn mobile-drawer-btn auth-only" id="mobile-alerts-btn" hidden><span>Enable alerts</span></button>
+          <button class="btn mobile-drawer-btn" id="mobile-theme-toggle"><span id="mobile-theme-text">Light</span></button>
+          <button class="btn mobile-drawer-btn bad" id="mobile-logout-btn" hidden><span>Sign out</span></button>
+        </div>
+      </div>
+    </div>
 
     <section class="login-screen" id="login-screen" hidden>
       <div class="login-card">
@@ -38,7 +79,8 @@
           <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
         </div>
         <div class="form-header-badge">Competition Team · Cairo</div>
-        <h1>Competition Team sign in</h1>
+        <h1>Competition Team Sign In</h1>
+        <p class="form-sub">Enter an authorized Competition Team volunteer code to open this workspace.</p>
         <form id="login-form" autocomplete="off" novalidate>
           <label class="lbl" for="login-code">Volunteer Code</label>
           <input id="login-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="e.g. CT-001" aria-describedby="login-error">
@@ -46,49 +88,52 @@
           <button class="btn primary login-btn" id="login-btn" type="submit">Sign in</button>
         </form>
         <p class="login-note" id="login-note" hidden></p>
-        <p style="margin-top:14px"><a href="../index.html" class="muted" style="font-size:13px">&larr; Back to Overview</a></p>
+        <p style="margin-top:16px"><a href="../index.html" class="muted" style="font-size:13px">&larr; Back to Overview</a></p>
+      </div>
+    </section>
+
+    <!-- STRICT RBAC BLOCK: Shown when signed in with an unauthorized role (never redirects) -->
+    <section class="denied-screen" id="access-denied" hidden>
+      <div class="denied-card" role="alert">
+        <div class="denied-icon" aria-hidden="true">🔒</div>
+        <div class="denied-badge">Access Restricted · Competition Team Only</div>
+        <h1>Unauthorized Module</h1>
+        <p id="denied-msg">Your volunteer role does not have permission to access the Competition Team panel.</p>
+        <div class="denied-actions">
+          <a class="btn primary" href="../index.html">&larr; Return to Overview</a>
+          <button class="btn" id="denied-logout-btn" type="button">Switch Volunteer Code</button>
+        </div>
       </div>
     </section>
 
     <main id="main" hidden>
-      <div class="note" id="demo-note" hidden></div>
+      <div class="note" id="demo-note" hidden style="margin-top:0;margin-bottom:16px"></div>
 
-      <div class="log-toolbar">
-        <a class="btn" href="../index.html">Overview</a>
-        <a class="btn" href="../maps.html">Maps</a>
-        <a class="btn" href="../request/poster.html">Participant QR poster</a>
-        <button class="btn" id="alerts-btn" title="Sound and desktop notifications for new requests">Enable alarm</button>
-        <span class="sp"></span>
-        <div class="user-chip" id="user-chip">
-          <span class="user-avatar" id="user-avatar" aria-hidden="true"></span>
-          <span class="user-meta"><b id="user-name"></b><small id="user-team"></small></span>
-          <button class="btn small" id="logout-btn" aria-label="Sign out">Sign out</button>
-        </div>
+      <div class="page-title">
+        <h2>Competition Team Monitor</h2>
+        <span class="greeting" id="greeting"></span>
       </div>
 
       <div class="dp-alarm" id="alarm" hidden role="status"></div>
 
-      <div class="dp-stats" id="stats"></div>
-
-      <div class="row issues-filter-row" style="margin:6px 0 14px">
+      <div class="row issues-filter-row" style="margin:6px 0 16px">
         <div id="issue-filters" class="chips-scroll-row"></div>
         <span class="sp desktop-only"></span>
-        <input id="issue-search" type="search" placeholder="Search request or name…" aria-label="Search requests">
+        <input id="issue-search" type="search" placeholder="Search request, room or name…" aria-label="Search requests">
       </div>
 
       <datalist id="dl-Competition"></datalist>
-      <datalist id="dl-TechOps"></datalist>
-      <datalist id="dl-Logistics"></datalist>
-      <div class="dp-grid" id="cards"></div>
+      <div class="req-grid" id="cards"></div>
     </main>
   </div>
 
-  <script src="../techops/js/config.js"></script>
-  <script src="../techops/js/firebase-config.js"></script>
-  <script src="../techops/js/seed-data.js"></script>
-  <script src="../techops/js/data.js"></script>
-  <script src="../techops/js/common.js"></script>
-  <script src="../techops/js/store.js"></script>
+  <script src="../scripts/services/config.js"></script>
+  <script src="../scripts/services/firebase-config.js"></script>
+  <script src="../scripts/services/seed-data.js"></script>
+  <script src="../scripts/services/data.js"></script>
+  <script src="../scripts/services/common.js"></script>
+  <script src="../scripts/services/store.js"></script>
+  <script src="../scripts/components/tutorial.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>

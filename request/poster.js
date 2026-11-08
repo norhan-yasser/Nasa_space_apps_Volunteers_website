@@ -36,5 +36,10 @@
     Store.login(code).then(function () { b.disabled = false; b.textContent = "Open"; show(); })
       .catch(function (e) { b.disabled = false; b.textContent = "Open"; err(e && e.message ? e.message : "That code was not recognised."); });
   };
-  Store.restore().then(function (u) { if (u) show(); else setTimeout(function () { $("gate-code").focus(); }, 100); }, function () {});
+  var fast = Store.peekUser ? Store.peekUser() : null;
+  if (fast) show();
+  else Store.restore().then(function (u) {
+    if (u) show();
+    else { $("gate").hidden = false; setTimeout(function () { $("gate-code").focus(); }, 100); }
+  }, function () { $("gate").hidden = false; });
 })();

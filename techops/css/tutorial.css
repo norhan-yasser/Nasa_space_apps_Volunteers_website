@@ -1,0 +1,303 @@
+/* NASA Space Apps Cairo - Game-Like Interactive Tutorial Overlay (Space Mission Training) */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.tutorial-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 11, 24, 0.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9991;
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+}
+
+:root[data-theme="light"] .tutorial-backdrop {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+/* Glowing spotlight around active element */
+.tutorial-spotlight {
+  position: fixed;
+  z-index: 9992;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(6, 11, 24, 0.78),
+              0 0 20px rgba(37, 72, 230, 0.65),
+              inset 0 0 12px rgba(251, 151, 70, 0.35);
+  border: 2px solid var(--accent, #fb9746);
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: tutorialPulse 2s infinite ease-in-out;
+}
+
+:root[data-theme="light"] .tutorial-spotlight {
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.72),
+              0 0 20px rgba(3, 35, 178, 0.65),
+              inset 0 0 12px rgba(217, 106, 20, 0.35);
+}
+
+@keyframes tutorialPulse {
+  0%, 100% {
+    border-color: var(--accent, #fb9746);
+    box-shadow: 0 0 0 9999px rgba(6, 11, 24, 0.78), 0 0 18px rgba(37, 72, 230, 0.6);
+  }
+  50% {
+    border-color: #22d3ee;
+    box-shadow: 0 0 0 9999px rgba(6, 11, 24, 0.78), 0 0 28px rgba(34, 211, 238, 0.8);
+  }
+}
+
+/* Active element is elevated above backdrop to allow interactive clicking during tour */
+.tutorial-target-active {
+  position: relative !important;
+  z-index: 9993 !important;
+  pointer-events: auto !important;
+}
+
+/* Floating Tour Card (Mission Briefing) */
+.tutorial-card {
+  position: fixed;
+  z-index: 9995;
+  width: min(390px, calc(100vw - 32px));
+  background: var(--surface, #0f1628);
+  border: 1px solid var(--line-strong, #34477a);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(251, 151, 70, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: auto;
+  box-sizing: border-box;
+  animation: tutorialCardIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tutorialCardIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tutorial-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tutorial-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent, #fb9746);
+  background: rgba(251, 151, 70, 0.12);
+  border: 1px solid rgba(251, 151, 70, 0.35);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.tutorial-step-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mut, #8d9bb5);
+}
+
+.tutorial-title {
+  font-family: var(--font-title, sans-serif);
+  font-size: 18px;
+  color: var(--ink-bright, #ffffff);
+  line-height: 1.25;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tutorial-desc {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink, #e2e8f4);
+  margin: 0;
+}
+
+.tutorial-sandbox-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(37, 72, 230, 0.15);
+  border: 1px dashed rgba(37, 72, 230, 0.45);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #93c5fd;
+}
+
+:root[data-theme="light"] .tutorial-sandbox-tag {
+  background: rgba(3, 35, 178, 0.08);
+  border-color: rgba(3, 35, 178, 0.3);
+  color: #1e40af;
+}
+
+.tutorial-progress-bar {
+  display: flex;
+  gap: 5px;
+  margin: 4px 0 2px;
+}
+
+.tutorial-progress-dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line, #243256);
+  transition: background 0.25s ease;
+}
+
+.tutorial-progress-dot.active {
+  background: var(--accent, #fb9746);
+}
+
+.tutorial-progress-dot.done {
+  background: var(--ok, #10b981);
+}
+
+.tutorial-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tutorial-actions-right {
+  display: flex;
+  gap: 8px;
+}
+
+.tutorial-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid var(--line-strong, #34477a);
+  background: var(--card, #121a30);
+  color: var(--ink, #e2e8f4);
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.tutorial-btn:hover {
+  background: var(--card-2, #172140);
+  border-color: var(--accent, #fb9746);
+}
+
+.tutorial-btn.primary {
+  background: var(--pri, #2548e6);
+  border-color: var(--pri, #2548e6);
+  color: #fff;
+}
+
+.tutorial-btn.primary:hover {
+  background: var(--pri-hover, #3a5df0);
+}
+
+.tutorial-btn.finish {
+  background: linear-gradient(135deg, var(--pri, #2548e6), var(--accent, #fb9746));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(251, 151, 70, 0.4);
+  font-size: 13.5px;
+  padding: 10px 16px;
+  min-height: 42px;
+}
+
+.tutorial-btn.finish:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(251, 151, 70, 0.55);
+}
+
+.tutorial-btn.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--mut, #8d9bb5);
+}
+
+.tutorial-btn.ghost:hover {
+  color: var(--ink-bright, #ffffff);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Sandbox banner indicator when in Tutorial Mode */
+.sandbox-mode-banner {
+  background: linear-gradient(90deg, rgba(37, 72, 230, 0.22), rgba(251, 151, 70, 0.18));
+  border-bottom: 1px solid var(--accent, #fb9746);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-bright, #ffffff);
+  z-index: 35;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sandbox-mode-banner b {
+  color: var(--accent, #fb9746);
+}
+
+.sandbox-mode-exit-btn {
+  background: var(--accent, #fb9746);
+  color: #1a0f05;
+  border: none;
+  font-weight: 700;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.sandbox-mode-exit-btn:hover {
+  opacity: 0.9;
+}
+
+/* Header & Drawer Tutorial Buttons */
+.btn-tutorial {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: rgba(251, 151, 70, 0.45) !important;
+  color: var(--accent, #fb9746) !important;
+}
+
+.btn-tutorial:hover {
+  background: rgba(251, 151, 70, 0.15) !important;
+  border-color: var(--accent, #fb9746) !important;
+}
+
+/* Responsive docking on mobile */
+@media (max-width: 640px) {
+  .tutorial-card {
+    left: 16px !important;
+    right: 16px !important;
+    width: auto !important;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    top: auto !important;
+    border-radius: 16px;
+  }
+}

@@ -5,11 +5,12 @@
 <p>Runs in <b>demo mode</b> (your real database is never touched). Serve the project folder, e.g. <code>python -m http.server</code>, then open <code>/tests/selftest.html</code>.</p>
 <h3 id="sum">Running…</h3><ul id="out"></ul>
 <script>window.TECHOPS_FIREBASE = {};</script>
-<script src="../techops/js/config.js"></script>
+<script src="../scripts/services/config.js"></script>
 <script>window.TECHOPS_FIREBASE = {};</script>
-<script src="../techops/js/seed-data.js"></script>
-<script src="../techops/js/data.js"></script>
-<script src="../techops/js/store.js"></script>
+<script src="../scripts/services/seed-data.js"></script>
+<script src="../scripts/services/data.js"></script>
+<script src="../scripts/services/common.js"></script>
+<script src="../scripts/services/store.js"></script>
 <script src="selftest.js"></script>
 <script>
 runSelfTest().then(function (res) {
