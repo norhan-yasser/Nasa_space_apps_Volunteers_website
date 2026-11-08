@@ -1,8 +1,9 @@
 /**
- * NASA Space Apps Cairo - Game-Like Guided Onboarding (Tutorial Mode)
+ * NASA Space Apps Cairo - Guided Onboarding (Tutorial Mode)
  * Tailored 4 Role-Based Mission Briefings: TechOps, Logistics, Competition, Maps.
  * Loads isolated sandbox dummy data during tour; clicking "Finish Tutorial & Start Working"
  * updates the completion flag, clears dummy state, and restores live data.
+ * Professional tone, seamless map panel integration, zero visual noise.
  */
 (function () {
   var Store = window.TechOpsStore, TO = window.TO;
@@ -11,14 +12,14 @@
     techops: [
       {
         target: "#status-pill",
-        title: "🛸 Tech Ops Command Center",
-        desc: "Welcome to Tech Ops! You monitor portal connectivity, Wi-Fi health, power lines, and technical help tickets in real time.",
+        title: "Tech Ops Command Center",
+        desc: "Welcome to Tech Ops. You monitor portal connectivity, Wi-Fi health, power lines, and technical help tickets in real time.",
         badge: "Mission Briefing · Step 1/5",
         sandboxText: "Sandbox Training Active"
       },
       {
         target: "#issue-filters",
-        title: "📋 Live Technical Ticket Queue",
+        title: "Technical Ticket Queue",
         desc: "Filter tickets between Unclaimed, Mine, or Done. Real-time notifications and audio alerts trigger whenever a participant reports an issue.",
         badge: "Mission Briefing · Step 2/5",
         sandboxText: "Practice Filtering"
@@ -26,22 +27,38 @@
       {
         target: "#issue-rows .req-card:first-child",
         fallbackTarget: "#issue-rows",
-        title: "⚡ Practice Ticket & Claiming",
+        title: "Practice Ticket & Claiming",
         desc: "This is a safe training ticket. Click 'Claim' to assign it to yourself, or 'Show Route' to see the exact walking route to the problem room.",
         badge: "Mission Briefing · Step 3/5",
         sandboxText: "Interactive Practice"
       },
       {
-        target: "nav.tabs [data-tab='maps']",
+        target: "#map",
         fallbackTarget: "#floor-seg",
-        title: "🗺️ Built-in Maps & Route Diagnostics",
-        desc: "Tech Ops has integrated multi-floor blueprints, Wi-Fi heatmap diagnostics, and stairwell navigation right inside your workspace.",
+        title: "Interactive Floor Maps & Routes",
+        desc: "Tech Ops includes built-in multi-floor blueprints, Wi-Fi heatmap diagnostics, and stairwell navigation. Switch floors or click on rooms to inspect details.",
         badge: "Mission Briefing · Step 4/5",
-        sandboxText: "Diagnostic Wayfinding"
+        sandboxText: "Diagnostic Wayfinding",
+        onEnter: function () {
+          if (typeof window.setTab === "function") {
+            window.setTab("maps");
+          } else {
+            var b = document.querySelector(".tabs [data-tab='maps'], .mobile-nav [data-tab='maps'], [data-tab='maps']");
+            if (b) b.click();
+          }
+        },
+        onLeave: function () {
+          if (typeof window.setTab === "function") {
+            window.setTab("issues");
+          } else {
+            var b = document.querySelector(".tabs [data-tab='issues'], .mobile-nav [data-tab='issues'], [data-tab='issues']");
+            if (b) b.click();
+          }
+        }
       },
       {
         target: null,
-        title: "🚀 Mission Training Complete!",
+        title: "Mission Training Complete",
         desc: "You have completed Tech Ops training and are ready for live operations on the ground at NASA Space Apps Cairo.",
         badge: "Training Certified",
         isFinish: true
@@ -51,31 +68,44 @@
     logistics: [
       {
         target: "#status-pill",
-        title: "📍 Logistics Operations Command",
-        desc: "Welcome to Logistics! You coordinate participant guidance, prayer rooms, supply distribution, and badge replacements across all 4 floors.",
+        title: "Logistics Operations Command",
+        desc: "Welcome to Logistics. You coordinate participant guidance, prayer rooms, supply distribution, and badge replacements across all floors.",
         badge: "Mission Briefing · Step 1/4",
         sandboxText: "Sandbox Training Active"
       },
       {
         target: "[data-if='unassigned']",
         fallbackTarget: ".chips-scroll-row",
-        title: "📋 Unclaimed Participant Requests",
+        title: "Unclaimed Participant Requests",
         desc: "Keep this tab open to catch new incoming requests. Audio alerts notify your team as soon as a participant submits a help ticket.",
         badge: "Mission Briefing · Step 2/4",
         sandboxText: "Queue Management"
       },
       {
-        target: "#issue-rows .req-card:first-child",
-        fallbackTarget: "#issue-rows",
-        title: "👟 Claiming & Show Route",
-        desc: "Claim requests before heading out so teammates don't duplicate work. Tap 'Show Route' for step-by-step directions to the participant's room.",
+        target: "#route-map-panel .route-map-viewport",
+        fallbackTarget: "#route-map-panel",
+        title: "Venue Route Navigation",
+        desc: "Tap 'Show Route' on any ticket to open the interactive floor blueprint. Follow the highlighted route and floor indicator to reach the attendee promptly.",
         badge: "Mission Briefing · Step 3/4",
-        sandboxText: "Interactive Practice"
+        sandboxText: "Interactive Practice",
+        onEnter: function () {
+          if (window.RouteMapPanel) {
+            window.RouteMapPanel.open({
+              room: "C231",
+              floor: "S",
+              title: "Room C231 · Second Floor",
+              details: "Sample Task: Lost badge replacement"
+            });
+          }
+        },
+        onLeave: function () {
+          if (window.RouteMapPanel) window.RouteMapPanel.close();
+        }
       },
       {
         target: null,
-        title: "🚀 Logistics Training Complete!",
-        desc: "You're all set to assist participants and keep operations flowing smoothly throughout the venue.",
+        title: "Logistics Training Complete",
+        desc: "You are prepared to assist participants and keep operations flowing smoothly throughout the venue.",
         badge: "Training Certified",
         isFinish: true
       }
@@ -84,29 +114,43 @@
     competition: [
       {
         target: "header.top",
-        title: "📡 Competition Team Monitor",
+        title: "Competition Team Monitor",
         desc: "Welcome to the Competition Desk. You manage participant challenge inquiries, judging schedules, submission troubleshooting, and Discord queries.",
         badge: "Mission Briefing · Step 1/4",
         sandboxText: "Sandbox Training Active"
       },
       {
-        target: "#issue-rows",
-        title: "💻 Discord & Remote Tickets",
-        desc: "Inquiries tagged [Remote] can be handled online. Tickets with physical room locations can be guided or handed out to field runners.",
+        target: "#cards .req-card:first-child",
+        fallbackTarget: "#cards",
+        title: "Discord & Remote Inquiries",
+        desc: "Inquiries tagged [Remote] are handled online. Use 'Copy for Discord' to format prompt, professional replies to participants on the server.",
         badge: "Mission Briefing · Step 2/4",
         sandboxText: "Remote Escalations"
       },
       {
-        target: "#issue-rows .req-card:first-child",
-        fallbackTarget: "#issue-rows",
-        title: "⚡ Quick Claim & Discord Copy",
-        desc: "Claim inquiries and click 'Copy for Discord' to instantly paste pre-formatted, polite replies directly to participants on the server.",
+        target: "#route-map-panel .route-map-viewport",
+        fallbackTarget: "#route-map-panel",
+        title: "Venue Route Guidance",
+        desc: "When a participant inquiry requires physical guidance or runner dispatch, the Route Map panel displays the floor blueprint and exact walking route to the room.",
         badge: "Mission Briefing · Step 3/4",
-        sandboxText: "Interactive Practice"
+        sandboxText: "Field Navigation",
+        onEnter: function () {
+          if (window.RouteMapPanel) {
+            window.RouteMapPanel.open({
+              room: "B130",
+              floor: "F",
+              title: "Room B130 · First Floor",
+              details: "Participant Inquiry: Evaluation & Demo Lab"
+            });
+          }
+        },
+        onLeave: function () {
+          if (window.RouteMapPanel) window.RouteMapPanel.close();
+        }
       },
       {
         target: null,
-        title: "🚀 Competition Desk Certified!",
+        title: "Competition Desk Certified",
         desc: "You are prepared to lead participant communications and challenge monitoring. Exit the sandbox to enter live mode.",
         badge: "Training Certified",
         isFinish: true
@@ -116,31 +160,39 @@
     maps: [
       {
         target: "#map",
-        title: "🗺️ Campus Blueprints & Zones",
+        title: "Campus Blueprints & Zones",
         desc: "Explore detailed multi-floor blueprints for Basement, Ground, First, and Second floors. Tap or pinch to zoom and inspect any room.",
         badge: "Mission Briefing · Step 1/4",
-        sandboxText: "Interactive Maps"
+        sandboxText: "Interactive Blueprint"
       },
       {
         target: ".floor-switcher",
         fallbackTarget: ".map-toolbar",
-        title: "🏢 Multi-Floor Switcher",
+        title: "Multi-Floor Switcher",
         desc: "Tap Basement, Ground Floor, First Floor, or Second Floor to instantly switch blueprint views.",
         badge: "Mission Briefing · Step 2/4",
         sandboxText: "Floor Navigation"
       },
       {
-        target: "#filter-toggle",
-        fallbackTarget: ".filter-toggle-btn",
-        title: "🎯 Room & Zone Filters",
-        desc: "Filter rooms by Participant teams, Judges, Mentors, VIPs, or Rest Areas to guide attendees swiftly.",
+        target: "#map-filter-panel",
+        fallbackTarget: "#filter-toggle",
+        title: "Room & Zone Filters",
+        desc: "Select categories to filter rooms across participants, mentors, judges, VIPs, or rest zones.",
         badge: "Mission Briefing · Step 3/4",
-        sandboxText: "Zone Diagnostics"
+        sandboxText: "Zone Diagnostics",
+        onEnter: function () {
+          var p = document.getElementById("map-filter-panel");
+          if (p) p.classList.add("is-open");
+        },
+        onLeave: function () {
+          var p = document.getElementById("map-filter-panel");
+          if (p) p.classList.remove("is-open");
+        }
       },
       {
         target: null,
-        title: "🚀 Venue Navigation Certified!",
-        desc: "You've mastered venue navigation and can guide anyone to any room or staircase across the entire campus.",
+        title: "Venue Navigation Certified",
+        desc: "You have mastered venue navigation and can guide anyone to any room or staircase across the entire campus.",
         badge: "Training Certified",
         isFinish: true
       }
@@ -194,14 +246,6 @@
     this.spotlightEl = overlay.querySelector(".tutorial-spotlight");
     this.cardEl = overlay.querySelector(".tutorial-card");
 
-    // Close on backdrop click (optional skip prompt)
-    var self = this;
-    this.backdropEl.addEventListener("click", function (e) {
-      if (e.target === self.backdropEl) {
-        // do not auto-close on accidental click, keep user focused
-      }
-    });
-
     this._renderBanner();
   };
 
@@ -211,8 +255,8 @@
     banner.id = "sandbox-mode-banner";
     banner.className = "sandbox-mode-banner";
     banner.innerHTML =
-      '<span>🛠️ <b>TRAINING SANDBOX MODE</b> — Interacting with practice dummy data.</span>' +
-      '<button class="sandbox-mode-exit-btn" id="sandbox-exit-btn" type="button">Finish Training 🚀</button>';
+      '<span><b>TRAINING SANDBOX MODE</b> — Interacting with practice dummy data.</span>' +
+      '<button class="sandbox-mode-exit-btn" id="sandbox-exit-btn" type="button">Finish Training</button>';
 
     var header = document.querySelector("header.top, header.portal-top, header");
     if (header && header.parentNode) {
@@ -234,6 +278,12 @@
       this.finish();
       return;
     }
+
+    // Call onLeave of current step if transitioning
+    if (this.steps[this.currentStep] && typeof this.steps[this.currentStep].onLeave === "function" && this.currentStep !== index) {
+      try { this.steps[this.currentStep].onLeave(); } catch (e) {}
+    }
+
     this.currentStep = index;
     var step = this.steps[index];
 
@@ -241,6 +291,11 @@
     if (this.activeTarget) {
       this.activeTarget.classList.remove("tutorial-target-active");
       this.activeTarget = null;
+    }
+
+    // Call onEnter of new step
+    if (typeof step.onEnter === "function") {
+      try { step.onEnter(); } catch (e) {}
     }
 
     var target = null;
@@ -258,7 +313,7 @@
     }
 
     var isLast = index === this.steps.length - 1 || step.isFinish;
-    var nextLabel = isLast ? "🚀 Finish Tutorial & Start Working" : "Next Step →";
+    var nextLabel = isLast ? "Finish Tutorial & Start Working" : "Next Step →";
     var nextClass = isLast ? "tutorial-btn finish" : "tutorial-btn primary";
     var nextId = isLast ? "tut-finish-btn" : "tut-next-btn";
 
@@ -272,7 +327,7 @@
       '<p class="tutorial-desc">' + step.desc + '</p>';
 
     if (step.sandboxText) {
-      h += '<div class="tutorial-sandbox-tag">🎮 ' + step.sandboxText + '</div>';
+      h += '<div class="tutorial-sandbox-tag">' + step.sandboxText + '</div>';
     }
 
     h +=
@@ -295,7 +350,7 @@
     if (btnPrev) btnPrev.onclick = function () { self._showStep(index - 1); };
     if (btnSkip) btnSkip.onclick = function () { self.finish(); };
 
-    if (target && target.offsetParent !== null) {
+    if (target) {
       this.activeTarget = target;
       target.classList.add("tutorial-target-active");
       try {
@@ -311,7 +366,7 @@
     var step = this.steps[this.currentStep];
     var target = this.activeTarget;
 
-    if (target && target.offsetParent !== null) {
+    if (target) {
       var r = target.getBoundingClientRect();
       var pad = 6;
       this.spotlightEl.style.display = "block";
@@ -320,7 +375,6 @@
       this.spotlightEl.style.width = (r.width + pad * 2) + "px";
       this.spotlightEl.style.height = (r.height + pad * 2) + "px";
 
-      // Position Card: preferred below target, or above if near bottom
       var isMobile = window.innerWidth <= 640;
       if (!isMobile) {
         var cardW = this.cardEl.offsetWidth || 370;
@@ -337,7 +391,6 @@
         this.cardEl.style.bottom = "auto";
       }
     } else {
-      // Centered or full modal style
       this.spotlightEl.style.display = "none";
       var isMobile = window.innerWidth <= 640;
       if (!isMobile) {
@@ -352,6 +405,10 @@
 
   P.finish = function () {
     var role = this.role;
+    if (this.steps[this.currentStep] && typeof this.steps[this.currentStep].onLeave === "function") {
+      try { this.steps[this.currentStep].onLeave(); } catch (e) {}
+    }
+
     if (Store && Store.setTutorialCompleted) {
       Store.setTutorialCompleted(role, true);
       Store.exitTutorialMode();
@@ -363,7 +420,7 @@
     }
 
     if (TO && TO.toast) {
-      TO.toast("Mission Training Complete! 🚀", "You are now connected to real operations.", "ok");
+      TO.toast("Mission Training Complete", "You are now connected to real operations.", "ok");
       if (TO.beep) TO.beep();
     }
   };
@@ -371,6 +428,9 @@
   P.destroy = function () {
     window.removeEventListener("resize", this._onResize);
     window.removeEventListener("scroll", this._onResize, true);
+    if (this.steps[this.currentStep] && typeof this.steps[this.currentStep].onLeave === "function") {
+      try { this.steps[this.currentStep].onLeave(); } catch (e) {}
+    }
     if (this.activeTarget) {
       this.activeTarget.classList.remove("tutorial-target-active");
       this.activeTarget = null;

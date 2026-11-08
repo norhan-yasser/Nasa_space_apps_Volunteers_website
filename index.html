@@ -64,28 +64,28 @@
 
       <div class="hub-grid" id="hub-grid">
         <a class="hub-card" data-module="maps" data-label="Open Maps →" data-role-label="All Volunteers" href="maps.html">
-          <span class="hub-icon" aria-hidden="true">🗺️</span>
+          <span class="hub-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg></span>
           <span class="hub-who">All volunteers</span>
           <h2>Maps</h2>
           <p>Venue floor maps, room finder and walking routes between any two rooms. Available to all volunteers.</p>
           <span class="hub-go">Open Maps &rarr;</span>
         </a>
         <a class="hub-card" data-module="logistics" data-label="Open Logistics →" data-role-label="Logistics Team" href="logistics/index.html">
-          <span class="hub-icon" aria-hidden="true">📍</span>
+          <span class="hub-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></span>
           <span class="hub-who">Logistics team</span>
           <h2>Logistics</h2>
           <p>Requests from members: go to a place, prayer requests and help requests. Claim a task, view its route and mark it done.</p>
           <span class="hub-go">Open Logistics &rarr;</span>
         </a>
         <a class="hub-card" data-module="competition" data-label="Open Competition Team →" data-role-label="Competition Team" href="dispatch/index.html">
-          <span class="hub-icon" aria-hidden="true">📡</span>
+          <span class="hub-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></span>
           <span class="hub-who">Competition Team</span>
           <h2>Competition Team</h2>
           <p>Monitor and alarm for every request, including Discord issues. Claim it, inspect room routes and hand it out remotely.</p>
           <span class="hub-go">Open Competition Team &rarr;</span>
         </a>
         <a class="hub-card" data-module="techops" data-label="Open Tech Ops →" data-role-label="Tech Ops Team" href="techops/index.html">
-          <span class="hub-icon" aria-hidden="true">🚀</span>
+          <span class="hub-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></span>
           <span class="hub-who">Tech Ops team</span>
           <h2>Tech Ops</h2>
           <p>Internet and power issues, tech help requests, Wi-Fi heatmap, team pings and equipment inventory.</p>
@@ -177,7 +177,7 @@
             c.setAttribute("aria-disabled", "true");
             c.setAttribute("tabindex", "-1");
             c.removeAttribute("href");
-            if (goEl) goEl.textContent = "🔒 Restricted · " + (c.getAttribute("data-role-label") || "Authorized Role") + " Only";
+            if (goEl) goEl.textContent = "Restricted · " + (c.getAttribute("data-role-label") || "Authorized Role") + " Only";
           }
         });
       }

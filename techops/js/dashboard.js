@@ -137,7 +137,7 @@
       d.meetups.filter(function (m) { return m.target === S.me && (m.status === "Pinged" || m.status === "Pending"); }).forEach(function (m) {
         h += '<div class="banner" style="border-color:var(--bad);background:rgba(239,68,68,0.14)">' +
           '<div style="flex:1;min-width:220px">' +
-          '<b style="color:#ff8a8a">🔔 Location Ping from ' + esc(m.by) + '</b>' +
+          '<b style="color:#ff8a8a">Location Ping from ' + esc(m.by) + '</b>' +
           '<div style="font-size:13px;margin-top:2px">They want to meet you! Please confirm your current room so we can guide you to each other.</div>' +
           (m.note ? '<div class="muted" style="font-size:12px;margin-top:2px">Note: ' + esc(m.note) + '</div>' : '') +
           '</div>' +
@@ -151,7 +151,7 @@
         var myRole = m.by === S.me ? "Requester" : "Recipient";
         h += '<div class="banner" style="border-color:var(--ok);background:rgba(16,185,129,0.12)">' +
           '<div style="flex:1;min-width:220px">' +
-          '<b style="color:#34d399">📍 Meetup Confirmed with ' + esc(other) + '</b>' +
+          '<b style="color:#34d399">Meetup Confirmed with ' + esc(other) + '</b>' +
           '<div style="font-size:13px;margin-top:2px">Meeting point: <b>' + esc(m.meetAt) + '</b> (' + esc(m.targetFloorName || m.byFloorName) + ')</div>' +
           '</div>' +
           '<button class="btn primary small" data-route-to="' + esc(m.meetAt) + '">🗺️ Show Walking Route</button>' +
@@ -167,6 +167,7 @@
   }
 
   function setTab(t) {
+    window.setTab = setTab;
     S.tab = t;
     /* Desktop tabs */
     document.querySelectorAll(".tabs .tab").forEach(function (b) {
@@ -225,13 +226,13 @@
       var action = free
         ? '<button class="btn small primary claim-btn" data-claim="' + esc(r.id) + '">Claim</button>'
         : mine ? '<button class="btn small ok resolve-btn" data-resolve="' + esc(r.id) + '">Mark as Resolved</button>' : "";
-      var who = done ? "✓ Resolved" + (r.assigned ? " · <b>" + esc(r.assigned) + "</b>" : "")
-        : r.handedBy ? "➡️ Handed to <b>" + esc(mine ? "You" : r.assigned) + "</b> by " + esc(r.handedBy)
+      var who = done ? "Resolved" + (r.assigned ? " · <b>" + esc(r.assigned) + "</b>" : "")
+        : r.handedBy ? "Handed to <b>" + esc(mine ? "You" : r.assigned) + "</b> by " + esc(r.handedBy)
         : r.assigned ? '<span class="assignee' + (mine ? " me" : "") + '">' + (mine ? "Assigned to <b>You</b>" : "Assigned to <b>" + esc(r.assigned) + "</b>") + "</span>"
         : "Unclaimed — awaiting Tech Ops";
       var routeBtn = r.room
-        ? '<button type="button" class="btn small route-btn" data-route-to="' + esc(r.room) + '">🗺️ Show Route</button>'
-        : '<button type="button" class="btn small route-btn is-disabled" disabled>🗺️ Show Route</button>';
+        ? '<button type="button" class="btn small route-btn" data-route-to="' + esc(r.room) + '">Show Route</button>'
+        : '<button type="button" class="btn small route-btn is-disabled" disabled>Show Route</button>';
 
       return '<article class="req-card' + (free ? " is-new" : mine ? " is-mine" : done ? " is-done" : "") + '">' +
         '<div class="req-card-head">' +
@@ -243,8 +244,8 @@
         "</div>" +
         '<div class="req-card-title">' + esc(r.issue) + "</div>" +
         (r.room
-          ? '<div class="req-card-loc">📍 <b>' + esc(r.room) + "</b>" + (floorLabel ? " · " + esc(floorLabel) : "") + "</div>"
-          : '<div class="req-card-loc is-remote">🌐 Location not specified</div>') +
+          ? '<div class="req-card-loc"><b>' + esc(r.room) + "</b>" + (floorLabel ? " · " + esc(floorLabel) : "") + "</div>"
+          : '<div class="req-card-loc is-remote">Location not specified</div>') +
         '<div class="req-card-desc">' + esc(r.details || "—") +
           (r.reporter ? '<span class="req-from">From: ' + esc(r.reporter) + "</span>" : "") +
         "</div>" +
@@ -434,7 +435,7 @@
         "<dt>Wi-Fi</dt><dd>" + (w ? '<b style="color:' + TO.speedColor(w.mbps) + '">' + w.mbps + " Mbps</b> · " + w.latency + " ms · " + TO.speedLabel(w.mbps) : "No reading") + "</dd></dl>" +
         
         '<div class="row" style="margin:12px 0 14px;gap:8px">' +
-        '<button class="btn primary small" id="side-route-here">📍 Fastest Route Here</button>' +
+        '<button class="btn primary small" id="side-route-here">Fastest Route Here</button>' +
         '<button class="btn small" id="side-route-from">Route From Here</button>' +
         '</div>' +
 
@@ -619,7 +620,7 @@
         '<div><div class="name">' + esc(t.name) + (isMe ? ' <span class="badge b-prog">You</span>' : '') + '</div><div class="role">' + esc(t.role) + '</div></div>' +
         '</div>' +
         '<div class="status ' + stClass(t.status) + '"><i></i>' + esc(t.status) + '</div>' +
-        '<div class="loc">📍 ' + esc(t.floorName) + " · Room " + esc(t.room) + '</div>' +
+        '<div class="loc">Room ' + esc(t.floorName) + " · Room " + esc(t.room) + '</div>' +
         '<div class="muted" style="font-size:12px">' + esc(t.focus) + '</div>' +
         '<span class="btn small primary" style="align-self:flex-start">' + (isMe ? 'Update My Location' : 'Ping for Meetup') + '</span>' +
         '</button>';
@@ -811,7 +812,7 @@
     var meMember = d.team.filter(function (t) { return t.name === meetup.target; })[0] || {};
     var ov = document.createElement("div"); ov.className = "backdrop";
     ov.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-label="Confirm Location">' +
-      '<div class="mh"><h3>📍 Confirm Your Room for Meetup</h3><button class="x" aria-label="Close">&times;</button></div>' +
+      '<div class="mh"><h3>Confirm Your Room for Meetup</h3><button class="x" aria-label="Close">&times;</button></div>' +
       '<div class="mb" id="conf-body"></div></div>';
     document.body.appendChild(ov);
 
@@ -881,7 +882,7 @@
           '<p style="margin:8px 0">Meeting agreed at: <b style="color:var(--accent);font-size:16px">Room ' + esc(meetAt) + '</b></p>' +
           '<p class="muted" style="font-size:12.5px">' + esc(meetup.by) + ' has been alerted. Follow the fastest route to get there.</p>' +
           '<div class="row" style="margin-top:16px;justify-content:center;gap:10px">' +
-          '<button class="btn primary" id="cf-route-btn">🗺️ Open Walking Route</button>' +
+          '<button class="btn primary" id="cf-route-btn">Open Walking Route</button>' +
           '<button class="btn ghost" id="cf-close">Close</button>' +
           '</div></div>';
 
@@ -1040,7 +1041,7 @@
       S.alertsOn = true; TO.beep();
       if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
       if ($("alerts-btn")) { $("alerts-btn").textContent = "Alerts on"; $("alerts-btn").disabled = true; }
-      if ($("mobile-alerts-btn")) { $("mobile-alerts-btn").textContent = "🔔 Alerts On"; $("mobile-alerts-btn").disabled = true; }
+      if ($("mobile-alerts-btn")) { $("mobile-alerts-btn").textContent = "Alerts On"; $("mobile-alerts-btn").disabled = true; }
       TO.toast("Alerts enabled", "Sound and notifications enabled for incoming issues.", "ok");
     }
     if ($("alerts-btn")) $("alerts-btn").onclick = enableAlerts;

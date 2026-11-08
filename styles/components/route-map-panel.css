@@ -1,0 +1,271 @@
+/* NASA Space Apps Cairo - Interactive Route Map Panel (Modal & Slide-over) */
+
+.route-map-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(6, 11, 24, 0.72);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 10050;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.route-map-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.route-map-panel {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  width: 95%;
+  max-width: 860px;
+  max-height: 85vh;
+  background: var(--bg-card, #0e172a);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.55);
+  z-index: 10060;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.route-map-panel.is-open {
+  transform: translate(-50%, 0);
+}
+
+/* Header */
+.route-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+}
+
+.route-map-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.route-map-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary, #3b82f6);
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.route-map-title {
+  margin: 0;
+  font-family: var(--font-title, sans-serif);
+  font-size: 18px;
+  color: var(--text, #f8fafc);
+  letter-spacing: 0.02em;
+}
+
+.route-map-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim, #94a3b8);
+}
+
+.route-map-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text, #f8fafc);
+  font-size: 16px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.route-map-close-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: scale(1.05);
+}
+
+/* Viewport & Canvas */
+.route-map-viewport {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  background: #020617;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.route-map-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1600px;
+  height: 750px;
+  transform-origin: 0 0;
+  cursor: grab;
+}
+
+.route-map-stage.is-dragging {
+  cursor: grabbing;
+}
+
+.route-map-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1600px;
+  height: 750px;
+  display: block;
+  pointer-events: none;
+}
+
+.route-map-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1600px;
+  height: 750px;
+}
+
+/* Zoom controls */
+.route-map-zoom-controls {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+
+.route-zoom-btn {
+  width: 32px;
+  height: 32px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s;
+}
+
+.route-zoom-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+}
+
+/* Footer */
+.route-map-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: rgba(15, 23, 42, 0.85);
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+}
+
+.route-map-floor-indicator {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #f8fafc);
+}
+
+.route-map-full-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary, #3b82f6);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.route-map-full-link:hover {
+  text-decoration: underline;
+  color: #60a5fa;
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .route-map-panel {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 -12px 35px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .route-map-header,
+[data-theme="light"] .route-map-footer {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .route-map-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .route-map-sub {
+  color: #64748b;
+}
+
+[data-theme="light"] .route-map-close-btn {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+[data-theme="light"] .route-map-viewport {
+  background: #f1f5f9;
+}
+
+[data-theme="light"] .route-zoom-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+/* Mobile Media Queries */
+@media (max-width: 640px) {
+  .route-map-panel {
+    width: 100%;
+    max-height: 88vh;
+    border-radius: 14px 14px 0 0;
+  }
+  .route-map-viewport {
+    height: 310px;
+  }
+  .route-map-header {
+    padding: 10px 14px;
+  }
+  .route-map-footer {
+    padding: 10px 14px;
+  }
+}

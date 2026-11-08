@@ -521,3 +521,5 @@ h1 {
   .hub-grid { grid-template-columns: 1fr; gap: 12px; }
   .hub-card { padding: 18px 16px 16px; min-height: 0; }
 }
+
+.hub-icon svg { width: 24px; height: 24px; stroke: currentColor; display: block; margin: auto; }

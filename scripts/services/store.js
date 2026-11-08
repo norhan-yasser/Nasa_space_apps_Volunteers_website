@@ -230,7 +230,7 @@
 
   function initTutorialReports() {
     return [
-      { id: "TUT-TO-01", ts: stamp(), floor: "G", floorName: "Ground Floor", room: "C026", issue: "Internet is lagging", details: "[Training Ticket] Wi-Fi speed dropping intermittently for Team Aurora during presentation setup.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Aurora · Practice", team: "TechOps" },
+      { id: "TUT-TO-01", ts: stamp(), floor: "G", floorName: "Ground Floor", room: "C026", issue: "Internet is lagging", details: "[Training Ticket] Wi-Fi speed dropping intermittently for Team Aurora during presentation setup.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Aurora", team: "TechOps" },
       { id: "TUT-TO-02", ts: stamp(), floor: "F", floorName: "First Floor", room: "B133", issue: "Need TechOps assistance", details: "[Training Ticket] Projector HDMI resolution is not detected by presenter laptop.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Judges Panel 1", team: "TechOps" },
       { id: "TUT-TO-03", ts: stamp(), floor: "F", floorName: "First Floor", room: "C139", issue: "Electricity / Power problem", details: "[Training Ticket] Outlet tripped at back desk, requesting power extension strip.", status: "In Progress", assigned: "Mohamed Khairy", claimedAt: stamp(), resolvedAt: "", reporter: "Team Nova", team: "TechOps" },
 
@@ -239,7 +239,7 @@
       { id: "TUT-LG-03", ts: stamp(), floor: "G", floorName: "Ground Floor", room: "S016", issue: "Go to a place", details: "[Training Ticket] Guidance escort from entrance to main auditorium.", status: "In Progress", assigned: "Norhan Yasser", claimedAt: stamp(), resolvedAt: "", reporter: "Guest Speaker", team: "Logistics" },
 
       { id: "TUT-CMP-01", ts: stamp(), floor: "", floorName: "", room: "", issue: "Discord issue", details: "[Training Ticket] Discord server invite link expired for two teammates joining late.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Orion · @mariam_a", team: "Competition" },
-      { id: "TUT-CMP-02", ts: stamp(), floor: "", floorName: "", room: "", issue: "Submission help", details: "[Training Ticket] GitHub repository link validation warning on Space Apps challenge portal.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Nebula · @youssef_dev", team: "Competition" },
+      { id: "TUT-CMP-02", ts: stamp(), floor: "F", floorName: "First Floor", room: "B130", issue: "Judge & Room Inquiry", details: "[Training Ticket] Lead evaluator requested room guidance to mentor and judging lab B130.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Evaluation Desk", team: "Competition" },
       { id: "TUT-CMP-03", ts: stamp(), floor: "F", floorName: "First Floor", room: "B130", issue: "Competition question", details: "[Training Ticket] Can our 240-second demo include open-source NASA imagery?", status: "In Progress", assigned: "Competition Lead", claimedAt: stamp(), resolvedAt: "", reporter: "Team Horizon", team: "Competition" }
     ];
   }

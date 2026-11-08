@@ -74,7 +74,7 @@
     var al = $("alarm");
     if (al) {
       al.hidden = !open;
-      if (open) al.textContent = "🚨 " + open + " unclaimed Competition Team request" + (open > 1 ? "s" : "");
+      if (open) al.textContent = "" + open + " unclaimed Competition Team request" + (open > 1 ? "s" : "");
     }
   }
   function notifyDesktop(title, body) {
@@ -119,19 +119,32 @@
     $("cards").innerHTML = rows.map(card).join("");
   }
 
+  
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".route-btn:not(.is-disabled)");
+    if (!btn) return;
+    var href = btn.getAttribute("href");
+    if (href && window.RouteMapPanel) {
+      e.preventDefault();
+      var m = href.match(/to=([^&]+)/);
+      var room = m ? decodeURIComponent(m[1]) : "";
+      window.RouteMapPanel.open({ room: room, details: "Fastest walking route to room" });
+    }
+  });
+
   function card(r) {
     var free = isUnassigned(r), mine = isMine(r), done = r.status === "Resolved";
     var floorLabel = r.floorName || Store.FLOOR_NAMES[r.floor] || "";
     var routeUrl = TO.routeHref(r, "../maps.html");
 
     var who = "";
-    if (done) who = "✓ Done" + (r.assigned ? " · <b>" + esc(r.assigned) + "</b>" : "");
-    else if (r.handedBy) who = "➡️ Handed to <b>" + esc(r.assigned) + "</b> by " + esc(r.handedBy === S.me ? "you" : r.handedBy);
+    if (done) who = "Done" + (r.assigned ? " · <b>" + esc(r.assigned) + "</b>" : "");
+    else if (r.handedBy) who = "Handed to <b>" + esc(r.assigned) + "</b> by " + esc(r.handedBy === S.me ? "you" : r.handedBy);
     else if (r.assigned) who = "Claimed by <b>" + esc(r.assigned === S.me ? "you" : r.assigned) + "</b>";
     else who = "Unclaimed — awaiting Competition Team";
 
     var routeBtn = routeUrl
-      ? '<a class="btn small route-btn" href="' + esc(routeUrl) + '">🗺️ Show Route</a>'
+      ? '<a class="btn small route-btn" href="' + esc(routeUrl) + '">Show Route</a>'
       : '<button type="button" class="btn small route-btn is-disabled" disabled title="Remote Discord/online request — no physical room assigned">🗺️ Show Route</button>';
 
     var actions = "";
@@ -161,8 +174,8 @@
       "</div>" +
       '<div class="req-card-title">' + esc(r.issue) + "</div>" +
       (r.room
-        ? '<div class="req-card-loc">📍 <b>' + esc(r.room) + "</b>" + (floorLabel ? " · " + esc(floorLabel) : "") + "</div>"
-        : '<div class="req-card-loc is-remote">🌐 Remote · Discord / Online</div>') +
+        ? '<div class="req-card-loc"><b>' + esc(r.room) + "</b>" + (floorLabel ? " · " + esc(floorLabel) : "") + "</div>"
+        : '<div class="req-card-loc is-remote">Remote · Discord / Online</div>') +
       '<div class="req-card-desc">' + esc(r.details || "—") +
         (r.reporter ? '<span class="req-from">From: ' + esc(r.reporter) + "</span>" : "") +
       "</div>" +
@@ -172,12 +185,12 @@
   }
 
   function discordText(r) {
-    return "🚨 **COMPETITION TEAM** — " + r.issue + "\n" +
-      (whereOf(r) ? "📍 " + whereOf(r) + "\n" : "") +
-      (r.details ? "📝 " + r.details + "\n" : "") +
+    return "**[COMPETITION DESK]** — " + r.issue + "\n" +
+      (whereOf(r) ? "Location: " + whereOf(r) + "\n" : "") +
+      (r.details ? "Details: " + r.details + "\n" : "") +
       (r.reporter ? "👤 From: " + r.reporter + "\n" : "") +
-      (r.assigned && r.handedBy ? "➡️ Assigned to: " + r.assigned + "\n" : "") +
-      "🆔 " + r.id;
+      (r.assigned && r.handedBy ? "Assigned to: " + r.assigned + "\n" : "") +
+      "ID: " + r.id;
   }
   function copy(text) {
     if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(function () { TO.toast("Copied", "Paste it in Discord.", "ok"); });

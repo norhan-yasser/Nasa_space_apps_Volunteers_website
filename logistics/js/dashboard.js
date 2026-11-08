@@ -84,13 +84,26 @@
     $("greeting").textContent = "Hi " + (S.user ? S.user.name.split(" ")[0] : "") + " · " + open + " unclaimed" + (mine ? " · " + mine + " yours" : "");
   }
 
+  
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".route-btn:not(.is-disabled)");
+    if (!btn) return;
+    var href = btn.getAttribute("href");
+    if (href && window.RouteMapPanel) {
+      e.preventDefault();
+      var m = href.match(/to=([^&]+)/);
+      var room = m ? decodeURIComponent(m[1]) : "";
+      window.RouteMapPanel.open({ room: room, details: "Fastest walking route to room" });
+    }
+  });
+
   function renderCard(r) {
     var when = Store.parseStamp(r.ts), mine = isMine(r), free = isUnassigned(r), done = r.status === "Resolved";
     var floorLabel = r.floorName || Store.FLOOR_NAMES[r.floor] || "";
     var routeUrl = TO.routeHref(r, "../maps.html");
 
     var who = done ? "✓ Done" + (r.assigned ? " · <b>" + esc(r.assigned) + "</b>" : "")
-      : r.handedBy ? "➡️ Handed to <b>" + esc(mine ? "You" : r.assigned) + "</b> by " + esc(r.handedBy)
+      : r.handedBy ? "Handed to <b>" + esc(mine ? "You" : r.assigned) + "</b> by " + esc(r.handedBy)
       : r.assigned ? '<span class="assignee' + (mine ? " me" : "") + '">' + (mine ? "Assigned to <b>You</b>" : "Assigned to <b>" + esc(r.assigned) + "</b>") + "</span>"
       : "Unclaimed — awaiting volunteer";
 
@@ -99,7 +112,7 @@
       : mine ? '<button class="btn small ok resolve-btn" data-resolve="' + esc(r.id) + '">Mark as Done</button>' : "";
 
     var routeBtn = routeUrl
-      ? '<a class="btn small route-btn" href="' + esc(routeUrl) + '">🗺️ Show Route</a>'
+      ? '<a class="btn small route-btn" href="' + esc(routeUrl) + '">Show Route</a>'
       : '<button type="button" class="btn small route-btn is-disabled" disabled title="No room specified">🗺️ Show Route</button>';
 
     return '<article class="req-card' + (free ? " is-new" : mine ? " is-mine" : done ? " is-done" : "") + '">' +
@@ -112,8 +125,8 @@
       "</div>" +
       '<div class="req-card-title">' + esc(r.issue) + "</div>" +
       (r.room
-        ? '<div class="req-card-loc">📍 <b>' + esc(r.room) + "</b>" + (floorLabel ? " · " + esc(floorLabel) : "") + "</div>"
-        : '<div class="req-card-loc is-remote">🌐 Location not specified</div>') +
+        ? '<div class="req-card-loc"><b>' + esc(r.room) + "</b>" + (floorLabel ? " · " + esc(floorLabel) : "") + "</div>"
+        : '<div class="req-card-loc is-remote">Location not specified</div>') +
       '<div class="req-card-desc">' + esc(r.details || "—") +
         (r.reporter ? '<span class="req-from">From: ' + esc(r.reporter) + "</span>" : "") +
       "</div>" +
