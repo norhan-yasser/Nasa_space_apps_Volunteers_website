@@ -154,7 +154,7 @@
           '<b style="color:#34d399">Meetup Confirmed with ' + esc(other) + '</b>' +
           '<div style="font-size:13px;margin-top:2px">Meeting point: <b>' + esc(m.meetAt) + '</b> (' + esc(m.targetFloorName || m.byFloorName) + ')</div>' +
           '</div>' +
-          '<button class="btn primary small" data-route-to="' + esc(m.meetAt) + '">🗺️ Show Walking Route</button>' +
+          '<button class="btn primary small" data-route-to="' + esc(m.meetAt) + '">Show Walking Route</button>' +
           '<button class="btn small" data-meet="' + esc(m.id) + '" data-st="Done">Mark Done</button>' +
           '</div>';
       });

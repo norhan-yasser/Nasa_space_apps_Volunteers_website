@@ -113,7 +113,7 @@
 
     var routeBtn = routeUrl
       ? '<a class="btn small route-btn" href="' + esc(routeUrl) + '">Show Route</a>'
-      : '<button type="button" class="btn small route-btn is-disabled" disabled title="No room specified">🗺️ Show Route</button>';
+      : '<button type="button" class="btn small route-btn is-disabled" disabled title="No room specified">Show Route</button>';
 
     return '<article class="req-card' + (free ? " is-new" : mine ? " is-mine" : done ? " is-done" : "") + '">' +
       '<div class="req-card-head">' +

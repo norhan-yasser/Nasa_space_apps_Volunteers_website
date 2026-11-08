@@ -145,7 +145,7 @@
 
     var routeBtn = routeUrl
       ? '<a class="btn small route-btn" href="' + esc(routeUrl) + '">Show Route</a>'
-      : '<button type="button" class="btn small route-btn is-disabled" disabled title="Remote Discord/online request — no physical room assigned">🗺️ Show Route</button>';
+      : '<button type="button" class="btn small route-btn is-disabled" disabled title="Remote Discord/online request — no physical room assigned">Show Route</button>';
 
     var actions = "";
     if (free) {
@@ -188,7 +188,7 @@
     return "**[COMPETITION DESK]** — " + r.issue + "\n" +
       (whereOf(r) ? "Location: " + whereOf(r) + "\n" : "") +
       (r.details ? "Details: " + r.details + "\n" : "") +
-      (r.reporter ? "👤 From: " + r.reporter + "\n" : "") +
+      (r.reporter ? "From: " + r.reporter + "\n" : "") +
       (r.assigned && r.handedBy ? "Assigned to: " + r.assigned + "\n" : "") +
       "ID: " + r.id;
   }

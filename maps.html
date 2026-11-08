@@ -40,7 +40,7 @@
       <div class="gate-badge">All Volunteers · Cairo</div>
       <h1 id="gate-title">Venue Maps</h1>
       <p>Enter your volunteer code to open floor blueprints and wayfinding.</p>
-      <form id="gate-form" autocomplete="off" novalidate>
+      <form action="javascript:void(0);" id="gate-form" autocomplete="off" novalidate>
         <input id="gate-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="VOLUNTEER CODE" aria-label="Volunteer code">
         <div class="gate-err" id="gate-err" role="alert" hidden></div>
         <button type="submit" id="gate-btn">Open Maps</button>
@@ -155,7 +155,7 @@
         <a class="btn" href="index.html">Overview</a>
         <button class="btn btn-tutorial" type="button" id="mobile-tutorial-btn">Tutorial</button>
         <button class="btn" type="button" id="mobile-dir-btn">Wayfinding &amp; Directions</button>
-        <button class="btn" type="button" id="mobile-theme-btn"><span id="mobile-theme-text">Light</span></button>
+        <button class="btn" type="button" id="mobile-theme-toggle"><span id="mobile-theme-text">Light</span></button>
         <button class="btn bad" type="button" id="mobile-signout-btn">Sign out</button>
       </div>
     </div>
@@ -329,7 +329,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             Open in Google Sheets
           </button>
-          <a class="btn" href="rooms_database_template.csv" download="NASA_Space_Apps_Cairo_Rooms_Template.csv">
+          <a class="btn" href="data/templates/rooms_database_template.csv" download="NASA_Space_Apps_Cairo_Rooms_Template.csv">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download CSV Template
           </a>

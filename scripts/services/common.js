@@ -27,7 +27,7 @@
     applyTheme(t);
     var b = document.getElementById("theme-toggle");
     if (b) b.addEventListener("click", toggleTheme);
-    var mb = document.getElementById("mobile-theme-toggle");
+    var mb = document.getElementById("mobile-theme-toggle") || document.getElementById("mobile-theme-btn");
     if (mb) mb.addEventListener("click", toggleTheme);
   }
 
@@ -47,6 +47,7 @@
   function beep() {
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx && audioCtx.state === "suspended") { audioCtx.resume().catch(function () {}); }
       var o = audioCtx.createOscillator(), g = audioCtx.createGain();
       o.type = "sine"; o.frequency.value = 880; g.gain.value = 0.08;
       o.connect(g); g.connect(audioCtx.destination);

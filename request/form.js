@@ -43,9 +43,9 @@
       '<div class="issue-opt-radio" aria-hidden="true"><span class="radio-dot"></span></div></label>';
   }
   var TEAM_CARDS = [
-    { id: "TechOps", icon: "💻", label: "Tech Ops", hint: "Internet, power, equipment or any tech problem" },
-    { id: "Logistics", icon: "🧭", label: "Logistics", hint: "Go to a place, prayer area or any other help" },
-    { id: "Competition", icon: "🏆", label: "Competition Team", hint: "Discord issues, competition questions, submissions (remote help, no room needed)" }
+    { id: "TechOps", icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>', label: "Tech Ops", hint: "Internet, power, equipment or any tech problem" },
+    { id: "Logistics", icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>', label: "Logistics", hint: "Go to a place, prayer area or any other help" },
+    { id: "Competition", icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"></path><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-2.34"></path><path d="M14 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>', label: "Competition Team", hint: "Discord issues, competition questions, submissions (remote help, no room needed)" }
   ];
   $("team-opts").innerHTML = TEAM_CARDS.map(function (t) { return card("team", t.id, t.icon, t.label, t.hint); }).join("");
   function pickedTeam() { var p = document.querySelector("input[name=team]:checked"); return p ? p.value : ""; }

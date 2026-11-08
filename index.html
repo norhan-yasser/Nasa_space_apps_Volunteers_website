@@ -49,7 +49,7 @@
           <b>Volunteer Role Sign-In</b>
           <span>Enter your code to highlight your assigned workspaces.</span>
         </div>
-        <form class="access-form" id="overview-login-form" autocomplete="off" novalidate>
+        <form action="javascript:void(0);" class="access-form" id="overview-login-form" autocomplete="off" novalidate>
           <input id="overview-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Volunteer code" aria-label="Volunteer code">
           <button type="submit" id="overview-login-btn">Sign in</button>
         </form>
@@ -128,7 +128,12 @@
         var loginBar = $("overview-login-bar");
         var banner = $("overview-role-banner");
         var statusTxt = $("overview-status-text");
-        if (statusTxt && Store) statusTxt.textContent = Store.isLive() ? "Live" : "Local preview";
+        var statusPill = $("overview-status-pill");
+        if (Store) {
+          var live = Store.isLive();
+          if (statusPill) statusPill.className = "pill-status " + (live ? "live" : "demo");
+          if (statusTxt) statusTxt.textContent = live ? "Live" : "Local preview";
+        }
 
         if (!user) {
           if (chip) chip.hidden = true;
