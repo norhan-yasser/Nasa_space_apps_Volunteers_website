@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// NASA Space Apps Cairo - volunteer portal (TechOps + Logistics)
+// NASA Space Apps Cairo - volunteer portal (Maps + Logistics + TechOps)
 //
 // Sign-in model: a browser signs in with Firebase Anonymous Auth, then proves it knows a valid Volunteer Code by
 // writing sessions/{uid} = { code }. That write is only accepted when volunteers/{code} exists. Every other rule
@@ -15,6 +15,8 @@ service cloud.firestore {
     function myCode() { return get(/databases/$(database)/documents/sessions/$(request.auth.uid)).data.code; }
     function me() { return vol(myCode()); }
     function isTechOps() { return hasSession() && me().Team == 'TechOps'; }
+    function isLogistics() { return hasSession() && me().Team == 'Logistics'; }
+    function isDispatch() { return hasSession() && (me().Team == 'Competition' || me().Team == 'Dispatch'); }   // Competition Team (old value 'Dispatch' still accepted)
     function isVolunteer() { return hasSession(); }
 
     // ---- identity --------------------------------------------------------------------------------------
@@ -34,13 +36,18 @@ service cloud.firestore {
     match /rooms/{id} { allow read: if isVolunteer(); allow write: if false; }
     match /wifi/{id}  { allow read: if isVolunteer(); allow write: if isTechOps(); }
 
-    // ---- TechOps tasks (issue reports) -------------------------------------------------------------------
+    // ---- Tasks (QR requests) -----------------------------------------------------------------------------
+    // Three queues share this collection, told apart by `team`: 'TechOps' (internet / power / tech help),
+    // 'Logistics' (go to a place / prayer / help) and 'Competition' (Discord issues / questions, handled remotely by the Competition Team = Team 'Dispatch'). A volunteer only sees and claims the queue of their own team.
+    function ownsTask() {
+      return (isTechOps() && resource.data.team == 'TechOps') || (isLogistics() && resource.data.team == 'Logistics');
+    }
     match /reports/{id} {
-      allow read: if isTechOps() && resource.data.team == 'TechOps';
+      allow read: if ownsTask() || isDispatch();      // Competition Team monitors all queues
 
-      // Public QR form: anyone holding an (anonymous) session may file a NEW, UNASSIGNED TechOps report.
+      // Public QR forms: anyone holding an (anonymous) session may file a NEW, UNASSIGNED request for either team.
       allow create: if signedIn()
-        && request.resource.data.team == 'TechOps'
+        && request.resource.data.team in ['TechOps', 'Logistics', 'Competition']
         && request.resource.data.status == 'New'
         && request.resource.data.assigned == ''
         && request.resource.data.keys().hasOnly(['id', 'ts', 'floor', 'floorName', 'room', 'issue', 'details',
@@ -49,17 +56,39 @@ service cloud.firestore {
         && request.resource.data.details is string && request.resource.data.details.size() <= 500
         && request.resource.data.reporter is string && request.resource.data.reporter.size() <= 60;
 
-      // One-click Claim: only an unassigned task, only for yourself, and it becomes "In Progress".
-      allow update: if isTechOps()
+      // One-click Claim: only an unassigned task of your own team, only for yourself, and it becomes "In Progress".
+      allow update: if ownsTask()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assigned', 'status', 'claimedAt'])
         && resource.data.assigned == '' && resource.data.status != 'Resolved'
         && request.resource.data.assigned == me().Name
         && request.resource.data.status == 'In Progress';
 
       // One-click Resolve: only the volunteer who claimed it.
-      allow update: if isTechOps()
+      allow update: if ownsTask()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])
         && resource.data.assigned == me().Name
+        && request.resource.data.status in ['In Progress', 'Resolved'];
+
+      // Dispatch: claim any unassigned request of either team (same one-click rule as the teams).
+      allow update: if isDispatch()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assigned', 'status', 'claimedAt'])
+        && resource.data.assigned == '' && resource.data.status != 'Resolved'
+        && request.resource.data.assigned == me().Name
+        && request.resource.data.status == 'In Progress';
+
+      // Dispatch: hand a request they claimed (or already handed out) to a member; the member becomes `assigned`.
+      allow update: if isDispatch()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assigned', 'handedBy', 'handedAt'])
+        && resource.data.status == 'In Progress'
+        && (resource.data.assigned == me().Name || resource.data.get('handedBy', '') == me().Name)
+        && request.resource.data.handedBy == me().Name
+        && request.resource.data.assigned is string
+        && request.resource.data.assigned.size() > 0 && request.resource.data.assigned.size() <= 60;
+
+      // Dispatch: mark done a request they claimed or handed out.
+      allow update: if isDispatch()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])
+        && (resource.data.assigned == me().Name || resource.data.get('handedBy', '') == me().Name)
         && request.resource.data.status in ['In Progress', 'Resolved'];
 
       allow delete: if false;

@@ -6,13 +6,13 @@ An isolated prototype for the **TechOps** category of NASA Space Apps Cairo. It 
 |---|---|
 | `index.html` | TechOps dashboard: issues, floor maps (zones + Wi-Fi heatmap), team and meetups, inventory |
 | `report.html` | Public mobile form opened by the room QR codes |
-| `qr-codes.html` | Printable sheet with one QR code per room (55 rooms) |
+| `qr-codes.html` | Printable sheet with one QR code per room (now also the prayer rooms, cafeteria and break areas) |
 
 Open `index.html` directly in a browser, or serve the repo root (for example `python -m http.server`) and go to `/techops/`.
 
 ## Features
 
-- **3 interactive floor maps** (pan, zoom, click a room). Rooms are coloured by zone: Participants, Volunteers, VIPs, Judges, Mentors.
+- **4 interactive floor maps (Basement, Ground, First, Second)** (pan, zoom, click a room). Rooms are coloured by zone: Participants, Volunteers, VIPs, Judges, Mentors.
 - **QR issue reporting.** Each room has a QR code that opens `report.html?floor=F&room=C139`. The user can change floor and room, then picks *Internet is lagging*, *Electricity / Power problem*, *Need TechOps assistance* or *Other* (free text).
 - **Live alerts.** The dashboard re-reads the sheet every 12 s (`POLL_MS`). A new report raises a toast, a sound, a bell counter, a pulsing pin on the map and, if enabled, a desktop notification (button *Enable alerts*).
 - **Team and meetups.** Click a profile, enter your room and their room, choose where to meet. The request is stored, shown to that member (choose *Viewing as* in the header) with *On my way* / *Done*, and previewed on the map.
@@ -57,3 +57,8 @@ Edit the tabs in the sheet (keep the header row). Room codes must match the floo
 - The Apps Script endpoint has no login: anyone who knows the URL can send reports. Fine for a prototype; add a shared secret or Google sign-in before real use.
 - The script only writes to the listed tabs and existing columns, limits text length and neutralises formulas.
 - The sheet is world-readable once shared by link, so keep real phone numbers and personal data out of it unless that is acceptable.
+
+## Basement, cafeteria and break areas
+- Basement uses `../assets/su tech floor assets/0.png`. Only `STAIR-EN` and `STAIR-SE` reach it; `WN`, `WS`, `SW` serve Ground to Second only (`ST.B` in `js/router.js`).
+- `PR-F`, `PR-M` (basement prayer rooms), `CAFETERIA` (ground), `BREAK-1` (first) and `BREAK-2` (second) are in `js/data.js` as shared places. They have no sheet row: the dashboard adds a plain one so they can be selected, routed to, reported on and used for meetups.
+- Routes across several floors are chained level by level through stairs that exist on both floors.

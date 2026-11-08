@@ -8,11 +8,14 @@
 
   /* [code, geometry]  geometry: 4 numbers = rectangle, otherwise flat x,y pairs (polygon) */
   var RAW = {
+    /* Basement (plan 0.png): only the two prayer rooms are marked */
+    B: [["PR-F", [970, 382, 1048, 505]], ["PR-M", [1087, 382, 1188, 575]]],
     G: [
       ["S034", [86, 201, 185, 287]], ["S035", [87, 312, 185, 394]], ["C027", [511, 240, 558, 320]],
       ["C026", [559, 240, 607, 320]], ["C017", [1157, 240, 1202, 320]],
       ["S016", [1259, 273, 1220, 208, 1295, 165, 1333, 229]],
-      ["S015", [1309, 360, 1270, 295, 1341, 252, 1381, 316]]
+      ["S015", [1309, 360, 1270, 295, 1341, 252, 1381, 316]],
+      ["CAFETERIA", [990, 396, 1250, 528]]
     ],
     F: [
       ["S140", [126, 178, 229, 269]], ["S141", [126, 295, 230, 378]], ["C139", [283, 218, 335, 304]],
@@ -25,7 +28,8 @@
       ["S122", [1403, 368, 1362, 298, 1489, 224, 1530, 294]],
       ["H114", [1466, 568, 1432, 510, 1527, 455, 1561, 513]],
       ["H113", [1516, 658, 1477, 591, 1563, 542, 1602, 608]],
-      ["C154", [381, 530, 430, 617]], ["C153", [431, 530, 481, 618]], ["C152", [480, 530, 534, 618]]
+      ["C154", [381, 530, 430, 617]], ["C153", [431, 530, 481, 618]], ["C152", [480, 530, 534, 618]],
+      ["BREAK-1", [942, 431, 1086, 578]]
     ],
     S: [
       ["S241", [119, 165, 224, 257]], ["S242", [120, 282, 225, 363]], ["C240", [274, 203, 324, 286]],
@@ -37,17 +41,27 @@
       ["H209", [1506, 629, 1460, 555, 1573, 486, 1618, 559]],
       ["C260", [119, 492, 173, 585]], ["C259", [172, 492, 223, 585]], ["C258", [268, 492, 317, 585]],
       ["C257", [316, 492, 364, 584]], ["C256", [363, 492, 412, 584]],
-      ["C265", [617, 698, 512, 698, 512, 612, 617, 612]]
+      ["C265", [617, 698, 512, 698, 512, 612, 617, 612]],
+      ["BREAK-2", [948, 404, 1052, 584]]
     ]
   };
 
+  /* Shared places (not assignable to a group): shown on the map and usable in routes, reports and meetups */
+  var PLACE_KIND = { "PR-F": "prayer", "PR-M": "prayer", "CAFETERIA": "cafeteria", "BREAK-1": "break", "BREAK-2": "break" };
+  var PLACE_STYLE = {
+    prayer: { color: "#8b5cf6", label: "Prayer Room" },
+    cafeteria: { color: "#d97706", label: "Cafeteria" },
+    "break": { color: "#0ea5e9", label: "Break Area" }
+  };
+
   var META = {
+    B: { name: "Basement", short: "Basement", level: "Level -1", img: IMG_DIR + "0.png" },
     G: { name: "Ground Floor", short: "Ground", level: "Level 0", img: IMG_DIR + "1.png" },
     F: { name: "First Floor", short: "First", level: "Level 1", img: IMG_DIR + "2.png" },
     S: { name: "Second Floor", short: "Second", level: "Level 2", img: IMG_DIR + "3.png" }
   };
 
-  var FLOORS = ["G", "F", "S"].map(function (id) {
+  var FLOORS = ["B", "G", "F", "S"].map(function (id) {
     var rooms = RAW[id].map(function (r) {
       var g = r[1], pts = [];
       if (g.length === 4) pts = [[g[0], g[1]], [g[2], g[1]], [g[2], g[3]], [g[0], g[3]]];
@@ -58,7 +72,7 @@
       var xs = pts.map(function (p) { return p[0]; });
       var ys = pts.map(function (p) { return p[1]; });
       var bb = [Math.min.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, xs), Math.max.apply(null, ys)];
-      return { code: r[0], floor: id, pts: pts, cx: cx, cy: cy, bb: bb };
+      return { code: r[0], floor: id, pts: pts, cx: cx, cy: cy, bb: bb, kind: PLACE_KIND[r[0]] || "" };
     });
     return { id: id, name: META[id].name, short: META[id].short, level: META[id].level, img: META[id].img, rooms: rooms };
   });
@@ -85,6 +99,7 @@
     W: 1673,
     H: 940,
     FLOORS: FLOORS,
+    PLACE_STYLE: PLACE_STYLE,
     ALL: ALL_ROOMS,
     ZONES: {
       Participants: { color: "#3d6bff", label: "Participants" },
@@ -99,6 +114,33 @@
       { id: "help", label: "Need TechOps assistance", hint: "Equipment, setup or any tech help" },
       { id: "other", label: "Other", hint: "Describe the problem yourself" }
     ],
+    /* Logistics QR help form: the three things a member can ask the Logistics team for */
+    LOG_ISSUES: [
+      { id: "place", label: "Go to a place", hint: "I need to get to a certain room or area" },
+      { id: "prayer", label: "Prayer request", hint: "Show me or take me to the prayer area" },
+      { id: "help", label: "Help request", hint: "Any other help from the Logistics team" }
+    ],
+    /* ONE participant QR form: every request type belongs to exactly one team. The team decides which dashboard
+     * (and which alerts) receive it, so the two queues never overlap. Labels match ISSUES / LOG_ISSUES above. */
+    REQUEST_TYPES: [
+      { id: "net",      team: "TechOps",   icon: "\uD83D\uDCF6", label: "Internet is lagging",         hint: "Slow or dropping Wi-Fi" },
+      { id: "power",    team: "TechOps",   icon: "\u26A1",       label: "Electricity / Power problem", hint: "No power, tripped outlets, cables" },
+      { id: "help",     team: "TechOps",   icon: "\uD83D\uDEE0\uFE0F", label: "Need TechOps assistance", hint: "Equipment, setup or any tech help" },
+      { id: "other",    team: "TechOps",   icon: "\uD83D\uDCAC", label: "Other",                       hint: "Another tech problem, describe it" },
+      { id: "place",    team: "Logistics", icon: "\uD83E\uDDED", label: "Go to a place",               hint: "I need to get to a certain room or area" },
+      { id: "prayer",   team: "Logistics", icon: "\uD83D\uDD4C", label: "Prayer request",              hint: "Show me or take me to the prayer area" },
+      { id: "log-help", team: "Logistics", icon: "\uD83D\uDE4B", label: "Help request",                hint: "Any other help from the Logistics team" },
+      /* Competition Team: handled remotely (claimed and handed out from the monitor), so no floor / room is asked */
+      { id: "comp-discord",    team: "Competition", icon: "\uD83C\uDFAE", label: "Discord issue",          hint: "Cannot join, access or use the event Discord" },
+      { id: "comp-question",   team: "Competition", icon: "\u2753",       label: "Competition question",   hint: "Rules, schedule, judging or challenge questions" },
+      { id: "comp-submission", team: "Competition", icon: "\uD83D\uDCE4", label: "Submission help",        hint: "Project submission or deadline problem" },
+      { id: "comp-other",      team: "Competition", icon: "\uD83D\uDCAC", label: "Other competition request", hint: "Anything else for the Competition Team" }
+    ],
+    TEAM_LABELS: { TechOps: "Tech Ops", Logistics: "Logistics", Competition: "Competition Team" },
+    teamFor: function (typeId) {
+      var t = (window.TechOpsData.REQUEST_TYPES || []).filter(function (x) { return x.id === typeId; })[0];
+      return t ? t.team : null;
+    },
     STATUSES: ["New", "In Progress", "Resolved"]
   };
 })();

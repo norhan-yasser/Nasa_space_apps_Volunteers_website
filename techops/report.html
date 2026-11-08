@@ -1,87 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Report a TechOps issue · NASA Space Apps Cairo</title>
-  <meta name="robots" content="noindex">
-  <link rel="icon" type="image/png" href="../assets/favicon.png">
-  <link rel="stylesheet" href="css/techops.css">
-  <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || 'dark'); } catch (e) {}</script>
+  <meta name="robots" content="noindex, nofollow">
+  <title>Moved</title>
+  <script>location.replace("../request/form.html" + location.search);</script>
+  <meta http-equiv="refresh" content="0; url=../request/form.html">
 </head>
-<body>
-  <div class="bg" aria-hidden="true"></div>
-  <div class="app">
-    <header class="top">
-      <a class="brand" href="index.html" style="text-decoration:none">
-        <img class="logo-dark" src="../assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
-        <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
-        <span class="brand-text"><span class="brand-title">TECHOPS</span><span class="brand-sub">INCIDENT DISPATCH</span></span>
-      </a>
-      <div class="sp"></div>
-      <a class="btn" href="index.html" style="margin-right:4px">Dashboard</a>
-      <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
-    </header>
-
-    <div class="form-shell">
-      <div class="card form-card" id="form-card">
-        <div class="form-header-badge">Universal QR Dispatch</div>
-        <h2>Need TechOps help?</h2>
-        <p class="form-sub">Tell us where you are and what's wrong. The on-ground TechOps team gets alerted right away.</p>
-
-        <form id="f" novalidate>
-          <div class="two" style="margin-top:6px">
-            <div class="field"><label class="lbl" for="floor">Floor</label>
-              <select id="floor" required><option value="">Select floor…</option></select></div>
-            <div class="field"><label class="lbl" for="room">Room code</label>
-              <select id="room" required><option value="">Select room…</option></select></div>
-          </div>
-
-          <fieldset style="border:none;margin:18px 0 0;padding:0">
-            <legend class="lbl" style="padding:0;margin:0 0 8px">What is the problem?</legend>
-            <div class="issue-opts" id="issues"></div>
-          </fieldset>
-
-          <div id="other-wrap" hidden style="margin-top:12px">
-            <label class="lbl" for="other">Describe the issue</label>
-            <input id="other" maxlength="80" placeholder="e.g. Projector has no signal">
-          </div>
-
-          <label class="lbl" for="details">More details <span style="font-weight:400;color:var(--mut)">(optional)</span></label>
-          <textarea id="details" maxlength="500" placeholder="Anything that helps us find and fix it faster"></textarea>
-
-          <label class="lbl" for="reporter">Your name or team <span style="font-weight:400;color:var(--mut)">(optional)</span></label>
-          <input id="reporter" maxlength="60" autocomplete="off" placeholder="e.g. Team Aurora">
-          <input id="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
-
-          <p id="err" style="color:var(--bad);font-size:13px;margin-top:12px;font-weight:600" role="alert" hidden></p>
-          <button class="btn primary" id="send" type="submit">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            Send Report to TechOps
-          </button>
-        </form>
-      </div>
-
-      <div class="card form-card success" id="done" hidden>
-        <div class="tick">&#10003;</div>
-        <h2>Report Sent to TechOps</h2>
-        <p class="form-sub" id="done-msg" style="margin-bottom:14px"></p>
-        <p style="margin:14px 0">Tracking Reference: <b id="done-id"></b></p>
-        <p class="note" id="done-demo" hidden></p>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap">
-          <a class="btn primary" href="index.html">View Status on Dashboard</a>
-          <button class="btn" id="again">Report another problem</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="js/config.js"></script>
-  <script src="js/firebase-config.js"></script>
-  <script src="js/seed-data.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/common.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/report.js"></script>
-</body>
+<body><p>This form moved: <a href="../request/form.html">open the help form</a>.</p></body>
 </html>

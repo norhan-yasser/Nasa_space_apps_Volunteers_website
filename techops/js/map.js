@@ -204,7 +204,7 @@
 
     /* room outlines (clickable) */
     f.rooms.forEach(function (r) {
-      var row = self.rooms[r.code] || {}, z = D.ZONES[row.zone], col = z ? z.color : "#64748b";
+      var row = self.rooms[r.code] || {}, z = D.ZONES[row.zone], col = z ? z.color : (r.kind && D.PLACE_STYLE[r.kind] ? D.PLACE_STYLE[r.kind].color : "#64748b");
       var dim = self.zoneFilter && row.zone !== self.zoneFilter;
       var sel = self.selected === r.code;
       if (heat) {

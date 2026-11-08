@@ -69,6 +69,9 @@
     if (i.indexOf("internet") >= 0 || i.indexOf("wi-fi") >= 0) return "b-net";
     if (i.indexOf("power") >= 0 || i.indexOf("electric") >= 0) return "b-power";
     if (i.indexOf("assist") >= 0) return "b-help";
+    if (i.indexOf("go to") >= 0) return "b-net";
+    if (i.indexOf("prayer") >= 0) return "b-power";
+    if (i.indexOf("help request") >= 0) return "b-help";
     return "b-other";
   }
   function initials(n) {
@@ -98,7 +101,9 @@
     return b.replace(/\/?$/, "/");
   }
   function reportUrl(floor, room) {
-    return baseUrl() + "report.html?floor=" + encodeURIComponent(floor) + "&room=" + encodeURIComponent(room);
+    var cfg = (window.TECHOPS_CONFIG || {}).REQUEST_BASE_URL;
+    var b = (cfg || (location.origin + location.pathname.replace(/[^\/]*$/, "") + "../request/")).replace(/\/?$/, "/");
+    return b + "form.html?floor=" + encodeURIComponent(floor) + "&room=" + encodeURIComponent(room);
   }
 
   window.TO = {

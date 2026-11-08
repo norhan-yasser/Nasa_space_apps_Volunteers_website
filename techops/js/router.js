@@ -8,6 +8,12 @@
 
   /* Only the 5 designated inner staircases are used for inter-floor routing */
   var ST = {
+    /* Basement: reached ONLY by the North-East (EN) and South-East (SE) stairs.
+       WN / WS / SW are locked to the basement (Ground -> 2nd floor only). */
+    B: {
+      EN: [1140, 352],
+      SE: [1078, 703]
+    },
     G: {
       WN: [508, 421],
       WS: [492, 579],
@@ -39,7 +45,7 @@
     SE: "South-East Wing Stairs"
   };
 
-  var ORD = ["G", "F", "S"];
+  var ORD = ["B", "G", "F", "S"];
   var ENT = { code: "ENTRANCE", floor: "G", p: [726, 689] };
 
   var EXITS = [
@@ -51,6 +57,9 @@
   ];
 
   var BATHS = {
+    B: [
+      { id: "WC-B1", bb: [1090, 255, 1186, 322], door: [1086, 318] }
+    ],
     G: [
       { id: "WC-G1", bb: [472, 344, 537, 390] },
       { id: "WC-G2", bb: [913, 344, 985, 390] },
@@ -72,6 +81,15 @@
   };
 
   var CORRIDORS = {
+    B: [
+      [[517, 355], [1068, 355]],
+      [[517, 355], [517, 618]],
+      [[1068, 355], [1068, 618]],
+      [[517, 618], [1068, 618]],
+      [[1068, 352], [1140, 352]],
+      [[1068, 618], [1068, 650], [1078, 703]],
+      [[1068, 355], [1068, 318], [1086, 318]]
+    ],
     G: [
       [[178, 334], [600, 334]],
       [[551, 334], [550, 500], [549, 600], [539, 613]],
@@ -82,7 +100,9 @@
       [[1291, 619], [1306, 573]],
       [[1306, 573], [1265, 556], [1250, 513], [1273, 482], [1334, 448], [1422, 420]],
       [[1213, 334], [1208, 378]],
-      [[1208, 378], [1262, 420], [1334, 448]]
+      [[1208, 378], [1262, 420], [1334, 448]],
+      [[1208, 378], [1200, 425]],
+      [[1262, 420], [1200, 425]]
     ],
     F: [
       [[243, 319], [680, 319]],
@@ -120,7 +140,10 @@
     S034: [178, 298], S035: [184, 340], S016: [1257, 273], S015: [1275, 323],
     S140: [232, 265], S141: [232, 338], S123: [1383, 238], S122: [1392, 284],
     H114: [1438, 520], H113: [1482, 612],
-    S241: [232, 250], S242: [232, 322], H210: [1408, 468], H209: [1466, 560]
+    S241: [232, 250], S242: [232, 322], H210: [1408, 468], H209: [1466, 560],
+    "PR-F": [1050, 403], "PR-M": [1088, 394],          /* basement prayer rooms */
+    CAFETERIA: [1200, 425],                            /* ground: inside the NE door */
+    "BREAK-1": [1005, 500], "BREAK-2": [986, 480]      /* open to the east inner halls */
   };
 
   function doorOf(r) {
@@ -307,41 +330,83 @@
       };
     }
 
-    /* Multi-floor walk: evaluate all 5 inner stairs and pick the shortest total distance */
-    var best = null;
-    for (var k in SN) {
-      try {
-        var r1 = walk(a.floor, a.id, "STAIR:" + k);
-        var r2 = walk(b.floor, "STAIR:" + k, b.id);
-        var c = r1.cost + r2.cost;
-        if (!best || c < best.c) best = { c: c, k: k, r1: r1, r2: r2 };
-      } catch (err) {}
+    /* Multi-floor walk. Floors are crossed one level at a time (Basement - Ground - First - Second); each level
+       change may only use a stair that exists on BOTH floors (the Basement has EN and SE only). The cheapest
+       combination of stairs wins (dynamic programming over the floors). */
+    function safe(fid, from, to) { try { return walk(fid, from, to); } catch (err) { return null; } }
+    var i0 = ORD.indexOf(a.floor), i1 = ORD.indexOf(b.floor), dir = i1 > i0 ? 1 : -1;
+    var fl = [];
+    for (var q = i0; q !== i1 + dir; q += dir) fl.push(ORD[q]);
+    var n = fl.length, up = dir > 0, trans = [], j;
+    function stairsFor(x, y) { return Object.keys(SN).filter(function (k) { return ST[x][k] && ST[y][k]; }); }
+    for (j = 0; j < n - 1; j++) trans.push(stairsFor(fl[j], fl[j + 1]));
+    var best = [{}];
+    trans[0].forEach(function (k) {
+      var r0 = safe(fl[0], a.id, "STAIR:" + k);
+      if (r0) best[0][k] = { c: r0.cost, prev: null, r: r0 };
+    });
+    for (j = 1; j < n - 1; j++) {
+      best[j] = {};
+      (function (jj) {
+        trans[jj].forEach(function (k) {
+          var bj = null;
+          trans[jj - 1].forEach(function (kp) {
+            if (!best[jj - 1][kp]) return;
+            var rr = safe(fl[jj], "STAIR:" + kp, "STAIR:" + k);
+            if (!rr) return;
+            var c = best[jj - 1][kp].c + rr.cost;
+            if (!bj || c < bj.c) bj = { c: c, prev: kp, r: rr };
+          });
+          if (bj) best[jj][k] = bj;
+        });
+      })(j);
     }
+    var fin = null;
+    trans[n - 2].forEach(function (k) {
+      if (!best[n - 2][k]) return;
+      var rl = safe(fl[n - 1], "STAIR:" + k, b.id);
+      if (!rl) return;
+      var c = best[n - 2][k].c + rl.cost;
+      if (!fin || c < fin.c) fin = { c: c, k: k, r: rl };
+    });
+    if (!fin) return null;
+    var ks = new Array(n - 1);
+    ks[n - 2] = fin.k;
+    for (j = n - 2; j > 0; j--) ks[j - 1] = best[j][ks[j]].prev;
 
-    if (!best) return null;
-
-    var up = ORD.indexOf(b.floor) > ORD.indexOf(a.floor);
-    var sa = ST[a.floor][best.k], sb = ST[b.floor][best.k];
-
-    legs.push(
-      { floor: a.floor, pts: [a.p].concat(best.r1.pts), m: [[a.p, "s", a.code], [sa, "t", SN[best.k]]] },
-      { floor: b.floor, pts: best.r2.pts.concat([b.p]), m: [[sb, "t", SN[best.k]], [b.p, "e", b.code]] }
-    );
-
+    var arrow = up ? "UP ▲" : "DOWN ▼", icon = up ? "up" : "down";
+    function note(x) { return (fl[x] === "B" || fl[x + 1] === "B") ? " Only the North-East and South-East stairs connect to the Basement." : ""; }
+    legs.push({ floor: fl[0], pts: [a.p].concat(best[0][ks[0]].r.pts), m: [[a.p, "s", a.code], [ST[fl[0]][ks[0]], "t", SN[ks[0]]]] });
     steps.push(
-      { legIdx: 0, floor: a.floor, icon: "walk", text: "From " + a.code + " (" + fname(a.floor) + "), walk towards the " + SN[best.k] + "." },
-      { legIdx: 0, floor: a.floor, icon: up ? "up" : "down", text: "Take the stairs " + (up ? "UP ▲" : "DOWN ▼") + " to the " + fname(b.floor) + "." },
-      { legIdx: 1, floor: b.floor, icon: "walk", text: "Exit the stairs at " + fname(b.floor) + " and follow the highlighted corridor route to " + b.code + "." }
+      { legIdx: 0, floor: fl[0], icon: "walk", text: "From " + a.code + " (" + fname(a.floor) + "), walk towards the " + SN[ks[0]] + "." },
+      { legIdx: 0, floor: fl[0], icon: icon, text: "Take the stairs " + arrow + " to the " + fname(fl[1]) + "." + note(0) }
     );
+    for (j = 1; j < n - 1; j++) {
+      if (ks[j - 1] === ks[j]) {
+        steps.push({ legIdx: legs.length - 1, floor: legs[legs.length - 1].floor, icon: icon, text: "Keep going " + arrow + " on the same stairs, past the " + fname(fl[j]) + ", to the " + fname(fl[j + 1]) + "." + note(j) });
+      } else {
+        var rj = best[j][ks[j]].r;
+        legs.push({ floor: fl[j], pts: rj.pts, m: [[ST[fl[j]][ks[j - 1]], "t", SN[ks[j - 1]]], [ST[fl[j]][ks[j]], "t", SN[ks[j]]]] });
+        steps.push(
+          { legIdx: legs.length - 1, floor: fl[j], icon: "walk", text: "Leave the " + SN[ks[j - 1]] + " on the " + fname(fl[j]) + " and walk to the " + SN[ks[j]] + "." },
+          { legIdx: legs.length - 1, floor: fl[j], icon: icon, text: "Take the stairs " + arrow + " to the " + fname(fl[j + 1]) + "." + note(j) }
+        );
+      }
+    }
+    var last = n - 1;
+    legs.push({ floor: fl[last], pts: fin.r.pts.concat([b.p]), m: [[ST[fl[last]][ks[last - 1]], "t", SN[ks[last - 1]]], [b.p, "e", b.code]] });
+    steps.push({ legIdx: legs.length - 1, floor: fl[last], icon: "walk", text: "Exit the stairs at " + fname(fl[last]) + " and follow the highlighted corridor route to " + b.code + "." });
 
-    var estSec = Math.max(30, Math.round(best.c / 14) + 25);
+    var names = [];
+    ks.forEach(function (k) { if (names.indexOf(SN[k]) < 0) names.push(SN[k]); });
+    var estSec = Math.max(30, Math.round(fin.c / 14) + 25 * (n - 1));
     return {
       legs: legs,
       steps: steps,
-      summary: fname(a.floor) + " → " + fname(b.floor) + " via " + SN[best.k] + " · ~" + estSec + "s walk",
-      totalCost: best.c,
-      stair: best.k,
-      stairName: SN[best.k]
+      summary: fname(a.floor) + " → " + fname(b.floor) + " via " + names.join(" → ") + " · ~" + estSec + "s walk",
+      totalCost: fin.c,
+      stair: ks[0],
+      stairName: names.join(" → ")
     };
   }
 

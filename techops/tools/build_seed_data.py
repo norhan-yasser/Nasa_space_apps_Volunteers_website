@@ -8,7 +8,7 @@ Inputs
   built-in dummy list         -> `volunteers` (Name / Volunteer Code / Team)
 
 Outputs
-  firebase/seed-data.json     -> uploaded to Firestore by tools/seed_firebase.py
+  firebase/seed-data.json     -> uploaded to Firestore by tools/seed_firebase.py or tools/seed_firestore_rest.py
   js/seed-data.js             -> bundled for the offline "local preview" mode only (DUMMY data)
 
 Run from the techops folder:  python tools/build_seed_data.py
@@ -28,8 +28,12 @@ TYPE_LETTER = {"chairs": "C", "small lecture": "S", "bring your device": "B", "l
 
 # --- dummy volunteers: replace with the real roster via seed_firebase.py --volunteers -------------
 VOLUNTEERS = [
-    ("Eng. Mohamed Khairy", "ADM-001", "Admin"),
-    ("Lead Organizer", "ADMIN", "Admin"),
+    # Common & Maps codes: open the Maps page for ANY volunteer (give NSAC-2026 to everybody). Change it before the event.
+    ("NASA Space Apps Volunteer", "NSAC-2026", "Volunteers"),
+    ("Maps Volunteer 1", "MAP-001", "Volunteers"),
+    ("Maps Volunteer 2", "MAP-002", "Volunteers"),
+    ("Maps Volunteer 3", "MAP-003", "Volunteers"),
+    # Tech Ops dummy volunteer codes
     ("Mohamed Khairy", "TO-001", "TechOps"),
     ("Omar", "TO-002", "TechOps"),
     ("Lojine", "TO-003", "TechOps"),
@@ -38,8 +42,31 @@ VOLUNTEERS = [
     ("Nour", "TO-006", "TechOps"),
     ("Youssef", "TO-007", "TechOps"),
     ("Hana", "TO-008", "TechOps"),
+    # Competition Team dummy volunteer codes
+    ("Competition Lead", "CT-001", "Competition"),
+    ("Competition Volunteer", "CT-002", "Competition"),
+    ("Competition Coordinator", "CT-003", "Competition"),
+    ("Competition Support", "CT-004", "Competition"),
+    # Logistics dummy volunteer codes
     ("Norhan Yasser", "LG-001", "Logistics"),
     ("Logistics Lead", "LG-002", "Logistics"),
+    ("Logistics Volunteer", "LG-003", "Logistics"),
+]
+
+# dummy Logistics tasks (QR help form): kind of help + where. Replaced by real requests during the event.
+LOGISTICS_REPORTS = [
+    ("LGR-0001", "2026-11-06 11:40:00", "G", "C026", "Go to a place", "Wants to go to: S140 (First Floor)", "Resolved", "Norhan Yasser", "Team Aurora"),
+    ("LGR-0002", "2026-11-06 12:02:00", "F", "C139", "Prayer request", "Prayer area: Men", "In Progress", "Logistics Lead", ""),
+    ("LGR-0003", "2026-11-06 12:10:00", "S", "C231", "Help request", "Lost my badge, need a replacement", "New", "", "Team Vega"),
+    ("LGR-0004", "2026-11-06 12:14:00", "G", "S016", "Go to a place", "Wants to go to: Main Entrance", "New", "", ""),
+]
+
+# dummy Competition Team tasks (remote requests from QR help form, no floor/room needed). Replaced by real requests during the event.
+COMPETITION_REPORTS = [
+    ("CMP-0001", "2026-11-06 11:50:00", "Discord issue", "Cannot see our mentor channel on the Cairo Discord server", "Resolved", "Competition Lead", "Team Solaris · @ziad_m"),
+    ("CMP-0002", "2026-11-06 12:06:00", "Competition question", "Can our 240-second demo slide deck include NASA open-source clips?", "In Progress", "Competition Volunteer", "Team Horizon · @salma_k"),
+    ("CMP-0003", "2026-11-06 12:18:00", "Submission help", "GitHub repository link validation error on project submission page", "New", "", "Team Nebula · @youssef_dev"),
+    ("CMP-0004", "2026-11-06 12:24:00", "Discord issue", "Invite link expired for two teammates joining late", "New", "", "Team Orion · @mariam_a"),
 ]
 
 
@@ -67,7 +94,7 @@ def build_rooms():
         if floor not in FLOORS:
             continue
         room_no = str(room_no or "").strip()
-        rtype = str(rtype or "").strip()
+        rtype = str(rtype.strip() if isinstance(rtype, str) else (rtype or "")).strip()
         letter = TYPE_LETTER.get(rtype.lower())
         if re.fullmatch(r"\d{3}", room_no) and letter:
             code = letter + room_no
@@ -181,6 +208,18 @@ def main():
         with_floor(d, "byFloorName", "byFloor")
         with_floor(d, "targetFloorName", "targetFloor")
         meetups[d["id"]] = d
+
+    for rid, ts, fl, room, issue, details, status, assigned, reporter in LOGISTICS_REPORTS:
+        d = {"id": rid, "ts": ts, "floor": fl, "room": room, "issue": issue, "details": details, "status": status, "assigned": assigned,
+             "claimedAt": ts if assigned else "", "resolvedAt": ts if status == "Resolved" else "", "reporter": reporter, "team": "Logistics"}
+        d["floorName"] = {v[0]: v[1] for v in FLOORS.values()}[fl]
+        reports[rid] = d
+
+    for rid, ts, issue, details, status, assigned, reporter in COMPETITION_REPORTS:
+        d = {"id": rid, "ts": ts, "floor": "", "floorName": "", "room": "", "issue": issue, "details": details,
+             "status": status, "assigned": assigned, "claimedAt": ts if assigned else "",
+             "resolvedAt": ts if status == "Resolved" else "", "reporter": reporter, "team": "Competition"}
+        reports[rid] = d
 
     volunteers = {code: {"Name": name, "Volunteer Code": code, "Team": team_name} for name, code, team_name in VOLUNTEERS}
 

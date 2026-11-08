@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Operations · NASA Space Apps Challenge Cairo</title>
-  <meta name="description" content="Operations hub for NASA Space Apps Challenge Cairo volunteers and organizers: sign in with your volunteer code to access your team dashboard or admin command center.">
+  <meta name="description" content="Operations hub for NASA Space Apps Challenge Cairo volunteers: venue maps, the Logistics team and the Tech Ops team.">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="stylesheet" href="landing.css">
   <script>
@@ -25,145 +25,57 @@
         <span class="portal-brand-text">OPERATIONS · CAIRO</span>
       </div>
       <div class="sp"></div>
-      <div id="portal-user-chip" class="portal-user-chip" hidden>
-        <span class="portal-avatar" id="portal-avatar"></span>
-        <span class="portal-meta"><b id="portal-name"></b><small id="portal-role"></small></span>
-        <button class="portal-btn-sm" id="portal-logout-btn">Sign out</button>
-      </div>
-      <button class="portal-theme-btn" id="theme-toggle" aria-label="Toggle theme">
-        <span id="theme-text">🌓 Theme</span>
-      </button>
+      <button class="portal-theme-btn" id="theme-toggle" aria-label="Toggle theme"><span>🌓 Theme</span></button>
     </header>
 
-    <main class="intro" id="intro-wrap">
-      <h1>Operations</h1>
+    <main class="intro">
+      <h1>Overview</h1>
       <p class="sub">NASA Space Apps Challenge Cairo</p>
+      <p class="desc">Choose where you are going. Each page asks for your volunteer code first.</p>
 
-      <p class="desc">
-        The unified working hub for the volunteers and organizers who run the event. Enter your volunteer or admin code below to open your team workspace.
-      </p>
-
-      <!-- 1. LOGIN FORM (Default when unauthenticated) -->
-      <section class="portal-card" id="login-box">
-        <div class="portal-badge">VOLUNTEER &amp; ADMIN ACCESS</div>
-        <form id="portal-login-form" autocomplete="off" novalidate>
-          <label class="portal-lbl" for="portal-code">Volunteer Code</label>
-          <div class="portal-input-row">
-            <input id="portal-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="e.g. TO-001, LG-001, ADM-001" aria-describedby="portal-err">
-            <button class="portal-btn primary" id="portal-submit-btn" type="submit">Sign in →</button>
-          </div>
-          <p class="portal-err" id="portal-err" role="alert" hidden></p>
-        </form>
-
-        <div class="portal-demo-section">
-          <span class="demo-lbl">Quick-test demo access:</span>
-          <div class="portal-chips">
-            <button type="button" class="portal-chip" data-code="TO-001">🚀 TechOps (TO-001)</button>
-            <button type="button" class="portal-chip" data-code="LG-001">📍 Logistics (LG-001)</button>
-            <button type="button" class="portal-chip admin-chip" data-code="ADM-001">🛡️ Admin (ADM-001)</button>
-          </div>
-        </div>
-
-        <div class="portal-manual-links">
-          <span>Or browse directly:</span>
-          <a href="techops/index.html">TechOps team dashboard &rarr;</a>
-          <span class="sep">&middot;</span>
-          <a href="logistics.html">Logistics team dashboard &rarr;</a>
-        </div>
-      </section>
-
-      <!-- 2. VOLUNTEER WELCOME CARD (Shown if already logged in as TechOps or Logistics) -->
-      <section class="portal-card" id="user-box" hidden>
-        <div class="portal-badge" id="welcome-badge">AUTHENTICATED</div>
-        <h2 id="welcome-heading">Welcome, Volunteer</h2>
-        <p class="portal-user-sub" id="welcome-sub"></p>
-        <div class="portal-actions">
-          <a class="portal-btn primary" id="launch-btn" href="#">Launch Workspace &rarr;</a>
-          <button class="portal-btn secondary" id="switch-btn">Switch Account / Sign Out</button>
-        </div>
-      </section>
-
-      <!-- 3. ADMIN MASTER CONTROL HUB (Shown when logged in as Admin) -->
-      <section class="portal-card admin-hub" id="admin-box" hidden>
-        <div class="admin-header">
-          <div class="portal-badge admin-badge">🛡️ MISSION CONTROL · ADMIN MODE</div>
-          <h2>Operations Command Center</h2>
-          <p class="admin-desc" id="admin-greeting">Welcome, Administrator. You have full oversight across venue logistics, technical operations, and volunteer communications.</p>
-        </div>
-
-        <!-- Master Launchers -->
-        <div class="admin-launchers">
-          <a class="admin-launcher tech" href="techops/index.html?auth=ADM-001">
-            <div class="launcher-icon">🚀</div>
-            <div class="launcher-body">
-              <b>TechOps Operations Dashboard</b>
-              <span>Task queue, 1-click claim, Wi-Fi speed heatmap, location pings &amp; equipment inventory</span>
-            </div>
-            <div class="launcher-arrow">&rarr;</div>
-          </a>
-          <a class="admin-launcher log" href="logistics.html?auth=ADM-001">
-            <div class="launcher-icon">📍</div>
-            <div class="launcher-body">
-              <b>Logistics &amp; Venue Dashboard</b>
-              <span>Venue floor maps, room assignments, manager contacts, and corridor wayfinding</span>
-            </div>
-            <div class="launcher-arrow">&rarr;</div>
-          </a>
-        </div>
-
-        <!-- Live Operations Pulse Grid -->
-        <div class="admin-stats-grid">
-          <div class="stat-card">
-            <span class="stat-lbl">TechOps Tasks</span>
-            <b class="stat-val" id="stat-issues">—</b>
-            <span class="stat-sub" id="stat-issues-sub">Loading live queue…</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-lbl">Venue Wi-Fi Health</span>
-            <b class="stat-val ok" id="stat-wifi">—</b>
-            <span class="stat-sub" id="stat-wifi-sub">Monitored inside room walls</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-lbl">Venue Rooms</span>
-            <b class="stat-val" id="stat-rooms">60</b>
-            <span class="stat-sub">Ground, 1st, 2nd Floors</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-lbl">Volunteers Registered</span>
-            <b class="stat-val" id="stat-volunteers">12</b>
-            <span class="stat-sub">TechOps, Logistics, Admin</span>
-          </div>
-        </div>
-
-        <!-- Volunteer Directory Accordion / Viewer -->
-        <div class="admin-roster-wrap">
-          <div class="roster-header">
-            <b>Volunteer Directory &amp; Codes</b>
-            <input id="roster-search" type="search" placeholder="Search volunteer or code…">
-          </div>
-          <div class="roster-table-wrap">
-            <table class="roster-table">
-              <thead>
-                <tr><th>Code</th><th>Name</th><th>Team</th><th>Quick Login</th></tr>
-              </thead>
-              <tbody id="roster-rows"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="admin-footer-actions">
-          <button class="portal-btn secondary" id="admin-logout-btn">Sign Out of Admin Mode</button>
-        </div>
-      </section>
+      <div class="hub-grid">
+        <a class="hub-card" href="maps.html">
+          <span class="hub-icon" aria-hidden="true">🗺️</span>
+          <span class="hub-who">All volunteers</span>
+          <h2>Maps</h2>
+          <p>Venue floor maps, room finder and walking routes between any two rooms. Uses the common volunteer code.</p>
+          <span class="hub-go">Open Maps &rarr;</span>
+        </a>
+        <a class="hub-card" href="logistics/index.html">
+          <span class="hub-icon" aria-hidden="true">📍</span>
+          <span class="hub-who">Logistics team</span>
+          <h2>Logistics</h2>
+          <p>Requests from members: go to a place, prayer requests and help requests. Claim a task and mark it done.</p>
+          <span class="hub-go">Open Logistics &rarr;</span>
+        </a>
+        <a class="hub-card" href="dispatch/index.html">
+          <span class="hub-icon" aria-hidden="true">📡</span>
+          <span class="hub-who">Competition Team</span>
+          <h2>Competition Team</h2>
+          <p>Monitor and alarm for every request, including Discord issues. Claim it and hand it out remotely; no room visits.</p>
+          <span class="hub-go">Open Competition Team &rarr;</span>
+        </a>
+        <a class="hub-card" href="techops/index.html">
+          <span class="hub-icon" aria-hidden="true">🚀</span>
+          <span class="hub-who">Tech Ops team</span>
+          <h2>Tech Ops</h2>
+          <p>Internet and power issues, tech help requests, Wi-Fi heatmap, team pings and equipment inventory.</p>
+          <span class="hub-go">Open Tech Ops &rarr;</span>
+        </a>
+      </div>
     </main>
   </div>
 
-  <script src="techops/js/config.js"></script>
-  <script src="techops/js/firebase-config.js"></script>
-  <script src="techops/js/seed-data.js"></script>
-  <script src="techops/js/data.js"></script>
-  <script src="techops/js/common.js"></script>
-  <script src="techops/js/store.js"></script>
-  <script src="portal.js"></script>
+  <script>
+    (function () {
+      var b = document.getElementById('theme-toggle');
+      if (!b) return;
+      b.onclick = function () {
+        var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('techops_theme', next); localStorage.setItem('nasa_theme', next); } catch (e) {}
+      };
+    })();
+  </script>
 </body>
 </html>

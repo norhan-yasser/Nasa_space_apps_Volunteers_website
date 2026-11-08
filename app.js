@@ -20,10 +20,16 @@ const TYPES = {
   S: "Small Lecture Hall",
   C: "Classroom",
   X: "Inaccessible",
-  T: "Outer Stage"
+  T: "Outer Stage",
+  P: "Prayer Room",
+  A: "Cafeteria",
+  K: "Break Area"
 };
+/* codes whose first letter is NOT their type */
+const SPECIAL_TYPE = { STAGE: "T", CAFETERIA: "A", "BREAK-1": "K", "BREAK-2": "K" };
 
 const IMG = {
+  B: "assets/su tech floor assets/0.png",
   G: "assets/su tech floor assets/1.png",
   F: "assets/su tech floor assets/2.png",
   S: "assets/su tech floor assets/3.png"
@@ -31,11 +37,17 @@ const IMG = {
 /* Room geometry (pixels of the original image). Rect = 4 numbers, polygon = flat x,y pairs. Placeholder outlines: refine in the editor. */
 const R=(a,b)=>a.map((c,i)=>[c,...b[i]]);
 
+/* Basement: only the two prayer rooms are marked (plan 0.png). Names shown next to the room code. */
+const ROOM_NAMES = { "PR-F": "Female", "PR-M": "Men" };
 const FLOORS=[
+{id:"B",name:"Basement",rooms:[
+["PR-F",[970,382,1048,505]],["PR-M",[1087,382,1188,575]]]},
 {id:"G",name:"Ground Floor",rooms:[
 ["S034",[86,201,185,287]],["S035",[87,312,185,394]],["C027",[511,240,558,320]],["C026",[559,240,607,320]],["C017",[1157,240,1202,320]],
 ["S016",[1259,273,1220,208,1295,165,1333,229]],["S015",[1309,360,1270,295,1341,252,1381,316]],["X",[87,536,187,690]],["X",[978,347,1199,390]],["X",[978,538,1245,609]],
 ["X",[934,636,1153,716]],
+/* Cafeteria: the open area east of the auditorium block, labelled on the ground plan */
+["CAFETERIA",[990,396,1250,528]],
 /* Outer Stage (outdoor, east of the building) - only data kept: the people responsible for arranging it */
 ["STAGE",[1462,182,1660,213,1617,499,1414,470]]]},
 {id:"F",name:"First Floor",rooms:[
@@ -45,7 +57,9 @@ const FLOORS=[
 ["C126",[1185,217,1235,303]],["C125",[1234,217,1283,303]],["C124",[1283,217,1333,303]],["S123",[1396,248,1355,178,1437,130,1478,201]],["S122",[1403,368,1362,298,1489,224,1530,294]],
 ["H114",[1466,568,1432,510,1527,455,1561,513]],["H113",[1516,658,1477,591,1563,542,1602,608]],["C154",[381,530,430,617]],["C153",[431,530,481,618]],["C152",[480,530,534,618]],
 ["X",[125,529,228,618]],["X",[280,529,381,617]],["X",[124,647,228,696]],["X",[279,647,379,728]],["X",[1088,526,1186,610]],
-["X",[1185,526,1286,610]],["X",[1286,526,1387,610]],["X",[1088,640,1186,724]],["X",[1185,640,1284,724]]]},
+["X",[1185,526,1286,610]],["X",[1286,526,1387,610]],["X",[1088,640,1186,724]],["X",[1185,640,1284,724]],
+/* Break area (labelled BREAK on the plan, east of the auditorium) */
+["BREAK-1",[942,431,1086,578]]]},
 {id:"S",name:"Second Floor",rooms:[
 ["S241",[119,165,224,257]],["S242",[120,282,225,363]],["C240",[274,203,324,286]],["B236",[465,203,512,286]],["B235",[511,203,559,286]],
 ["B234",[559,203,607,286]],["B233",[607,203,661,286]],["C231",[916,199,963,279]],["C230",[962,199,1011,280]],["C229",[1010,198,1058,280]],
@@ -54,7 +68,8 @@ const FLOORS=[
 ["C257",[316,492,364,584]],["C256",[363,492,412,584]],["C265",[617,698,512,698,512,612,617,612]],["X",[322,203,370,286]],["X",[371,203,417,286]],
 ["X",[417,203,464,286]],["X",[397,315,489,364]],["X",[907,242,917,282,914,376,665,375,662,246,717,192,862,191]],["X",[894,405,870,552,714,552,685,406]],["X",[1364,220,1324,154,1409,103,1449,168]],
 ["X",[1420,312,1377,243,1462,190,1505,259]],["X",[1053,504,1146,575]],["X",[1146,504,1249,575]],["X",[1249,504,1346,575]],["X",[1008,612,1147,703]],
-["X",[1247,619,1243,698,1148,699,1146,624,1153,615,1237,612]],["X",[268,618,364,698]],["X",[162,611,223,660]],["X",[413,493,463,584]],["X",[464,493,518,584]]]}];
+["X",[1247,619,1243,698,1148,699,1146,624,1153,615,1237,612]],["X",[268,618,364,698]],["X",[162,611,223,660]],["X",[413,493,463,584]],["X",[464,493,518,584]],
+["BREAK-2",[948,404,1052,584]]]}];
 
 /* Normalise room geometry & data structures */
 FLOORS.forEach(f => {
@@ -69,9 +84,9 @@ FLOORS.forEach(f => {
     const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
     return {
       code: x ? "X-" + f.id + String(n).padStart(2, "0") : c,
-      name: null,   /* restricted rooms carry no public label or code */
+      name: ROOM_NAMES[c] || null,   /* restricted rooms carry no public label or code */
       floor: f.id,
-      type: c == "STAGE" ? "T" : c[0],
+      type: SPECIAL_TYPE[c] || c[0],   /* PR-* = P (prayer room) */
       pts,
       bb: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]
     };
@@ -115,7 +130,7 @@ const canView = r => access(r) == "ok";
 let floor = null, sel = null;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
-const color = r => r.type == "T" ? "#14b8a6" : access(r) == "no" ? COL.no : mode(r) == "Unassigned" ? COL.na : COL.ok;
+const color = r => r.type == "T" ? "#14b8a6" : r.type == "P" ? "#8b5cf6" : r.type == "A" ? "#d97706" : r.type == "K" ? "#0ea5e9" : access(r) == "no" ? COL.no : mode(r) == "Unassigned" ? COL.na : COL.ok;
 
 /* Theme handling */
 function initTheme() {
@@ -352,8 +367,8 @@ function home() {
   `;
 
   let cardsHtml = FLOORS.map(f => {
-    const a = f.rooms.filter(r => r.type != "T" && access(r) == "ok").length;   /* accessible rooms only (no total, no restricted, no stage) */
-    const levelCode = f.id == "G" ? "Level 0" : f.id == "F" ? "Level 1" : "Level 2";
+    const a = f.rooms.filter(r => r.type != "T" && r.type != "A" && r.type != "K" && access(r) == "ok").length;   /* accessible rooms only (no total, no restricted, no stage) */
+    const levelCode = f.id == "B" ? "Level -1" : f.id == "G" ? "Level 0" : f.id == "F" ? "Level 1" : "Level 2";
     return `
       <div class="fc" data-f="${f.id}">
         <div class="fc-preview">
@@ -479,7 +494,7 @@ function draw() {
     e.onmousemove = ev => {
       const b = map.getBoundingClientRect(), t = $("tip");
       t.style.display = "block";
-      t.innerHTML = `<div class="tip-head"><b>${esc(name)}</b> <span class="tip-tag tip-ok">Active Stairs</span></div><div class="tip-sub">Authorized inner staircase · Connects Ground, 1st &amp; 2nd Floors</div>`;
+      t.innerHTML = `<div class="tip-head"><b>${esc(name)}</b> <span class="tip-tag tip-ok">Active Stairs</span></div><div class="tip-sub">Authorized inner staircase · ${STAIR_CONNECTS[k]}</div>`;
       t.style.left = ev.clientX - b.left + 14 + "px";
       t.style.top = ev.clientY - b.top + 14 + "px";
     };
@@ -536,7 +551,9 @@ function draw() {
   + `<span><i class="leg-stair-ok"></i>Authorized Stairs (Available)</span>`
   + `<span><i class="leg-stair-no"></i>Emergency Stairs (Closed)</span>`
   + `<span><i class="leg-wc"></i>Bathrooms</span>`
-  + (floor.id == "G" ? `<span><i class="leg-exit"></i>Exits (5)</span><span><i class="leg-stage"></i>Outer Stage</span>` : "");
+  + (floor.id == "F" || floor.id == "S" ? `<span><i style="background:#0ea5e9"></i>Break Area</span>` : "")
+  + (floor.id == "B" ? `<span><i style="background:#8b5cf6"></i>Prayer Rooms</span>` : "")
+  + (floor.id == "G" ? `<span><i class="leg-exit"></i>Exits (5)</span><span><i class="leg-stage"></i>Outer Stage</span><span><i style="background:#d97706"></i>Cafeteria</span>` : "");
 }
 
 ["ft", "fa", "fs"].forEach(i => $(i).onchange = draw);
@@ -662,6 +679,16 @@ function show(r) {
         <span class="pill">This room is restricted for operations staff and authorized personnel.</span>
       </div>
     `;
+  } else if (r.type == "P" || r.type == "A" || r.type == "K") {
+    h += `
+      <div class="sec">
+        <h4>${TYPES[r.type]}</h4>
+        <div class="kv">
+          ${row("Person responsible", d.resp)}
+          ${row("Space Capacity", d.cap != null && d.cap !== "" ? d.cap + " people" : "")}
+        </div>
+      </div>
+    `;
   } else if (r.type == "T") {
     const names = (d.resp || "").split(/[;,]/).map(s => s.trim()).filter(Boolean);
     h += `
@@ -779,7 +806,7 @@ function hits(q) {
   return ALL.filter(r => {
     const d = D(r);
     if (!canView(r)) return false;   /* restricted rooms are never listed in search */
-    return [r.code, r.name, d.resp, d.chal, d.vteam, ...teams(r)].some(s => s && String(s).toLowerCase().includes(q));
+    return [r.code, r.name, TYPES[r.type], d.resp, d.chal, d.vteam, ...teams(r)].some(s => s && String(s).toLowerCase().includes(q));
   });
 }
 
@@ -857,6 +884,12 @@ $("q").oninput = e => {
    ============================================================ */
 /* Only the 5 designated inner staircases are available for inter-floor routing */
 const ST = {
+  /* Basement is reached ONLY by the North-East (EN) and South-East (SE) stairs.
+     WN / WS / SW are locked to the basement: they serve Ground -> 2nd floor only. */
+  B: {
+    EN: [1140, 352],
+    SE: [1078, 703]
+  },
   G: {
     WN: [508, 421],
     WS: [492, 579],
@@ -887,13 +920,20 @@ const SN = {
   EN: "North-East Inner Stairs (Auditorium)",
   SE: "South-East Wing Stairs"
 };
+const STAIR_CONNECTS = {
+  WN: "Connects Ground, 1st &amp; 2nd Floors (no Basement access)",
+  WS: "Connects Ground, 1st &amp; 2nd Floors (no Basement access)",
+  SW: "Connects Ground, 1st &amp; 2nd Floors (no Basement access)",
+  EN: "Connects Basement, Ground, 1st &amp; 2nd Floors",
+  SE: "Connects Basement, Ground, 1st &amp; 2nd Floors"
+};
 const UNAVAILABLE_STAIRS = [
-  { id: "NW_OUT", name: "Far NW Outer Stairs (Closed)", p: [77, 245], pf: { G: [37, 266], F: [77, 250], S: [75, 238] } },
+  { id: "NW_OUT", name: "Far NW Outer Stairs (Closed)", p: [77, 245], pf: { B: [462, 355], G: [37, 266], F: [77, 250], S: [75, 238] } },
   { id: "SW_OUT", name: "Far SW Outer Stairs (Closed)", p: [77, 645], pf: { G: [40, 659], F: [77, 660], S: [66, 634] } },
   { id: "NE_OUT", name: "Far NE Outer Stairs (Closed)", p: [1490, 150], pf: { G: [1354, 201], F: [1495, 166], S: [1476, 135] } },
   { id: "SE_OUT", name: "Far SE Outer Stairs (Closed)", p: [1595, 515], pf: { G: [1440, 538], F: [1596, 535], S: [1617, 477] } }
 ];
-const ORD = ["G", "F", "S"];
+const ORD = ["B", "G", "F", "S"];
 const ENT = { code: "ENTRANCE", floor: "G", p: [726, 689] };
 
 /* ============================================================
@@ -914,6 +954,9 @@ const EXITS = [
    confirm with a highlighted plan and adjust the boxes [x1, y1, x2, y2] if needed.
    ============================================================ */
 const BATHS = {
+  B: [
+    { id: "WC-B1", bb: [1090, 255, 1186, 322], door: [1086, 318] }
+  ],
   G: [
     { id: "WC-G1", bb: [472, 344, 537, 390] },
     { id: "WC-G2", bb: [913, 344, 985, 390] },
@@ -937,7 +980,7 @@ const BATH_ALL = Object.keys(BATHS).flatMap(f => BATHS[f].map(b => {
   const cy = (b.bb[1] + b.bb[3]) / 2, cx = (b.bb[0] + b.bb[2]) / 2;
   const side = (cy < 450 ? "North" : "South") + "-" + (cx < 836 ? "West" : "East");
   const fl = FLOORS.find(x => x.id == f).name.replace(" Floor", "");
-  return { ...b, floor: f, side, label: `${side} Bathroom (${fl})`, door: [Math.round(cx), b.bb[1] + 4], pts: [[b.bb[0], b.bb[1]], [b.bb[2], b.bb[1]], [b.bb[2], b.bb[3]], [b.bb[0], b.bb[3]]] };
+  return { ...b, floor: f, side, label: `${side} Bathroom (${fl})`, door: b.door || [Math.round(cx), b.bb[1] + 4], pts: [[b.bb[0], b.bb[1]], [b.bb[2], b.bb[1]], [b.bb[2], b.bb[3]], [b.bb[0], b.bb[3]]] };
 }));
 let ROUTE = null;
 
@@ -945,6 +988,15 @@ let ROUTE = null;
    each other are joined automatically. Outer (closed) stairs are never
    part of this map, so they can never be used. */
 const CORRIDORS = {
+  B: [
+    [[517, 355], [1068, 355]],                                   // north corridor
+    [[517, 355], [517, 618]],                                    // west hall
+    [[1068, 355], [1068, 618]],                                  // east hall (prayer rooms)
+    [[517, 618], [1068, 618]],                                   // south corridor
+    [[1068, 352], [1140, 352]],                                  // -> stairs EN
+    [[1068, 618], [1068, 650], [1078, 703]],                     // -> stairs SE
+    [[1068, 355], [1068, 318], [1086, 318]]                      // -> bathroom door
+  ],
   G: [
     [[178, 334], [600, 334]],                                    // north-west corridor
     [[551, 334], [550, 500], [549, 600], [539, 613]],            // west inner hall (stairs WN, WS)
@@ -955,7 +1007,9 @@ const CORRIDORS = {
     [[1291, 619], [1306, 573]],                                  // east wing up to the south-east door
     [[1306, 573], [1265, 556], [1250, 513], [1273, 482], [1334, 448], [1422, 420]],  // outdoor path: south-east door -> around the east wing -> stage
     [[1213, 334], [1208, 378]],                                  // corridor end -> north-east door
-    [[1208, 378], [1262, 420], [1334, 448]]                      // outdoor path: north-east door -> joins the stage path
+    [[1208, 378], [1262, 420], [1334, 448]],                     // outdoor path: north-east door -> joins the stage path
+    [[1208, 378], [1200, 425]],                                  // north-east door -> cafeteria
+    [[1262, 420], [1200, 425]]                                   // outdoor path -> cafeteria (from the SE door / stage side)
   ],
   F: [
     [[243, 319], [680, 319]],                                    // north-west corridor
@@ -997,7 +1051,12 @@ const DOOR_PTS = {
   S241: [232, 250], S242: [232, 322], H210: [1408, 468], H209: [1466, 560]
 };
 
-DOOR_PTS.STAGE = [1422, 420];   /* stage entrance (outdoor) */
+DOOR_PTS.STAGE = [1422, 420];
+DOOR_PTS.CAFETERIA = [1200, 425];       /* ground: inside the NE door of the cafeteria */
+DOOR_PTS["BREAK-1"] = [1005, 500];   /* first floor: open to the east inner hall */
+DOOR_PTS["BREAK-2"] = [986, 480];    /* second floor: open to the east inner hall */
+DOOR_PTS["PR-F"] = [1050, 403];   /* basement: Female prayer room door (east wall) */
+DOOR_PTS["PR-M"] = [1088, 394];   /* basement: Men prayer room door (top-left, opens onto the east hall) */   /* stage entrance (outdoor) */
 
 function doorOf(r) {
   if (DOOR_PTS[r.code]) return DOOR_PTS[r.code];
@@ -1114,7 +1173,7 @@ function loc(code) {
   if (code == "ENTRANCE") return { ...ENT, id: "ENTRANCE" };
   if (code.startsWith("STAIR-")) {
     const k = code.replace("STAIR-", "");
-    if (SN[k] && floor) {
+    if (SN[k] && floor && ST[floor.id][k]) {
       return { code: SN[k], floor: floor.id, p: ST[floor.id][k], id: "STAIR:" + k };
     }
   }
@@ -1135,26 +1194,61 @@ async function planRoute(a, b) {
     return { legs, steps };
   }
 
-  /* different floors: try each of the 5 inner stairs, keep the shortest */
-  let best = null;
-  for (const k in SN) {
-    const r1 = walk(a.floor, a.id, "STAIR:" + k), r2 = walk(b.floor, "STAIR:" + k, b.id);
-    const c = r1.cost + r2.cost;
-    if (!best || c < best.c) best = { c, k, r1, r2 };
+  /* different floors: floors are crossed one level at a time (B-G-F-S). For each level change only
+     stairs that exist on BOTH floors can be used (the Basement has EN and SE only). Cheapest
+     combination wins (dynamic programming over the floors). */
+  const i0 = ORD.indexOf(a.floor), i1 = ORD.indexOf(b.floor), dir = i1 > i0 ? 1 : -1;
+  const fl = [];
+  for (let i = i0; i != i1 + dir; i += dir) fl.push(ORD[i]);
+  const n = fl.length, up = dir > 0;
+  const trans = [];
+  for (let j = 0; j < n - 1; j++) trans.push(Object.keys(SN).filter(k => ST[fl[j]][k] && ST[fl[j + 1]][k]));
+  const best = [];
+  best[0] = {};
+  trans[0].forEach(k => { const r = walk(fl[0], a.id, "STAIR:" + k); best[0][k] = { c: r.cost, prev: null, r }; });
+  for (let j = 1; j < n - 1; j++) {
+    best[j] = {};
+    trans[j].forEach(k => {
+      let bj = null;
+      trans[j - 1].forEach(kp => {
+        const r = walk(fl[j], "STAIR:" + kp, "STAIR:" + k), c = best[j - 1][kp].c + r.cost;
+        if (!bj || c < bj.c) bj = { c, prev: kp, r };
+      });
+      best[j][k] = bj;
+    });
   }
+  let fin = null;
+  trans[n - 2].forEach(k => {
+    const r = walk(fl[n - 1], "STAIR:" + k, b.id), c = best[n - 2][k].c + r.cost;
+    if (!fin || c < fin.c) fin = { c, k, r };
+  });
+  if (!fin) throw new Error("no stairs");
+  const ks = new Array(n - 1);
+  ks[n - 2] = fin.k;
+  for (let j = n - 2; j > 0; j--) ks[j - 1] = best[j][ks[j]].prev;
 
-  const up = ORD.indexOf(b.floor) > ORD.indexOf(a.floor);
-  const sa = ST[a.floor][best.k], sb = ST[b.floor][best.k];
-  legs.push(
-    { floor: a.floor, pts: [a.p, ...best.r1.pts], m: [[a.p, "s"], [sa, "t"]] },
-    { floor: b.floor, pts: [...best.r2.pts, b.p], m: [[sb, "t"], [b.p, "e"]] }
-  );
-
+  const arrow = up ? "UP ▲" : "DOWN ▼";
+  const note = j => (fl[j] == "B" || fl[j + 1] == "B") ? " Only the North-East and South-East stairs connect to the Basement." : "";
+  legs.push({ floor: fl[0], pts: [a.p, ...best[0][ks[0]].r.pts], m: [[a.p, "s"], [ST[fl[0]][ks[0]], "t"]] });
   steps.push(
-    [0, `From ${a.code} (${fname(a.floor)}) walk towards the ${SN[best.k]}.`],
-    [0, `Take the stairs ${up ? "UP ▲" : "DOWN ▼"} to the ${fname(b.floor)}.`],
-    [1, `Leave the ${SN[best.k]} and follow the highlighted path to ${b.code}.`]
+    [0, `From ${a.code} (${fname(a.floor)}) walk towards the ${SN[ks[0]]}.`],
+    [0, `Take the stairs ${arrow} to the ${fname(fl[1])}.${note(0)}`]
   );
+  for (let j = 1; j < n - 1; j++) {
+    if (ks[j - 1] == ks[j]) {
+      steps.push([legs.length - 1, `Keep going ${arrow} on the same stairs, past the ${fname(fl[j])}, to the ${fname(fl[j + 1])}.${note(j)}`]);
+    } else {
+      const r = best[j][ks[j]].r, sp = ST[fl[j]][ks[j - 1]], sn = ST[fl[j]][ks[j]];
+      legs.push({ floor: fl[j], pts: r.pts, m: [[sp, "t"], [sn, "t"]] });
+      steps.push(
+        [legs.length - 1, `Leave the ${SN[ks[j - 1]]} on the ${fname(fl[j])} and walk to the ${SN[ks[j]]}.`],
+        [legs.length - 1, `Take the stairs ${arrow} to the ${fname(fl[j + 1])}.${note(j)}`]
+      );
+    }
+  }
+  const last = n - 1;
+  legs.push({ floor: fl[last], pts: [...fin.r.pts, b.p], m: [[ST[fl[last]][ks[last - 1]], "t"], [b.p, "e"]] });
+  steps.push([legs.length - 1, `Leave the ${SN[ks[last - 1]]} and follow the highlighted path to ${b.code}.`]);
   return { legs, steps };
 }
 
@@ -1195,6 +1289,7 @@ function stairsSvg() {
   }
 
   UNAVAILABLE_STAIRS.forEach(s => {
+    if (floor.id == "B" && !(s.pf && s.pf.B)) return;   /* only the far-west outer stairs exist in the basement */
     const [x, y] = (s.pf && s.pf[floor.id]) || s.p;
     h += `
       <g class="stair-marker stair-closed" data-closed="${s.id}" data-name="${esc(s.name)}" transform="translate(${x},${y})" tabindex="0"><g class="stair-inner">
@@ -1347,7 +1442,7 @@ async function go(near) {
       <div class="route-floor-switch">
         ${ROUTE.legs.map((l, idx) => `
           <button type="button" class="btn ${idx == 0 ? 'on' : ''} r-floor-btn" data-leg="${idx}">
-            ${idx == 0 ? '1. ' : '2. '}${fname(l.floor)}
+            ${idx + 1}. ${fname(l.floor)}
           </button>
         `).join("")}
       </div>
@@ -1476,7 +1571,11 @@ if (gsheetOpenBtn) {
 initTheme();
 home();
 
-// Auto-sync from Google Sheet on startup if URL configured
-if (GSHEET_URL) {
+// Auto-sync from Google Sheet once the volunteer code gate is open (never while the page is locked)
+function startSheetSync() {
+  if (window.__sheetSyncStarted || !GSHEET_URL) return;
+  window.__sheetSyncStarted = true;
   syncFromGoogleSheet(GSHEET_URL, true);
 }
+if (window.MapsGate && window.MapsGate.isUnlocked()) startSheetSync();
+else document.addEventListener("maps:unlocked", startSheetSync);

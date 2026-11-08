@@ -23,6 +23,13 @@
   function load() {
     return Store.loadAll().then(function (d) {
       S.data = d;
+      /* shared places (prayer rooms, cafeteria, break areas) have no sheet row: add a plain one so they can be selected, routed to and used in meetups */
+      D.FLOORS.forEach(function (f) {
+        f.rooms.forEach(function (g) {
+          if (!g.kind || d.rooms.some(function (r) { return r.code === g.code; })) return;
+          d.rooms.push({ code: g.code, floor: f.id, floorName: f.name, wing: "", roomNo: "", type: D.PLACE_STYLE[g.kind].label, capacity: 0, physicalCapacity: 0, zone: "", assigned: "", contact: "" });
+        });
+      });
       d.roomMap = {}; d.rooms.forEach(function (r) { d.roomMap[r.code] = r; });
       fillRoomDataList();
       detectNew();
@@ -415,7 +422,7 @@
         }).join("") : '<div class="muted" style="font-size:13px;margin-top:4px">No open issues for this room.</div>') +
         
         '<div style="margin-top:14px"><b>Room QR code</b><div class="muted" style="font-size:12px;margin-bottom:6px">Scan to report an issue directly from this room.</div><div class="qr-box">' + TO.qrSvg(url, 4) + '</div></div>' +
-        '<div class="row" style="margin-top:12px"><a class="btn small" href="' + esc(url) + '" target="_blank" rel="noopener">Open form</a><a class="btn small" href="qr-codes.html">Universal QR</a><button class="btn small ghost" id="side-clear">Clear</button></div>';
+        '<div class="row" style="margin-top:12px"><a class="btn small" href="' + esc(url) + '" target="_blank" rel="noopener">Open form</a><a class="btn small" href="../request/poster.html">Participant QR</a><button class="btn small ghost" id="side-clear">Clear</button></div>';
 
       var c = $("side-clear"); if (c) c.onclick = function () { S.selected = null; map.select(null); renderSide(); };
       var btnHere = $("side-route-here");
@@ -524,7 +531,7 @@
       bEl.innerHTML = wifiCard + assignedRow + issueCard +
         '<div style="display:flex;gap:8px;margin-top:8px">' +
         '<a class="btn small" style="flex:1;justify-content:center;height:42px" href="' + esc(url) + '" target="_blank" rel="noopener">Direct Form</a>' +
-        '<a class="btn small" style="flex:1;justify-content:center;height:42px" href="qr-codes.html">Universal QR</a>' +
+        '<a class="btn small" style="flex:1;justify-content:center;height:42px" href="../request/poster.html">Participant QR</a>' +
         '</div>';
 
       btnHere.style.display = "flex";
@@ -976,7 +983,6 @@
     }
     if ($("logout-btn")) $("logout-btn").onclick = doLogout;
     if ($("mobile-logout-btn")) $("mobile-logout-btn").onclick = doLogout;
-    if ($("logistics-logout")) $("logistics-logout").onclick = doLogout;
 
     /* Mobile drawer toggle */
     var mToggle = $("mobile-menu-toggle");
@@ -1164,13 +1170,11 @@
     var chip = $("user-chip");
     var mobUser = $("mobile-user");
     var loginScreen = $("login-screen");
-    var logisticsView = $("logistics-view");
     var bell = $("bell");
     var techOnly = document.querySelectorAll(".tech-only");
 
     if (!user) {
       if (loginScreen) loginScreen.hidden = false;
-      if (logisticsView) logisticsView.hidden = true;
       if (main) main.hidden = true;
       if (nav) nav.hidden = true;
       if (chip) chip.hidden = true;
@@ -1181,7 +1185,7 @@
       var ln = $("login-note");
       if (ln && !Store.isLive()) {
         ln.hidden = false;
-        ln.innerHTML = 'Preview mode volunteer codes: <b>TO-001</b> (Mohamed Khairy), <b>TO-002</b> (Omar), <b>TO-003</b> (Lojine), or <b>LG-001</b> (Logistics).';
+        ln.innerHTML = 'Preview mode volunteer codes: <b>TO-001</b> (Mohamed Khairy), <b>TO-002</b> (Omar), <b>TO-003</b> (Lojine).';
       }
       var inp = $("login-code");
       if (inp) { inp.value = ""; setTimeout(function () { inp.focus(); }, 120); }
@@ -1201,22 +1205,21 @@
       if ($("mobile-user-avatar")) $("mobile-user-avatar").textContent = user.initials || TO.initials(user.name);
     }
 
-    if (user.team === "Logistics") {
-      if (loginScreen) loginScreen.hidden = true;
-      if (logisticsView) logisticsView.hidden = false;
-      if (main) main.hidden = true;
-      if (nav) nav.hidden = true;
-      if (bell) bell.hidden = true;
-      techOnly.forEach(function (el) { el.hidden = true; });
-      if ($("logistics-msg")) {
-        $("logistics-msg").textContent = "Welcome, " + user.name + " (" + user.code + "). Your Logistics workspace is being prepared by Norhan. Check back soon!";
-      }
+    /* Logistics volunteers have their own workspace */
+    if (user.team === "Dispatch" || user.team === "Competition") { location.replace("../dispatch/index.html"); return; }
+    if (user.team === "Logistics") { location.replace("../logistics/index.html"); return; }
+
+    /* Only TechOps volunteer codes open this dashboard (the common Maps code does not) */
+    if (user.team !== "TechOps") {
+      Store.logout().then(function () {
+        applyUser(null);
+        showLoginError("This dashboard is for the Tech Ops team. Your code opens the Maps page from the Operations home.");
+      });
       return;
     }
 
     /* TechOps user */
     if (loginScreen) loginScreen.hidden = true;
-    if (logisticsView) logisticsView.hidden = true;
     if (main) main.hidden = false;
     if (nav) nav.hidden = false;
     if (bell) bell.hidden = false;

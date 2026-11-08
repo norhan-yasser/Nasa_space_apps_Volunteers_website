@@ -1,14 +1,24 @@
 {
   "volunteers": {
-    "ADM-001": {
-      "Name": "Eng. Mohamed Khairy",
-      "Volunteer Code": "ADM-001",
-      "Team": "Admin"
+    "NSAC-2026": {
+      "Name": "NASA Space Apps Volunteer",
+      "Volunteer Code": "NSAC-2026",
+      "Team": "Volunteers"
     },
-    "ADMIN": {
-      "Name": "Lead Organizer",
-      "Volunteer Code": "ADMIN",
-      "Team": "Admin"
+    "MAP-001": {
+      "Name": "Maps Volunteer 1",
+      "Volunteer Code": "MAP-001",
+      "Team": "Volunteers"
+    },
+    "MAP-002": {
+      "Name": "Maps Volunteer 2",
+      "Volunteer Code": "MAP-002",
+      "Team": "Volunteers"
+    },
+    "MAP-003": {
+      "Name": "Maps Volunteer 3",
+      "Volunteer Code": "MAP-003",
+      "Team": "Volunteers"
     },
     "TO-001": {
       "Name": "Mohamed Khairy",
@@ -50,6 +60,26 @@
       "Volunteer Code": "TO-008",
       "Team": "TechOps"
     },
+    "CT-001": {
+      "Name": "Competition Lead",
+      "Volunteer Code": "CT-001",
+      "Team": "Competition"
+    },
+    "CT-002": {
+      "Name": "Competition Volunteer",
+      "Volunteer Code": "CT-002",
+      "Team": "Competition"
+    },
+    "CT-003": {
+      "Name": "Competition Coordinator",
+      "Volunteer Code": "CT-003",
+      "Team": "Competition"
+    },
+    "CT-004": {
+      "Name": "Competition Support",
+      "Volunteer Code": "CT-004",
+      "Team": "Competition"
+    },
     "LG-001": {
       "Name": "Norhan Yasser",
       "Volunteer Code": "LG-001",
@@ -58,6 +88,11 @@
     "LG-002": {
       "Name": "Logistics Lead",
       "Volunteer Code": "LG-002",
+      "Team": "Logistics"
+    },
+    "LG-003": {
+      "Name": "Logistics Volunteer",
+      "Volunteer Code": "LG-003",
       "Team": "Logistics"
     }
   },
@@ -1913,6 +1948,126 @@
       "team": "TechOps",
       "claimedAt": "",
       "floor": "F"
+    },
+    "LGR-0001": {
+      "id": "LGR-0001",
+      "ts": "2026-11-06 11:40:00",
+      "floor": "G",
+      "room": "C026",
+      "issue": "Go to a place",
+      "details": "Wants to go to: S140 (First Floor)",
+      "status": "Resolved",
+      "assigned": "Norhan Yasser",
+      "claimedAt": "2026-11-06 11:40:00",
+      "resolvedAt": "2026-11-06 11:40:00",
+      "reporter": "Team Aurora",
+      "team": "Logistics",
+      "floorName": "Ground Floor"
+    },
+    "LGR-0002": {
+      "id": "LGR-0002",
+      "ts": "2026-11-06 12:02:00",
+      "floor": "F",
+      "room": "C139",
+      "issue": "Prayer request",
+      "details": "Prayer area: Men",
+      "status": "In Progress",
+      "assigned": "Logistics Lead",
+      "claimedAt": "2026-11-06 12:02:00",
+      "resolvedAt": "",
+      "reporter": "",
+      "team": "Logistics",
+      "floorName": "First Floor"
+    },
+    "LGR-0003": {
+      "id": "LGR-0003",
+      "ts": "2026-11-06 12:10:00",
+      "floor": "S",
+      "room": "C231",
+      "issue": "Help request",
+      "details": "Lost my badge, need a replacement",
+      "status": "New",
+      "assigned": "",
+      "claimedAt": "",
+      "resolvedAt": "",
+      "reporter": "Team Vega",
+      "team": "Logistics",
+      "floorName": "Second Floor"
+    },
+    "LGR-0004": {
+      "id": "LGR-0004",
+      "ts": "2026-11-06 12:14:00",
+      "floor": "G",
+      "room": "S016",
+      "issue": "Go to a place",
+      "details": "Wants to go to: Main Entrance",
+      "status": "New",
+      "assigned": "",
+      "claimedAt": "",
+      "resolvedAt": "",
+      "reporter": "",
+      "team": "Logistics",
+      "floorName": "Ground Floor"
+    },
+    "CMP-0001": {
+      "id": "CMP-0001",
+      "ts": "2026-11-06 11:50:00",
+      "floor": "",
+      "floorName": "",
+      "room": "",
+      "issue": "Discord issue",
+      "details": "Cannot see our mentor channel on the Cairo Discord server",
+      "status": "Resolved",
+      "assigned": "Competition Lead",
+      "claimedAt": "2026-11-06 11:50:00",
+      "resolvedAt": "2026-11-06 11:50:00",
+      "reporter": "Team Solaris · @ziad_m",
+      "team": "Competition"
+    },
+    "CMP-0002": {
+      "id": "CMP-0002",
+      "ts": "2026-11-06 12:06:00",
+      "floor": "",
+      "floorName": "",
+      "room": "",
+      "issue": "Competition question",
+      "details": "Can our 240-second demo slide deck include NASA open-source clips?",
+      "status": "In Progress",
+      "assigned": "Competition Volunteer",
+      "claimedAt": "2026-11-06 12:06:00",
+      "resolvedAt": "",
+      "reporter": "Team Horizon · @salma_k",
+      "team": "Competition"
+    },
+    "CMP-0003": {
+      "id": "CMP-0003",
+      "ts": "2026-11-06 12:18:00",
+      "floor": "",
+      "floorName": "",
+      "room": "",
+      "issue": "Submission help",
+      "details": "GitHub repository link validation error on project submission page",
+      "status": "New",
+      "assigned": "",
+      "claimedAt": "",
+      "resolvedAt": "",
+      "reporter": "Team Nebula · @youssef_dev",
+      "team": "Competition"
+    },
+    "CMP-0004": {
+      "id": "CMP-0004",
+      "ts": "2026-11-06 12:24:00",
+      "floor": "",
+      "floorName": "",
+      "room": "",
+      "issue": "Discord issue",
+      "details": "Invite link expired for two teammates joining late",
+      "status": "New",
+      "assigned": "",
+      "claimedAt": "",
+      "resolvedAt": "",
+      "reporter": "Team Orion · @mariam_a",
+      "team": "Competition"
     }
   },
   "meetups": {

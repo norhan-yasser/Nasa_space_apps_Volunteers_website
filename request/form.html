@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Need help? · NASA Space Apps Challenge Cairo</title>
+  <link rel="icon" type="image/png" href="../assets/favicon.png">
+  <link rel="stylesheet" href="../techops/css/techops.css">
+  <link rel="stylesheet" href="request.css">
+  <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('techops_theme') || 'dark'); } catch (e) {}</script>
+</head>
+<body>
+  <!-- PARTICIPANT PAGE: opened by the QR code. Deliberately has NO link to any volunteer page (maps, dashboards). -->
+  <div class="bg" aria-hidden="true"></div>
+  <div class="app">
+    <header class="top">
+      <span class="brand">
+        <img class="logo-dark" src="../assets/logos/NSAC_HORIZONTAL_WHITE.png" alt="NASA Space Apps Challenge">
+        <img class="logo-light" src="../assets/logos/NSAC_HORIZONTAL_DARK.png" alt="NASA Space Apps Challenge">
+        <span class="brand-text"><span class="brand-title">HELP DESK</span><span class="brand-sub">CAIRO</span></span>
+      </span>
+      <div class="sp"></div>
+      <button class="btn" id="theme-toggle" aria-label="Toggle light or dark theme"><span class="btn-text">Light</span></button>
+    </header>
+
+    <div class="form-shell">
+      <div class="card form-card" id="form-card">
+        <div class="form-header-badge">Participants</div>
+        <h2>How can we help?</h2>
+        <p class="form-sub">Tell us where you are and what you need. Choose the team first. Tech Ops and Logistics will come to your room; the Competition Team helps remotely.</p>
+
+        <form id="f" novalidate>
+          <!-- STEP 1 (mandatory, first thing on the form): which team? Everything else depends on it. -->
+          <fieldset class="req-group" style="margin-top:6px">
+            <legend class="lbl">Which team do you need? <span style="color:var(--bad)">*</span></legend>
+            <div class="issue-opts" id="team-opts"></div>
+          </fieldset>
+
+          <div id="rest" hidden>
+            <div class="two" id="loc-wrap" style="margin-top:18px">
+              <div class="field"><label class="lbl" for="floor">Your floor</label>
+                <select id="floor" required><option value="">Select floor…</option></select></div>
+              <div class="field"><label class="lbl" for="room">Your room</label>
+                <select id="room" required><option value="">Select room…</option></select></div>
+            </div>
+
+            <fieldset class="req-group" id="grp-TechOps" hidden>
+              <legend class="lbl">What is not working?</legend>
+              <div class="issue-opts" id="issues-tech"></div>
+            </fieldset>
+            <fieldset class="req-group" id="grp-Logistics" hidden>
+              <legend class="lbl">What do you need?</legend>
+              <div class="issue-opts" id="issues-log"></div>
+            </fieldset>
+
+            <fieldset class="req-group" id="grp-Competition" hidden>
+              <legend class="lbl">What do you need from the Competition Team?</legend>
+              <div class="issue-opts" id="issues-comp"></div>
+            </fieldset>
+
+            <div id="other-wrap" hidden style="margin-top:12px">
+              <label class="lbl" for="other">Describe the problem</label>
+              <input id="other" maxlength="80" placeholder="e.g. Projector has no signal">
+            </div>
+            <div id="place-wrap" hidden style="margin-top:12px">
+              <label class="lbl" for="dest">Where do you want to go?</label>
+              <select id="dest"></select>
+            </div>
+            <fieldset id="prayer-wrap" hidden class="req-group">
+              <legend class="lbl">Prayer area for</legend>
+              <div class="issue-opts" id="prayer-opts"></div>
+            </fieldset>
+
+            <label class="lbl" for="details" id="details-lbl">More details <span style="font-weight:400;color:var(--mut)">(optional)</span></label>
+            <textarea id="details" maxlength="400" placeholder="Anything that helps us find you or fix it faster"></textarea>
+
+            <label class="lbl" for="reporter" id="reporter-lbl">Your name or team <span style="font-weight:400;color:var(--mut)">(optional)</span></label>
+            <input id="reporter" maxlength="60" autocomplete="off" placeholder="e.g. Team Aurora">
+            <input id="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+
+            <p id="err" style="color:var(--bad);font-size:13px;margin-top:12px;font-weight:600" role="alert" hidden></p>
+            <button class="btn primary" id="send" type="submit">Send request</button>
+          </div>
+          <p id="err-team" style="color:var(--bad);font-size:13px;margin-top:12px;font-weight:600" role="alert" hidden></p>
+        </form>
+      </div>
+
+      <div class="card form-card success" id="done" hidden>
+        <div class="tick">&#10003;</div>
+        <h2>Request sent</h2>
+        <p class="form-sub" id="done-msg" style="margin-bottom:14px"></p>
+        <p style="margin:14px 0">Reference: <b id="done-id"></b></p>
+        <p class="note" id="done-demo" hidden></p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap">
+          <button class="btn primary" id="again">Send another request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../techops/js/config.js"></script>
+  <script src="../techops/js/firebase-config.js"></script>
+  <script src="../techops/js/seed-data.js"></script>
+  <script src="../techops/js/data.js"></script>
+  <script src="../techops/js/common.js"></script>
+  <script src="../techops/js/store.js"></script>
+  <script src="form.js"></script>
+</body>
+</html>

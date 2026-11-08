@@ -11,9 +11,11 @@ Get the key: Firebase console -> Project settings -> Service accounts -> Generat
 NEVER commit the key or your real roster (both are in .gitignore).
 
 `volunteers.real.json` format - one object keyed by Volunteer Code:
-    { "TO-101": { "Name": "Sara Ali", "Volunteer Code": "TO-101", "Team": "TechOps" },
-      "LG-201": { "Name": "Omar H.",  "Volunteer Code": "LG-201", "Team": "Logistics" } }
-`Team` must be exactly "TechOps" or "Logistics". Codes: letters, digits, "-" or "_" (stored upper-case).
+    { "NSAC-2026": { "Name": "NASA Space Apps Volunteer", "Volunteer Code": "NSAC-2026", "Team": "Volunteers" },
+      "TO-101": { "Name": "Sara Ali", "Volunteer Code": "TO-101", "Team": "TechOps" },
+      "LG-201": { "Name": "Omar H.",  "Volunteer Code": "LG-201", "Team": "Logistics" },
+      "CT-101": { "Name": "Competition Member", "Volunteer Code": "CT-101", "Team": "Competition" } }
+`Team` must be "TechOps", "Logistics", "Competition" or "Volunteers". Codes: letters, digits, "-" or "_" (stored upper-case).
 """
 import argparse
 import json
@@ -22,7 +24,7 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEAMS = {"TechOps", "Logistics"}
+TEAMS = {"TechOps", "Logistics", "Competition", "Volunteers"}
 
 
 def load_volunteers(path):
@@ -34,7 +36,7 @@ def load_volunteers(path):
         code = re.sub(r"\s+", "", str(v.get("Volunteer Code", ""))).upper()
         name, team = str(v.get("Name", "")).strip(), str(v.get("Team", "")).strip()
         if not re.fullmatch(r"[A-Z0-9_-]{2,40}", code) or not name or team not in TEAMS:
-            sys.exit(f"Invalid volunteer record: {v!r} (need Name, Volunteer Code, Team = TechOps | Logistics)")
+            sys.exit(f"Invalid volunteer record: {v!r} (need Name, Volunteer Code, Team = TechOps | Logistics | Competition | Volunteers)")
         out[code] = {"Name": name, "Volunteer Code": code, "Team": team}
     return out
 
