@@ -54,10 +54,10 @@
     var after = await reportsFor("TO-001");
     ok("unknown team falls back to TechOps (never invisible)", after.some(function (x) { return x.id === forged.id; }));
 
-    /* 5. login lives in the tab (sessionStorage) and not in permanent storage */
+    /* 5. login lives in sessionStorage and is mirrored in localStorage for seamless cross-tab & maps navigation */
     await Store.logout(); await Store.login("NSAC-2026");
     ok("session stored in sessionStorage", !!root.sessionStorage.getItem("techops_volunteer_code"));
-    ok("nothing stored in localStorage", !root.localStorage.getItem("techops_volunteer_code") && !root.localStorage.getItem("techops_volunteer_user"));
+    ok("session mirrored in localStorage for seamless maps navigation", !!root.localStorage.getItem("techops_volunteer_code"));
     ok("peekUser() resolves active session synchronously (0ms)", !!(Store.peekUser && Store.peekUser() && Store.peekUser().code === "NSAC-2026"));
     ok("restore() keeps a fresh session", !!(await Store.restore()));
 

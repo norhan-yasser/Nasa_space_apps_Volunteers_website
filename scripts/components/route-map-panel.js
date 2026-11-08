@@ -76,7 +76,7 @@
       '</div>' +
       '<div class="route-map-footer">' +
         '<div class="route-map-floor-indicator" id="route-map-floor-indicator">Floor: Ground Floor</div>' +
-        '<a class="route-map-full-link" id="route-map-full-link" href="../maps.html" target="_blank">Open Full Venue Map →</a>' +
+        '<a class="route-map-full-link" id="route-map-full-link" href="../maps.html" >Open Full Venue Map →</a>' +
       '</div>';
 
     document.body.appendChild(backdrop);
@@ -203,7 +203,7 @@
     this.floorEl.textContent = "Floor: " + fName;
 
     var isSub = typeof location !== "undefined" && /\/(techops|logistics|dispatch|request|tests)\//i.test(location.pathname);
-    var fullHref = (isSub ? "../" : "") + "maps.html?from=CO26" + (roomCode ? "&to=" + encodeURIComponent(roomCode) : "");
+    var fullHref = (isSub ? "../" : "") + "maps.html?from=ENTRANCE" + (roomCode ? "&to=" + encodeURIComponent(roomCode) : "");
     this.fullLinkEl.href = fullHref;
 
     // Load Floor Image

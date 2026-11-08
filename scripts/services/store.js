@@ -24,11 +24,38 @@
   var SESSION_KEY = "techops_volunteer_code", SESSION_SEEN = "techops_session_seen", SESSION_USER = "techops_volunteer_user", LOCAL_KEY = "techops_local_db_v1";
   /* SECURITY: the volunteer login lives in sessionStorage (it dies with the tab, never survives a browser restart) and
    * also expires when the person was away from the site for longer than SESSION_GRACE_MS (default 5 min). */
-  var GRACE = Number((window.TECHOPS_CONFIG || {}).SESSION_GRACE_MS) || 5 * 60 * 1000;
-  function sget(k) { try { return sessionStorage.getItem(k) || ""; } catch (e) { return ""; } }
-  function sset(k, v) { try { v ? sessionStorage.setItem(k, v) : sessionStorage.removeItem(k); } catch (e) {} }
-  try { localStorage.removeItem(SESSION_KEY); localStorage.removeItem(SESSION_USER); } catch (e) {} /* old permanent logins stop working */
-  function clearSessionStorage() { sset(SESSION_KEY, ""); sset(SESSION_SEEN, ""); sset(SESSION_USER, ""); }
+  var GRACE = Number((window.TECHOPS_CONFIG || {}).SESSION_GRACE_MS) || (24 * 60 * 60 * 1000);
+  function sget(k) {
+    try {
+      return sessionStorage.getItem(k) || localStorage.getItem(k) || "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function sset(k, v) {
+    try {
+      if (v) {
+        sessionStorage.setItem(k, v);
+        localStorage.setItem(k, v);
+      } else {
+        sessionStorage.removeItem(k);
+        localStorage.removeItem(k);
+      }
+    } catch (e) {}
+  }
+  function clearSessionStorage() {
+    sset(SESSION_KEY, "");
+    sset(SESSION_SEEN, "");
+    sset(SESSION_USER, "");
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_SEEN);
+      sessionStorage.removeItem(SESSION_USER);
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(SESSION_SEEN);
+      localStorage.removeItem(SESSION_USER);
+    } catch (e) {}
+  }
   function markSeen() { if (sget(SESSION_KEY)) sset(SESSION_SEEN, String(Date.now())); }
   function sessionFresh() { var t = Number(sget(SESSION_SEEN)) || 0; return !!t && Date.now() - t <= GRACE; }
   /* Which task queue this browser reads: "TechOps", "Logistics", or "Competition" (strictly isolated per role). */

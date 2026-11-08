@@ -15,7 +15,7 @@ window.TECHOPS_CONFIG = {
     Competition: ["Competition Lead", "Competition Volunteer"]
   },
   /* How long (ms) a volunteer may be away from the site before the code is asked again */
-  SESSION_GRACE_MS: 5 * 60 * 1000,
+  SESSION_GRACE_MS: 24 * 60 * 60 * 1000,
   /* Public address of the logistics/ folder: the Logistics help QR code points to <this>help.html */
   LOGISTICS_BASE_URL: "https://norhan-yasser.github.io/Nasa_space_apps_Volunteers_website/logistics/"
 };

@@ -85,17 +85,7 @@
   }
 
   
-  document.addEventListener("click", function (e) {
-    var btn = e.target.closest(".route-btn:not(.is-disabled)");
-    if (!btn) return;
-    var href = btn.getAttribute("href");
-    if (href && window.RouteMapPanel) {
-      e.preventDefault();
-      var m = href.match(/to=([^&]+)/);
-      var room = m ? decodeURIComponent(m[1]) : "";
-      window.RouteMapPanel.open({ room: room, details: "Fastest walking route to room" });
-    }
-  });
+  /* Direct navigation: clicking Show Route takes volunteer directly to Maps */
 
   function renderCard(r) {
     var when = Store.parseStamp(r.ts), mine = isMine(r), free = isUnassigned(r), done = r.status === "Resolved";
