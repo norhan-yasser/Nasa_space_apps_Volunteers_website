@@ -1699,6 +1699,10 @@ function bindMapsTutorial() {
   const tb = document.getElementById("tutorial-btn");
   const mtb = document.getElementById("mobile-tutorial-btn");
   const launch = () => {
+    const drawer = document.getElementById("mobile-drawer");
+    if (drawer) drawer.hidden = true;
+    const toggle = document.getElementById("mobile-menu-toggle") || document.getElementById("mobile-menu-btn");
+    if (toggle) toggle.setAttribute("aria-expanded", "false");
     if (typeof open === "function") { try { open("G"); } catch (e) {} }
     if (window.NasaTutorial) window.NasaTutorial.start("maps");
   };

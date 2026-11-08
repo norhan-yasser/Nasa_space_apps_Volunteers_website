@@ -299,5 +299,87 @@
     bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
     top: auto !important;
     border-radius: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
   }
+}
+
+
+/* Embedded Map Preview inside Tutorial Card */
+.tutorial-card.has-map {
+  width: min(480px, calc(100vw - 32px));
+}
+
+.tutorial-map-preview {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #020617;
+  display: flex;
+  flex-direction: column;
+  margin: 2px 0 6px;
+}
+
+.tut-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  background: rgba(15, 23, 42, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tut-map-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.tut-map-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.tut-map-stage {
+  position: relative;
+  width: 100%;
+  height: 175px;
+  background: #020617;
+  overflow: hidden;
+}
+
+.tut-map-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tut-map-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+[data-theme="light"] .tut-map-header {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .tut-map-label {
+  color: #0f172a;
 }

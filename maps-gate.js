@@ -146,6 +146,7 @@
     };
   }
   if (mClose) mClose.onclick = closeDrawer;
+  if ($("mobile-tutorial-btn")) $("mobile-tutorial-btn").addEventListener("click", closeDrawer);
   if ($("mobile-dir-btn")) {
     $("mobile-dir-btn").onclick = function () {
       closeDrawer();

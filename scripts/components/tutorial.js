@@ -82,24 +82,15 @@
         sandboxText: "Queue Management"
       },
       {
-        target: "#route-map-panel .route-map-viewport",
-        fallbackTarget: "#route-map-panel",
+        target: null,
         title: "Venue Route Navigation",
-        desc: "Tap 'Show Route' on any ticket to open the interactive floor blueprint. Follow the highlighted route and floor indicator to reach the attendee promptly.",
+        desc: "Tap 'Show Route' on any ticket to view the floor blueprint and exact walking path from the operations desk to the participant's room.",
         badge: "Mission Briefing · Step 3/4",
         sandboxText: "Interactive Practice",
-        onEnter: function () {
-          if (window.RouteMapPanel) {
-            window.RouteMapPanel.open({
-              room: "C231",
-              floor: "S",
-              title: "Room C231 · Second Floor",
-              details: "Sample Task: Lost badge replacement"
-            });
-          }
-        },
-        onLeave: function () {
-          if (window.RouteMapPanel) window.RouteMapPanel.close();
+        mapPreview: {
+          room: "C231",
+          floor: "S",
+          label: "Room C231 · Second Floor"
         }
       },
       {
@@ -128,24 +119,15 @@
         sandboxText: "Remote Escalations"
       },
       {
-        target: "#route-map-panel .route-map-viewport",
-        fallbackTarget: "#route-map-panel",
+        target: null,
         title: "Venue Route Guidance",
-        desc: "When a participant inquiry requires physical guidance or runner dispatch, the Route Map panel displays the floor blueprint and exact walking route to the room.",
+        desc: "When a participant inquiry requires physical guidance or runner dispatch, tap 'Show Route' on the ticket to inspect the floor blueprint, stairwells, and room directions.",
         badge: "Mission Briefing · Step 3/4",
         sandboxText: "Field Navigation",
-        onEnter: function () {
-          if (window.RouteMapPanel) {
-            window.RouteMapPanel.open({
-              room: "B130",
-              floor: "F",
-              title: "Room B130 · First Floor",
-              details: "Participant Inquiry: Evaluation & Demo Lab"
-            });
-          }
-        },
-        onLeave: function () {
-          if (window.RouteMapPanel) window.RouteMapPanel.close();
+        mapPreview: {
+          room: "B130",
+          floor: "F",
+          label: "Room B130 · First Floor"
         }
       },
       {
@@ -222,6 +204,13 @@
   };
 
   P.start = function (role, onFinish) {
+    // Unconditionally close mobile drawer and route map panel
+    var drawer = document.getElementById("mobile-drawer");
+    if (drawer) drawer.hidden = true;
+    var toggle = document.getElementById("mobile-menu-toggle") || document.getElementById("mobile-menu-btn");
+    if (toggle) toggle.setAttribute("aria-expanded", "false");
+    if (window.RouteMapPanel) window.RouteMapPanel.close();
+
     this.init(role, onFinish);
     this._buildDOM();
     this._showStep(0);
@@ -279,7 +268,6 @@
       return;
     }
 
-    // Call onLeave of current step if transitioning
     if (this.steps[this.currentStep] && typeof this.steps[this.currentStep].onLeave === "function" && this.currentStep !== index) {
       try { this.steps[this.currentStep].onLeave(); } catch (e) {}
     }
@@ -287,13 +275,11 @@
     this.currentStep = index;
     var step = this.steps[index];
 
-    // Clear previous elevated target
     if (this.activeTarget) {
       this.activeTarget.classList.remove("tutorial-target-active");
       this.activeTarget = null;
     }
 
-    // Call onEnter of new step
     if (typeof step.onEnter === "function") {
       try { step.onEnter(); } catch (e) {}
     }
@@ -317,6 +303,13 @@
     var nextClass = isLast ? "tutorial-btn finish" : "tutorial-btn primary";
     var nextId = isLast ? "tut-finish-btn" : "tut-next-btn";
 
+    // Toggle card class for map preview sizing
+    if (step.mapPreview) {
+      this.cardEl.classList.add("has-map");
+    } else {
+      this.cardEl.classList.remove("has-map");
+    }
+
     var h =
       '<div class="tutorial-card-header">' +
         '<span class="tutorial-badge">' + (step.badge || "Mission Briefing") + '</span>' +
@@ -325,6 +318,56 @@
       '<div class="tutorial-progress-bar">' + dots + '</div>' +
       '<h3 class="tutorial-title">' + step.title + '</h3>' +
       '<p class="tutorial-desc">' + step.desc + '</p>';
+
+    // Render Embedded Route Map Preview if specified
+    if (step.mapPreview) {
+      var mp = step.mapPreview;
+      var roomCode = mp.room;
+      var floor = mp.floor || "G";
+      var floorFiles = { B: "0.png", G: "1.png", F: "2.png", S: "3.png" };
+      var isSub = typeof location !== "undefined" && /\/(techops|logistics|dispatch|request|tests)\//i.test(location.pathname);
+      var imgSrc = (isSub ? "../" : "") + "assets/floors/" + (floorFiles[floor] || "1.png");
+      var rObj = null;
+      var D = window.TechOpsData || {};
+      if (D.ALL && D.ALL.length) {
+        for (var k = 0; k < D.ALL.length; k++) {
+          if (D.ALL[k].code && D.ALL[k].code.toUpperCase() === roomCode.toUpperCase()) {
+            rObj = D.ALL[k];
+            break;
+          }
+        }
+      }
+
+      var cx = rObj ? (rObj.cx || 800) : 800;
+      var cy = rObj ? (rObj.cy || 375) : 375;
+      var ox = 620, oy = 320;
+      var midX = (ox + cx) / 2;
+      var routePts = ox + "," + oy + " " + midX + "," + oy + " " + midX + "," + cy + " " + cx + "," + cy;
+
+      var polySvg = "";
+      if (rObj && rObj.pts && rObj.pts.length) {
+        var ptsStr = rObj.pts.map(function (p) { return p[0] + "," + p[1]; }).join(" ");
+        polySvg = '<polygon points="' + ptsStr + '" fill="rgba(59, 130, 246, 0.45)" stroke="#3b82f6" stroke-width="4" stroke-dasharray="8 4" />';
+      }
+
+      h +=
+        '<div class="tutorial-map-preview">' +
+          '<div class="tut-map-header">' +
+            '<span class="tut-map-badge">Venue Route</span>' +
+            '<span class="tut-map-label">' + (mp.label || ('Room ' + roomCode)) + '</span>' +
+          '</div>' +
+          '<div class="tut-map-stage">' +
+            '<img class="tut-map-img" src="' + imgSrc + '" alt="Floor Map Blueprint">' +
+            '<svg class="tut-map-svg" viewBox="0 0 1673 940">' +
+              polySvg +
+              '<polyline points="' + routePts + '" fill="none" stroke="#60a5fa" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="10 6" />' +
+              '<circle cx="' + ox + '" cy="' + oy + '" r="10" fill="#10b981" stroke="#ffffff" stroke-width="3" />' +
+              '<circle cx="' + cx + '" cy="' + cy + '" r="13" fill="#ef4444" stroke="#ffffff" stroke-width="3" />' +
+              '<text x="' + cx + '" y="' + (cy - 20) + '" text-anchor="middle" fill="#ffffff" font-family="system-ui, sans-serif" font-weight="bold" font-size="24" stroke="#020617" stroke-width="4" paint-order="stroke fill">' + roomCode + '</text>' +
+            '</svg>' +
+          '</div>' +
+        '</div>';
+    }
 
     if (step.sandboxText) {
       h += '<div class="tutorial-sandbox-tag">' + step.sandboxText + '</div>';
@@ -389,6 +432,7 @@
         this.cardEl.style.left = left + "px";
         this.cardEl.style.right = "auto";
         this.cardEl.style.bottom = "auto";
+        this.cardEl.style.transform = "none";
       }
     } else {
       this.spotlightEl.style.display = "none";
