@@ -2,14 +2,14 @@
    Global Custom Typography: Munake & abeatbyKai */
 @font-face {
   font-family: 'Munake';
-  src: url('assets/fonts/Munake-Demo.ttf') format('truetype');
+  src: url('../../assets/fonts/Munake-Demo.ttf') format('truetype');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'abeatbyKai';
-  src: url('assets/fonts/abeatbyKaiRegular.otf') format('opentype');
+  src: url('../../assets/fonts/abeatbyKaiRegular.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -84,7 +84,7 @@ button, input, select, textarea { font: inherit; font-family: var(--font-body); 
 .bg-image {
   position: absolute;
   top: -12px; left: -12px; right: -12px; bottom: -12px;
-  background: url('assets/images/hero-optimized.jpg') center / cover no-repeat;
+  background: url('../../assets/images/hero-optimized.jpg') center / cover no-repeat;
   filter: blur(var(--bg-img-blur));
   transform: scale(1.02);
   opacity: var(--bg-img-opacity);

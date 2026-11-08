@@ -29,10 +29,10 @@ const TYPES = {
 const SPECIAL_TYPE = { STAGE: "T", CAFETERIA: "A", "BREAK-1": "K", "BREAK-2": "K" };
 
 const IMG = {
-  B: "assets/su tech floor assets/0.png",
-  G: "assets/su tech floor assets/1.png",
-  F: "assets/su tech floor assets/2.png",
-  S: "assets/su tech floor assets/3.png"
+  B: "assets/floors/0.png",
+  G: "assets/floors/1.png",
+  F: "assets/floors/2.png",
+  S: "assets/floors/3.png"
 };
 /* Room geometry (pixels of the original image). Rect = 4 numbers, polygon = flat x,y pairs. Placeholder outlines: refine in the editor. */
 const R=(a,b)=>a.map((c,i)=>[c,...b[i]]);

@@ -8,7 +8,7 @@
    -------------------------------------------------------------------------- */
 @font-face {
   font-family: 'Munake';
-  src: url('assets/fonts/Munake-Demo.ttf') format('truetype');
+  src: url('../../assets/fonts/Munake-Demo.ttf') format('truetype');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -16,7 +16,7 @@
 
 @font-face {
   font-family: 'abeatbyKai';
-  src: url('assets/fonts/abeatbyKaiRegular.otf') format('opentype');
+  src: url('../../assets/fonts/abeatbyKaiRegular.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -144,7 +144,7 @@ h1, h2, h3 { font-family: var(--font-title); font-weight: 400; letter-spacing: .
   left: -12px;
   right: -12px;
   bottom: -12px;
-  background-image: url('assets/images/hero-optimized.jpg');
+  background-image: url('../../assets/images/hero-optimized.jpg');
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;

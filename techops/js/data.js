@@ -4,7 +4,8 @@
  * the Logistics site uses. Only rooms that can be assigned to groups are listed here.
  */
 (function () {
-  var IMG_DIR = "../assets/su tech floor assets/";
+  var isSub = typeof location !== "undefined" && /\/(techops|logistics|dispatch|request|tests)\//i.test(location.pathname);
+  var IMG_DIR = (isSub ? "../" : "") + "assets/floors/";
 
   /* [code, geometry]  geometry: 4 numbers = rectangle, otherwise flat x,y pairs (polygon) */
   var RAW = {
