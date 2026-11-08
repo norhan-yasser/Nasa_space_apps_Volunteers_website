@@ -1657,6 +1657,8 @@ function applyUrlRoute() {
   const params = new URLSearchParams(location.search);
   const rawTo = (params.get("to") || params.get("routeTo") || params.get("room") || "").trim();
   const rawFrom = (params.get("from") || params.get("routeFrom") || "").trim();
+  const taskId = (params.get("taskId") || params.get("task") || params.get("reportId") || "").trim();
+  const fromTeam = (params.get("fromTeam") || params.get("team") || "").trim();
   if (!rawTo) return;
   window.__urlRouteApplied = true;
 
@@ -1679,6 +1681,55 @@ function applyUrlRoute() {
   $("df").value = fromCode;
   $("dt").value = toCode;
   go();
+
+  /* Wire up Mark as Done button under the map */
+  if (taskId) {
+    const taskBar = $("dir-task-bar");
+    const taskBtn = $("task-done-btn");
+    const taskLabel = $("dir-task-label");
+    const taskText = $("task-done-text");
+    if (taskBar) taskBar.hidden = false;
+    if (taskLabel) taskLabel.textContent = "Task " + taskId;
+    
+    let destLabel = "Return";
+    const curUser = (window.TechOpsStore && window.TechOpsStore.currentUser) ? window.TechOpsStore.currentUser() : null;
+    const team = (fromTeam || (curUser && curUser.team) || "").toLowerCase();
+    if (team === "logistics") destLabel = "Return to Logistics";
+    else if (team.indexOf("comp") >= 0 || team.indexOf("dispatch") >= 0) destLabel = "Return to Competition";
+    else if (team === "techops") destLabel = "Return to Tech Ops";
+
+    if (taskText) taskText.textContent = "Mark as Done & " + destLabel;
+
+    if (taskBtn && !taskBtn.__bound) {
+      taskBtn.__bound = true;
+      taskBtn.onclick = async function () {
+        taskBtn.disabled = true;
+        const prevText = taskText ? taskText.textContent : "";
+        if (taskText) taskText.textContent = "Marking task as done…";
+        try {
+          if (window.TechOpsStore && window.TechOpsStore.resolveReport) {
+            await window.TechOpsStore.resolveReport(taskId);
+          }
+          if (window.TO && window.TO.toast) {
+            window.TO.toast("Task Done", taskId + " marked as done. Returning...", "ok");
+            if (window.TO.beep) window.TO.beep();
+          }
+          let dest = "index.html";
+          if (team === "logistics") dest = "logistics/index.html";
+          else if (team.indexOf("comp") >= 0 || team.indexOf("dispatch") >= 0) dest = "dispatch/index.html";
+          else if (team === "techops") dest = "techops/index.html";
+          
+          setTimeout(function () { location.href = dest; }, 350);
+        } catch (err) {
+          taskBtn.disabled = false;
+          if (taskText) taskText.textContent = prevText;
+          if (window.TO && window.TO.toast) {
+            window.TO.toast("Could not resolve", (err && err.message) || String(err), "bad");
+          }
+        }
+      };
+    }
+  }
 }
 
 function onMapsUnlocked() {

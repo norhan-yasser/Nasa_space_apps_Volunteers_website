@@ -141,7 +141,10 @@
     var rt = routeTarget(r);
     if (!rt) return "";
     var base = mapsPage || "../maps.html";
-    return base + "?from=" + encodeURIComponent(rt.from) + "&to=" + encodeURIComponent(rt.to);
+    var params = "from=" + encodeURIComponent(rt.from) + "&to=" + encodeURIComponent(rt.to);
+    if (r && r.id) params += "&taskId=" + encodeURIComponent(r.id);
+    if (r && r.team) params += "&fromTeam=" + encodeURIComponent(r.team);
+    return base + "?" + params;
   }
 
   function bindMobileDrawer() {

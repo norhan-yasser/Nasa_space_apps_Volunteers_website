@@ -471,6 +471,13 @@
   /* One-click claim: assigns the task to the signed-in volunteer and moves it to "In Progress". */
   function claimReport(id) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
+    if (String(id).indexOf("TUT-") === 0) {
+      if (_tutorialReports) {
+        var tr = _tutorialReports.filter(function (x) { return x.id === id; })[0];
+        if (tr) { tr.assigned = user.name; tr.status = "In Progress"; tr.claimedAt = stamp(); }
+      }
+      return Promise.resolve({ id: id, status: "In Progress", assigned: user.name });
+    }
     if (_tutorialMode && _tutorialReports) {
       var r = _tutorialReports.filter(function (x) { return x.id === id; })[0];
       if (!r) return Promise.reject(fail("missing", "Training task not found."));
@@ -491,6 +498,13 @@
   /* One-click resolve: only the volunteer who claimed the task can resolve it. */
   function resolveReport(id) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
+    if (String(id).indexOf("TUT-") === 0) {
+      if (_tutorialReports) {
+        var tr = _tutorialReports.filter(function (x) { return x.id === id; })[0];
+        if (tr) { tr.status = "Resolved"; tr.resolvedAt = stamp(); }
+      }
+      return Promise.resolve({ id: id, status: "Resolved" });
+    }
     if (_tutorialMode && _tutorialReports) {
       var r = _tutorialReports.filter(function (x) { return x.id === id; })[0];
       if (!r) return Promise.reject(fail("missing", "Training task not found."));
@@ -500,8 +514,10 @@
       return Promise.resolve({ id: r.id, status: r.status });
     }
     return guard(backend().mutateReport(id, function (r) {
-      if (r.assigned !== user.name && r.handedBy !== user.name) throw fail("claimed", "Only " + (r.assigned || "the assignee") + " can resolve this task.");
-      return { status: "Resolved", resolvedAt: stamp() };
+      if (r.assigned && r.assigned !== user.name && r.handedBy !== user.name) {
+        throw fail("claimed", "Only " + (r.assigned || "the assignee") + " can resolve this task.");
+      }
+      return { assigned: r.assigned || user.name, status: "Resolved", resolvedAt: stamp() };
     }));
   }
   /* Keep the session alive only while the site is actually open on screen; coming back after being away too long locks again. */
