@@ -10,7 +10,7 @@
   var S = {
     data: null, tab: "issues", floor: "G", layer: "zones", selected: null, pins: true, zone: null,
     issueFilter: "unassigned", issueText: "", first: true,
-    activeRoute: null, user: null, busy: {},
+    activeRoute: null, activeTaskId: null, user: null, busy: {},
     seen: jget(SEEN_KEY, []), seenMeet: jget(SEEN_MEET, []), me: "", alertsOn: false
   };
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
@@ -235,7 +235,7 @@
         : r.assigned ? '<span class="assignee' + (mine ? " me" : "") + '">' + (mine ? "Assigned to <b>You</b>" : "Assigned to <b>" + esc(r.assigned) + "</b>") + "</span>"
         : "Unclaimed — awaiting Tech Ops";
       var routeBtn = r.room
-        ? '<button type="button" class="btn small route-btn" data-route-to="' + esc(r.room) + '">Show Route</button>'
+        ? '<button type="button" class="btn small route-btn" data-route-to="' + esc(r.room) + '" data-task-id="' + esc(r.id) + '">Show Route</button>'
         : '<button type="button" class="btn small route-btn is-disabled" disabled>Show Route</button>';
 
       return '<article class="req-card' + (free ? " is-new" : mine ? " is-mine" : done ? " is-done" : "") + '">' +
@@ -273,13 +273,16 @@
   }
 
   function gotoIssueOnMap(r) {
+    S.activeTaskId = r.id;
     setTab("maps");
     S.floor = r.floor;
     map.setFloor(r.floor);
     renderMapChrome();
     selectRoom(r.room, true);
-    /* Pre-fill destination */
     $("rt-to").value = r.room;
+    var fromRoom = myCurrentRoom();
+    $("rt-from").value = fromRoom;
+    planAndShowRoute(fromRoom, r.room, r.id);
   }
 
   /* ------------------------------------------------------------ Maps & Routing Engine */
@@ -332,10 +335,19 @@
   }
 
   /* Plan and display fastest walking route between any two rooms */
-  function planAndShowRoute(fromCode, toCode) {
+  function planAndShowRoute(fromCode, toCode, explicitTaskId) {
     if (!Router) return;
     fromCode = (fromCode || "").trim();
     toCode = (toCode || "").trim();
+
+    if (explicitTaskId) {
+      S.activeTaskId = explicitTaskId;
+    } else if (!S.activeTaskId && S.data && S.data.reports) {
+      var match = S.data.reports.filter(function (r) {
+        return r.room === toCode && r.status !== "Resolved" && (!r.team || r.team === "TechOps");
+      })[0];
+      if (match) S.activeTaskId = match.id;
+    }
 
     if (!fromCode) fromCode = myCurrentRoom() || "ENTRANCE";
     if (!toCode) {
@@ -384,15 +396,30 @@
 
   function clearActiveRoute() {
     S.activeRoute = null;
+    S.activeTaskId = null;
     map.clearRoute();
     var out = $("route-output");
     if (out) { out.hidden = true; out.innerHTML = ""; }
+    var taskBar = $("map-task-bar");
+    if (taskBar) taskBar.hidden = true;
   }
 
   function renderRouteOutput(route, locA, locB) {
     var out = $("route-output");
     if (!out) return;
     out.hidden = false;
+
+    var destCode = (locB && locB.code) || $("rt-to").value.trim();
+    var activeTask = null;
+    if (S.activeTaskId && S.data && S.data.reports) {
+      activeTask = S.data.reports.filter(function (r) { return r.id === S.activeTaskId; })[0];
+    }
+    if (!activeTask && destCode && S.data && S.data.reports) {
+      activeTask = S.data.reports.filter(function (r) {
+        return r.room === destCode && r.status !== "Resolved" && (!r.team || r.team === "TechOps");
+      })[0];
+      if (activeTask) S.activeTaskId = activeTask.id;
+    }
 
     var h = '<div class="route-panel">' +
       '<div class="route-summary">' +
@@ -409,8 +436,44 @@
         '<button class="btn small" style="padding:2px 8px;font-size:11px">View Floor</button>' +
         '</div>';
     });
-    h += '</div></div>';
+    h += '</div>';
+
+    /* In-Route Mark as Done bar: resolve directly from route panel without switching back */
+    if (activeTask) {
+      h += '<div class="route-task-bar" style="margin-top:14px;padding:14px 16px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);border-radius:14px;display:flex;flex-direction:column;gap:10px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span class="badge b-prog" style="font-size:11px;padding:2px 8px">Assigned Task</span>' +
+            '<b style="font-size:13px;color:var(--ink-bright)">' + esc(activeTask.id) + '</b>' +
+          '</div>' +
+          '<span style="font-size:12px;color:var(--mut)">Room <b>' + esc(activeTask.room) + '</b></span>' +
+        '</div>' +
+        '<div style="font-size:13px;color:var(--ink-bright);font-weight:600">' + esc(activeTask.issue) + '</div>' +
+        (activeTask.details ? '<div style="font-size:12px;color:var(--mut);line-height:1.4">' + esc(activeTask.details) + '</div>' : '') +
+        '<button type="button" class="btn ok task-done-btn" data-resolve-task="' + esc(activeTask.id) + '" style="width:100%;min-height:46px;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(16,185,129,0.35);touch-action:manipulation">' +
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '<span>Mark as Done &amp; Return to Issues</span>' +
+        '</button>' +
+      '</div>';
+    }
+
+    h += '</div>';
     out.innerHTML = h;
+
+    /* Sync In-Map Task Bar right under the map */
+    var mapTaskBar = $("map-task-bar");
+    if (mapTaskBar) {
+      if (activeTask) {
+        mapTaskBar.hidden = false;
+        var idEl = $("map-task-id"), rmEl = $("map-task-room"), issEl = $("map-task-issue"), btnEl = $("map-task-done-btn");
+        if (idEl) idEl.textContent = activeTask.id;
+        if (rmEl) rmEl.textContent = "Room " + activeTask.room;
+        if (issEl) issEl.textContent = activeTask.issue + (activeTask.details ? " · " + activeTask.details : "");
+        if (btnEl) btnEl.dataset.resolveTask = activeTask.id;
+      } else {
+        mapTaskBar.hidden = true;
+      }
+    }
 
     out.querySelectorAll(".route-step").forEach(function (el) {
       el.onclick = function () {
@@ -444,7 +507,9 @@
         '</div>' +
 
         "<b>Open issues (" + iss.length + ")</b>" + (iss.length ? iss.map(function (x) {
-          return '<div class="mini-issue"><span class="badge ' + TO.issueClass(x.issue) + '">' + esc(x.issue) + '</span> <span class="badge ' + TO.statusClass(x.status) + '">' + esc(x.status) + '</span><div class="muted" style="margin-top:4px">' + esc(x.details || "") + "</div></div>";
+          return '<div class="mini-issue"><span class="badge ' + TO.issueClass(x.issue) + '">' + esc(x.issue) + '</span> <span class="badge ' + TO.statusClass(x.status) + '">' + esc(x.status) + '</span><div class="muted" style="margin-top:4px">' + esc(x.details || "") + '</div>' +
+            '<button type="button" class="btn ok small" data-resolve-task="' + esc(x.id) + '" style="margin-top:6px;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px">✓ Mark Done</button>' +
+          '</div>';
         }).join("") : '<div class="muted" style="font-size:13px;margin-top:4px">No open issues for this room.</div>') +
         
         '<div style="margin-top:14px"><b>Room QR code</b><div class="muted" style="font-size:12px;margin-bottom:6px">Scan to report an issue directly from this room.</div><div class="qr-box">' + TO.qrSvg(url, 4) + '</div></div>' +
@@ -550,7 +615,11 @@
       var issueCard = iss.length
         ? '<div style="margin-bottom:12px"><b style="font-size:13px;display:block;margin-bottom:6px">Active Issues (' + iss.length + ')</b>' +
           iss.map(function (x) {
-            return '<div style="padding:8px 10px;background:var(--card-2);border-radius:8px;margin-bottom:6px;font-size:12.5px"><span class="badge ' + TO.issueClass(x.issue) + '">' + esc(x.issue) + '</span> ' + esc(x.details || "") + '</div>';
+            return '<div style="padding:10px;background:var(--card-2);border-radius:10px;margin-bottom:8px;font-size:12.5px">' +
+              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span class="badge ' + TO.issueClass(x.issue) + '">' + esc(x.issue) + '</span><span class="muted" style="font-size:11px">' + esc(x.id) + '</span></div>' +
+              '<div>' + esc(x.details || "") + '</div>' +
+              '<button type="button" class="btn ok small" data-resolve-task="' + esc(x.id) + '" style="margin-top:8px;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px">✓ Mark Task as Done</button>' +
+            '</div>';
           }).join("") + '</div>'
         : '<div class="muted" style="font-size:13px;margin-bottom:12px">No active issues reported.</div>';
 
@@ -965,6 +1034,31 @@
   }
 
   /* ------------------------------------------------------------ Event Listeners */
+  function resolveTaskAndReturn(taskId, btn) {
+    if (!taskId) return;
+    if (btn) {
+      btn.disabled = true;
+      var span = btn.querySelector("span") || btn;
+      span.textContent = "Marking as Done…";
+    }
+    Store.resolveReport(taskId).then(function () {
+      TO.toast("Task Resolved", taskId + " marked as done.", "ok");
+      if (TO.beep) TO.beep();
+      clearActiveRoute();
+      if (window.closeMapBottomSheet) closeMapBottomSheet();
+      /* Return directly to the Issues tab as requested */
+      setTab("issues");
+      S.issueFilter = "unassigned";
+      renderIssues();
+    }).catch(function (err) {
+      console.error('Task resolution error:', err);
+      if (btn) btn.disabled = false;
+      var span = btn.querySelector("span") || btn;
+      span.textContent = "Mark as Done & Return to Issues";
+      TO.toast("Could not resolve", (err && err.message) || String(err), "bad");
+    });
+  }
+
   function bind() {
     /* Desktop Tab clicks */
     document.querySelector(".tabs").addEventListener("click", function (e) {
@@ -1104,13 +1198,17 @@
         var m = S.data.meetups.filter(function (x) { return x.id === meetId; })[0];
         if (m) openConfirmLocationModal(m);
       }
+      else if ((t = e.target.closest("[data-resolve-task]"))) {
+        resolveTaskAndReturn(t.dataset.resolveTask, t);
+      }
       else if ((t = e.target.closest("[data-route-to]"))) {
         var destRoom = t.dataset.routeTo;
+        var taskId = t.dataset.taskId || null;
         setTab("maps");
         $("rt-to").value = destRoom;
         var fromRoom = myCurrentRoom();
         $("rt-from").value = fromRoom;
-        planAndShowRoute(fromRoom, destRoom);
+        planAndShowRoute(fromRoom, destRoom, taskId);
       }
       else if ((t = e.target.closest("[data-meet]"))) {
         Store.update("meetups", t.dataset.meet, { status: t.dataset.st });
@@ -1158,6 +1256,9 @@
       map.setFloor(S.floor);
     }
     if (q.get("layer") === "heat") { S.layer = "heat"; map.setLayer("heat"); }
+    if (q.get("taskId")) {
+      S.activeTaskId = q.get("taskId");
+    }
     if (q.get("room")) {
       S.selected = q.get("room");
       map.select(S.selected);

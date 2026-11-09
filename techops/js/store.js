@@ -213,7 +213,11 @@
     return fb.signedIn().then(function () {
       return fb.db.runTransaction(function (tx) {
         return tx.get(ref).then(function (snap) {
-          if (!snap.exists) throw fail("missing", "This task no longer exists.");
+          if (!snap.exists) {
+            var localMatch = findCacheReport(id);
+            if (localMatch) return;
+            throw fail("missing", "This task no longer exists.");
+          }
           tx.update(ref, fn(snap.data()));
         });
       });
