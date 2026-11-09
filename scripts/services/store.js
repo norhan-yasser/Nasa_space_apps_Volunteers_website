@@ -15,7 +15,8 @@
   /* Firebase Auth requires http/https; when opened directly via file://, run cleanly against bundled local data with zero console errors. */
   var IS_FILE = typeof location !== "undefined" && location.protocol === "file:";
   var LIVE = !!(FB.apiKey && FB.projectId && !IS_FILE);
-  var SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
+  var SDK_PRIMARY = "https://www.gstatic.com/firebasejs/10.12.2/";
+  var SDK_FALLBACK = "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/";
   var COLS = ["rooms", "wifi", "team", "inventory", "reports", "meetups"];
   var KEYFIELD = { rooms: "code", wifi: "id", team: "name", inventory: "id", reports: "id", meetups: "id" };
   var NUMERIC = { capacity: 1, x: 1, y: 1, mbps: 1, latency: 1, qty: 1 };
@@ -154,17 +155,35 @@
 
   /* ---------------------------------------------------------------- Firebase backend */
   var fb = { db: null, auth: null, unsubs: [], boot: null };
-  function loadScript(src) {
+  function loadScript(name) {
+    if (window.firebase && window.firebase.app) {
+      if (name === "firebase-app-compat") return Promise.resolve();
+      if (name === "firebase-auth-compat" && window.firebase.auth) return Promise.resolve();
+      if (name === "firebase-firestore-compat" && window.firebase.firestore) return Promise.resolve();
+    }
     return new Promise(function (res, rej) {
-      var s = document.createElement("script"); s.src = src; s.onload = res;
-      s.onerror = function () { rej(fail("sdk", "Could not load the Firebase SDK. Check your internet connection.")); };
+      var primary = SDK_PRIMARY + name + ".js";
+      var fallback = SDK_FALLBACK + name + ".min.js";
+      var s = document.createElement("script");
+      s.src = primary;
+      s.onload = res;
+      s.onerror = function () {
+        console.warn("Primary Firebase CDN failed for " + name + ", trying fallback CDN...");
+        var fbScript = document.createElement("script");
+        fbScript.src = fallback;
+        fbScript.onload = res;
+        fbScript.onerror = function () {
+          rej(fail("sdk", "Could not load the Firebase SDK. Check your internet connection or ad-blocker."));
+        };
+        document.head.appendChild(fbScript);
+      };
       document.head.appendChild(s);
     });
   }
   fb.init = function () {
     if (fb.boot) return fb.boot;
-    fb.boot = loadScript(SDK + "firebase-app-compat.js")
-      .then(function () { return Promise.all([loadScript(SDK + "firebase-auth-compat.js"), loadScript(SDK + "firebase-firestore-compat.js")]); })
+    fb.boot = loadScript("firebase-app-compat")
+      .then(function () { return Promise.all([loadScript("firebase-auth-compat"), loadScript("firebase-firestore-compat")]); })
       .then(function () {
         /* Omit authDomain so Firebase Auth does not inject the OAuth /__/auth/iframe element (we only use Anonymous Auth). */
         if (!firebase.apps.length) firebase.initializeApp({ apiKey: FB.apiKey, projectId: FB.projectId, appId: FB.appId });
@@ -174,6 +193,9 @@
             fb.db.enablePersistence({ synchronizeTabs: true }).catch(function () {});
           }
         } catch (e) {}
+      }).catch(function (err) {
+        fb.boot = null;
+        throw err;
       });
     return fb.boot;
   };
@@ -183,7 +205,14 @@
     });
   };
   fb.signedIn = function () {
-    return fb.authUser().then(function (u) { return u || fb.auth.signInAnonymously().then(function (r) { return r.user; }); });
+    return fb.authUser().then(function (u) {
+      return u || fb.auth.signInAnonymously().then(function (r) { return r.user; });
+    }).catch(function (err) {
+      if (err && err.code === "auth/unauthorized-domain") {
+        throw fail("auth", "This domain is not authorized in Firebase Console yet. Please add logistics.spaceappscairo.com to Authentication -> Settings -> Authorized Domains.");
+      }
+      throw err;
+    });
   };
   fb.getVolunteer = function (code) {
     return fb.signedIn().then(function () { return fb.db.collection("volunteers").doc(code).get(); })

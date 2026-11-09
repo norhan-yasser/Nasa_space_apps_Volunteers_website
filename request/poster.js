@@ -6,10 +6,24 @@
   TO.initTheme();
 
   function defaultBase() {
+    /* If running on live hosted site, derive base from actual origin */
+    if (location.origin && location.origin.indexOf("http") === 0) {
+      return (location.origin + location.pathname.replace(/[^\/]*$/, "")).replace(/\/?$/, "/");
+    }
     var cfg = (window.TECHOPS_CONFIG || {}).REQUEST_BASE_URL;
     return (cfg || (location.origin + location.pathname.replace(/[^\/]*$/, ""))).replace(/\/?$/, "/");
   }
-  function savedBase() { try { return localStorage.getItem(KEY) || ""; } catch (e) { return ""; } }
+  function savedBase() {
+    try {
+      var s = localStorage.getItem(KEY) || "";
+      /* Discard stale legacy github.io URL if user previously cached it */
+      if (s && s.indexOf("norhan-yasser.github.io") !== -1 && location.hostname !== "norhan-yasser.github.io") {
+        localStorage.removeItem(KEY);
+        return "";
+      }
+      return s;
+    } catch (e) { return ""; }
+  }
   function currentBase() { return ($("base").value.trim() || defaultBase()).replace(/\/?$/, "/"); }
   function url() { return currentBase() + "form.html"; }
   function draw() { $("qr-box").innerHTML = TO.qrSvg(url(), 6); }
