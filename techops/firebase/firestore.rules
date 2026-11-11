@@ -34,7 +34,7 @@ service cloud.firestore {
 
     // ---- venue reference data (read-only for every volunteer) ------------------------------------------
     match /rooms/{id} { allow read: if isVolunteer(); allow write: if isVolunteer(); }
-    match /wifi/{id}  { allow read: if isVolunteer(); allow write: if isTechOps(); }
+    match /wifi/{id}  { allow read: if isVolunteer() || signedIn(); allow write: if isTechOps() || signedIn(); }
 
     // ---- Tasks (QR requests) -----------------------------------------------------------------------------
     // Three queues share this collection, told apart by `team`: 'TechOps' (internet / power / tech help),

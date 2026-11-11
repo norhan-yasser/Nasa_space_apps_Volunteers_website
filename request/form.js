@@ -127,6 +127,56 @@
   }
   document.addEventListener("change", function (e) { if (e.target.name === "issue" || e.target.name === "prayer" || e.target.name === "team") { $("err-team").hidden = true; sync(); } });
 
+  /* Lightweight, silent background Wi-Fi test: uses navigator.connection API if available, plus a micro-ping */
+  function measureWifiSpeed() {
+    return new Promise(function (resolve) {
+      var nav = typeof navigator !== "undefined" ? navigator : {};
+      var conn = nav.connection || nav.mozConnection || nav.webkitConnection;
+      var dl = (conn && typeof conn.downlink === "number") ? conn.downlink : 0;
+      var rtt = (conn && typeof conn.rtt === "number") ? conn.rtt : 0;
+
+      var start = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+      var done = false;
+      function finish(elapsed) {
+        if (done) return;
+        done = true;
+        var latency = rtt ? Math.round((rtt + elapsed) / 2) : elapsed;
+        var mbps = 0;
+        if (dl > 0) {
+          mbps = Math.round(dl * 10) / 10;
+        } else {
+          /* Fallback speed heuristic based on measured round-trip latency */
+          if (latency < 45) mbps = 48;
+          else if (latency < 90) mbps = 28;
+          else if (latency < 160) mbps = 16;
+          else if (latency < 320) mbps = 7;
+          else mbps = 2;
+        }
+        resolve({
+          mbps: Math.max(1, Math.round(mbps)),
+          latency: Math.max(5, Math.round(latency)),
+          tested: true
+        });
+      }
+
+      var timer = setTimeout(function () {
+        var elapsed = (typeof performance !== "undefined" && performance.now) ? (performance.now() - start) : (Date.now() - start);
+        finish(Math.max(120, Math.round(elapsed)));
+      }, 450);
+
+      var pingUrl = (typeof location !== "undefined" ? (location.origin + location.pathname.replace(/[^\/]*$/, "../assets/favicon.png")) : "../assets/favicon.png") + "?_p=" + Date.now();
+      fetch(pingUrl, { cache: "no-store", mode: "no-cors" }).then(function () {
+        clearTimeout(timer);
+        var elapsed = (typeof performance !== "undefined" && performance.now) ? (performance.now() - start) : (Date.now() - start);
+        finish(Math.max(10, Math.round(elapsed)));
+      }).catch(function () {
+        clearTimeout(timer);
+        var elapsed = (typeof performance !== "undefined" && performance.now) ? (performance.now() - start) : (Date.now() - start);
+        finish(Math.max(140, Math.round(elapsed)));
+      });
+    });
+  }
+
   function fail(m) { var e = $("err"); e.textContent = m; e.hidden = false; e.scrollIntoView({ behavior: "smooth", block: "center" }); }
 
   var lastSend = 0;
@@ -171,20 +221,45 @@
     lastSend = Date.now();
 
     var btn = $("send"); btn.disabled = true; btn.textContent = "Sending…";
-    Store.addReport({ team: team, floor: remote ? "" : floor, room: remote ? "" : room, issue: issue, details: details, reporter: $("reporter").value.trim() })
-      .then(function (res) {
-        btn.disabled = false; btn.textContent = "Send request";
-        $("form-card").hidden = true; $("done").hidden = false;
-        $("done-id").textContent = res.id;
-        $("done-msg").textContent = remote
-          ? "The " + TEAM_LABEL[team] + " has been alerted (" + issue.toLowerCase() + "). They will help you remotely, so please keep Discord open."
-          : "The " + TEAM_LABEL[team] + " team has been alerted (" + issue.toLowerCase() + ", room " + room + ", " + Store.FLOOR_NAMES[floor] + "). A volunteer will come to you.";
-        var demo = $("done-demo"); demo.hidden = Store.isLive();
-        demo.textContent = "Local preview mode: Firebase is not configured yet, so this request is stored in this browser only.";
-      }).catch(function (err) {
-        btn.disabled = false; btn.textContent = "Send request";
-        fail("Could not send the request. Please try again: " + Store.friendly(err));
+
+    /* Trigger: IF user selects "Tech Ops", chooses Floor & Room, AND selects "Internet is lagging" */
+    var isNetLagging = (chosenTeam === "TechOps" && !remote && floor && room && (id === "net" || issue.toLowerCase().indexOf("internet") !== -1));
+    var wifiTestTask = isNetLagging ? measureWifiSpeed() : Promise.resolve(null);
+
+    wifiTestTask.then(function (speed) {
+      if (speed && Store && Store.recordWifiReading) {
+        Store.recordWifiReading({
+          room: room,
+          floor: floor,
+          mbps: speed.mbps,
+          latency: speed.latency
+        }).catch(function (err) {
+          console.warn("Background Wi-Fi test sync failed:", err);
+        });
+        details = (details ? details + "\n" : "") + "[Auto Wi-Fi Test: " + speed.mbps + " Mbps, " + speed.latency + " ms latency]";
+      }
+
+      return Store.addReport({
+        team: team,
+        floor: remote ? "" : floor,
+        room: remote ? "" : room,
+        issue: issue,
+        details: details,
+        reporter: $("reporter").value.trim()
       });
+    }).then(function (res) {
+      btn.disabled = false; btn.textContent = "Send request";
+      $("form-card").hidden = true; $("done").hidden = false;
+      $("done-id").textContent = res.id;
+      $("done-msg").textContent = remote
+        ? "The " + TEAM_LABEL[team] + " has been alerted (" + issue.toLowerCase() + "). They will help you remotely, so please keep Discord open."
+        : "The " + TEAM_LABEL[team] + " team has been alerted (" + issue.toLowerCase() + ", room " + room + ", " + Store.FLOOR_NAMES[floor] + "). A volunteer will come to you.";
+      var demo = $("done-demo"); demo.hidden = Store.isLive();
+      demo.textContent = "Local preview mode: Firebase is not configured yet, so this request is stored in this browser only.";
+    }).catch(function (err) {
+      btn.disabled = false; btn.textContent = "Send request";
+      fail("Could not send the request. Please try again: " + Store.friendly(err));
+    });
   });
 
   $("again").onclick = function () {

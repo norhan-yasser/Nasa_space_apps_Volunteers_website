@@ -188,9 +188,14 @@
     this.el.classList.toggle("heat", heat);
 
     /* Wi-Fi readings that sit INSIDE a room of this floor. Points in corridors, halls or outside (outer stage)
-       are never drawn: the heatmap lives strictly in room interiors. */
-    var roomWifi = heat ? this.wifi.map(function (w) {
-      var g = w.floor === f.id ? D.roomAt(f.id, w.x, w.y) : null;
+       are never drawn: the heatmap lives strictly in room interiors.
+       ONLY display Wi-Fi data for rooms that have been tested!
+       Untested rooms appear neutral on the heatmap without any color or glow. */
+    var roomWifi = heat ? this.wifi.filter(function (w) {
+      return w && (w.tested === true || w.tested === "true");
+    }).map(function (w) {
+      var g = (w.room && f.rooms.filter(function (r) { return r.code === w.room; })[0]) ||
+              (w.floor === f.id ? D.roomAt(f.id, w.x, w.y) : null);
       return g ? { w: w, g: g } : null;
     }).filter(Boolean) : [];
 
@@ -215,6 +220,9 @@
       var isTextOnly = r.code === "CAFETERIA";
       if (heat) {
         h += '<polygon class="rm' + (sel ? " sel" : "") + '" data-code="' + r.code + '" points="' + pts(r) + '" fill="' + (isTextOnly ? "rgba(255,255,255,.001)" : "rgba(255,255,255,.04)") + '" stroke="' + (isTextOnly && !sel ? "none" : "rgba(255,255,255,.55)") + '" stroke-width="2.5"/>';
+        if (!isTextOnly) {
+          h += '<text x="' + r.cx + '" y="' + (r.cy + 6) + '" text-anchor="middle" font-size="16" font-weight="800" fill="rgba(255,255,255,.7)" stroke="rgba(0,0,0,.65)" stroke-width="3.5" paint-order="stroke" pointer-events="none">' + r.code + "</text>";
+        }
       } else if (isTextOnly) {
         h += '<polygon class="rm rm-label-hit' + (sel ? " sel" : "") + (dim ? " dim" : "") + '" data-code="' + r.code + '" points="' + pts(r) + '" fill="' + col + '" fill-opacity="' + (sel ? ".25" : ".001") + '" stroke="' + col + '" stroke-opacity="' + (sel ? "1" : "0") + '" stroke-width="2.5"/>';
       } else {

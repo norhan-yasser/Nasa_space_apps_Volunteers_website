@@ -326,7 +326,10 @@
   }
 
   function wifiFor(code) {
-    return S.data.wifi.filter(function (w) { return w.id === "WF-" + code; })[0];
+    if (!S.data || !S.data.wifi || !code) return null;
+    return S.data.wifi.filter(function (w) {
+      return w && (w.tested === true || w.tested === "true") && (w.room === code || w.id === "WF-" + code || w.id === code);
+    })[0] || null;
   }
 
   function myCurrentRoom() {
@@ -540,15 +543,15 @@
     }
 
     var rooms = d.rooms.filter(function (r) { return r.floor === S.floor; });
-    var w = d.wifi.filter(function (x) { return x.floor === S.floor; });
+    var w = d.wifi.filter(function (x) { return x.floor === S.floor && (x.tested === true || x.tested === "true"); });
     var avg = w.length ? Math.round(w.reduce(function (a, b) { return a + b.mbps; }, 0) / w.length) : 0;
     var weak = w.filter(function (x) { return x.mbps < 15; });
     var open = d.reports.filter(function (r) { return r.floor === S.floor && r.status !== "Resolved"; }).length;
     var zc = {}; rooms.forEach(function (r) { zc[r.zone] = (zc[r.zone] || 0) + 1; });
     
     side.innerHTML = "<h3>" + esc(Store.FLOOR_NAMES[S.floor]) + '</h3><div class="sub">Select any room on the blueprint or click directions.</div>' +
-      '<dl class="kv"><dt>Rooms</dt><dd>' + rooms.length + "</dd><dt>Open issues</dt><dd>" + open + "</dd><dt>Avg Wi-Fi</dt><dd>" + (avg ? '<b style="color:' + TO.speedColor(avg) + '">' + avg + " Mbps</b>" : "—") + "</dd>" +
-      "<dt>Weak spots</dt><dd>" + (weak.length ? esc(weak.map(function (x) { return x.label.replace("Room ", ""); }).join(", ")) : "None") + "</dd></dl>" +
+      '<dl class="kv"><dt>Rooms</dt><dd>' + rooms.length + "</dd><dt>Open issues</dt><dd>" + open + "</dd><dt>Avg Wi-Fi</dt><dd>" + (w.length ? '<b style="color:' + TO.speedColor(avg) + '">' + avg + " Mbps</b> (" + w.length + " tested)" : '<span class="muted">No rooms tested yet</span>') + "</dd>" +
+      "<dt>Weak spots</dt><dd>" + (weak.length ? esc(weak.map(function (x) { return (x.room || x.label.replace("Room ", "")); }).join(", ")) : (w.length ? "None" : "—")) + "</dd></dl>" +
       '<div class="row" style="margin:12px 0 10px"><button class="btn small primary" id="side-route-ent">Route from Main Entrance</button></div>' +
       "<b>Rooms by zone</b>" + Object.keys(D.ZONES).map(function (z) {
         return '<div class="row" style="margin-top:6px;gap:8px"><span class="dot" style="width:10px;height:10px;border-radius:50%;background:' + D.ZONES[z].color + '"></span><span style="flex:1">' + z + "</span><b>" + (zc[z] || 0) + "</b></div>";

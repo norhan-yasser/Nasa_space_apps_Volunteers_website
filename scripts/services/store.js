@@ -171,6 +171,7 @@
     });
   }
   fb.init = function () {
+    if (!LIVE) return Promise.resolve();
     if (fb.boot) return fb.boot;
     fb.boot = loadScript("firebase-app-compat")
       .then(function () { return Promise.all([loadScript("firebase-auth-compat"), loadScript("firebase-firestore-compat")]); })
@@ -185,6 +186,7 @@
     return fb.boot;
   };
   fb.authUser = function () {
+    if (!LIVE) return Promise.resolve(null);
     return fb.init().then(function () {
       return new Promise(function (res) {
         try {
@@ -196,6 +198,7 @@
     });
   };
   fb.signedIn = function () {
+    if (!LIVE) return Promise.resolve({ uid: "demo-user" });
     return fb.authUser().then(function (u) {
       if (u) return u;
       return fb.auth.signInAnonymously().then(function (r) { return r.user; });
@@ -207,6 +210,16 @@
     });
   };
   fb.getVolunteer = function (code) {
+    if (!LIVE) {
+      var seed = (window.TechOpsSeed && window.TechOpsSeed.volunteers) ? window.TechOpsSeed.volunteers[code] : null;
+      if (seed) return Promise.resolve(Object.assign({ "Volunteer Code": code }, seed));
+      if (code === "TO-001" || code === "TO-002") return Promise.resolve({ "Volunteer Code": code, Name: code === "TO-001" ? "Mohamed Khairy" : "Tech Volunteer", Team: "TechOps", Role: "TechOps" });
+      if (code === "LG-001" || code === "LG-002") return Promise.resolve({ "Volunteer Code": code, Name: "Logistics Volunteer", Team: "Logistics", Role: "Logistics" });
+      if (code === "CT-001") return Promise.resolve({ "Volunteer Code": "CT-001", Name: "Competition Lead", Team: "Competition", Role: "Competition" });
+      if (code === "CT-002") return Promise.resolve({ "Volunteer Code": "CT-002", Name: "Competition Volunteer", Team: "Competition", Role: "Competition" });
+      if (code === "NSAC-2026") return Promise.resolve({ "Volunteer Code": "NSAC-2026", Name: "General Volunteer", Team: "Volunteer", Role: "Volunteer" });
+      return Promise.reject(fail("invalid", "We couldn't find that volunteer code in Firebase. Check it and try again."));
+    }
     return fb.signedIn().then(function () {
       return fb.db.collection("volunteers").doc(code).get();
     }).then(function (d) {
@@ -230,6 +243,7 @@
     });
   };
   fb.bindSession = function (code) {
+    if (!LIVE) return Promise.resolve();
     return fb.signedIn().then(function (u) {
       if (!u || !u.uid) return Promise.resolve();
       return fb.db.collection("sessions").doc(u.uid).set({ code: code, at: stamp() }).catch(function () {});
@@ -237,6 +251,22 @@
   };
   fb.start = function () {
     fb.stop();
+    if (!LIVE) {
+      COLS.forEach(function (col) {
+        if (!cache[col] || !cache[col].length) {
+          var s = window.TechOpsSeed && window.TechOpsSeed[col];
+          if (s) {
+            cache[col] = Array.isArray(s) ? s.slice() : Object.keys(s).map(function (k) { var x = Object.assign({}, s[k]); x._id = k; if (!x.id) x.id = k; return x; });
+          } else {
+            cache[col] = [];
+          }
+        }
+        ready[col] = true;
+      });
+      checkReady();
+      emit();
+      return Promise.resolve();
+    }
     var prep = (user && user.code) ? fb.bindSession(user.code) : fb.signedIn();
     return prep.then(function () {
       COLS.forEach(function (col) {
@@ -254,17 +284,53 @@
     });
   };
   fb.set = function (col, id, obj) {
+    if (!LIVE) {
+      var arr = cache[col] = cache[col] || [];
+      var found = false;
+      for (var i = 0; i < arr.length; i++) {
+        if (arr[i].id === id || arr[i]._id === id) {
+          Object.assign(arr[i], obj);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        var copy = Object.assign({ id: id, _id: id }, obj);
+        arr.push(copy);
+      }
+      emit();
+      return Promise.resolve();
+    }
     return fb.signedIn().then(function () {
       return fb.db.collection(col).doc(id).set(obj, { merge: true });
     });
   };
   fb.update = function (col, id, fields) {
+    if (!LIVE) {
+      var arr = cache[col] = cache[col] || [];
+      for (var i = 0; i < arr.length; i++) {
+        if (arr[i].id === id || arr[i]._id === id) {
+          Object.assign(arr[i], fields);
+          break;
+        }
+      }
+      emit();
+      return Promise.resolve();
+    }
     return fb.signedIn().then(function () {
       return fb.db.collection(col).doc(id).update(fields);
     });
   };
   /* Transactional: two volunteers can never claim the same task. */
   fb.mutateReport = function (id, fn) {
+    if (!LIVE) {
+      var r = findCacheReport(id);
+      if (!r) throw fail("missing", "This task no longer exists.");
+      var updated = fn(r);
+      Object.assign(r, updated);
+      emit();
+      return Promise.resolve();
+    }
     return fb.signedIn().then(function () {
       var ref = fb.db.collection("reports").doc(id);
       return fb.db.runTransaction(function (tx) {
@@ -280,7 +346,10 @@
     });
   };
   fb.stop = function () { fb.unsubs.forEach(function (u) { u(); }); fb.unsubs = []; };
-  fb.signOut = function () { return fb.init().then(function () { return fb.auth.signOut().catch(function () {}); }); };
+  fb.signOut = function () {
+    if (!LIVE) return Promise.resolve();
+    return fb.init().then(function () { return fb.auth.signOut().catch(function () {}); });
+  };
 
   function backend() { return fb; }
 
@@ -452,7 +521,24 @@
       /* allRooms = every room document in Firestore (Maps also needs STAGE, PR-F, PR-M, etc.); rooms = only the ones that have geometry */
       out.allRooms = out.rooms.slice();
       if (D && D.ALL) out.rooms = out.rooms.filter(function (r) { return geo[r.code]; });
-      if (D && D.roomAt) out.wifi = out.wifi.filter(function (w) { var g = D.roomAt(w.floor, w.x, w.y); if (g) w.room = g.code; return !!g; });
+      if (out.wifi) {
+        var validRoomMap = {};
+        (out.allRooms || []).forEach(function (r) { if (r && r.code) validRoomMap[r.code] = r; });
+        out.wifi = out.wifi.filter(function (w) {
+          if (!w) return false;
+          var rc = w.room || (w.id ? w.id.replace(/^WF-/, "") : "");
+          var matched = validRoomMap[rc];
+          if (!matched) return false;
+          // Strictly only include tested Wi-Fi readings
+          if (w.tested !== true && w.tested !== "true") return false;
+          w.room = rc;
+          if (!w.floor && matched.floor) w.floor = matched.floor;
+          if (!w.floorName && matched.floorName) w.floorName = matched.floorName;
+          if (!w.x && matched.cx) w.x = matched.cx;
+          if (!w.y && matched.cy) w.y = matched.cy;
+          return true;
+        });
+      }
       return out;
     });
   }
@@ -566,10 +652,13 @@
   function logout() {
     user = null; clearSessionStorage(); TEAM = "TechOps";
     started = false; ready = {};
-    cache = { rooms: [], wifi: [], team: [], inventory: [], reports: [], meetups: [] };
-    readyP = new Promise(function (r) { readyResolve = r; });
-    fb.stop();
-    return fb.signOut().catch(function () {});
+    if (LIVE) {
+      cache = { rooms: [], wifi: [], team: [], inventory: [], reports: [], meetups: [] };
+      readyP = new Promise(function (r) { readyResolve = r; });
+      fb.stop();
+      return fb.signOut().catch(function () {});
+    }
+    return Promise.resolve();
   }
 
   /* ---------------------------------------------------------------- writes (strictly to Firebase Firestore) */
@@ -579,6 +668,53 @@
   function update(name, keyValue, fields) {
     return guard(backend().update(name, keyValue, withFloorNames(Object.assign({}, fields))));
   }
+  function recordWifiReading(data) {
+    if (!data || !data.room) return Promise.reject(fail("bad_data", "Room is required"));
+    var roomCode = String(data.room).trim().toUpperCase();
+    var floorId = String(data.floor || "").trim().toUpperCase();
+
+    var geo = null;
+    if (D && D.FLOORS) {
+      for (var i = 0; i < D.FLOORS.length; i++) {
+        var match = D.FLOORS[i].rooms.filter(function (r) { return r.code === roomCode; })[0];
+        if (match) { geo = match; if (!floorId) floorId = D.FLOORS[i].id; break; }
+      }
+    }
+    var x = geo ? geo.cx : (Number(data.x) || 0);
+    var y = geo ? geo.cy : (Number(data.y) || 0);
+    var floorName = FLOOR_NAMES[floorId] || data.floorName || "";
+    var docId = "WF-" + roomCode;
+    var nowStr = new Date().toISOString().slice(0, 16).replace("T", " ");
+
+    var wifiDoc = {
+      id: docId,
+      room: roomCode,
+      floor: floorId,
+      floorName: floorName,
+      label: "Room " + roomCode,
+      x: x,
+      y: y,
+      mbps: Math.max(1, Math.round(Number(data.mbps) || 0)),
+      latency: Math.max(1, Math.round(Number(data.latency) || 0)),
+      tested: true,
+      updated: nowStr
+    };
+
+    if (cache.wifi) {
+      var idx = -1;
+      for (var j = 0; j < cache.wifi.length; j++) {
+        if (cache.wifi[j].id === docId || cache.wifi[j].room === roomCode) { idx = j; break; }
+      }
+      if (idx >= 0) cache.wifi[idx] = Object.assign({}, cache.wifi[idx], wifiDoc);
+      else cache.wifi.push(wifiDoc);
+      emit();
+    }
+
+    return backend().set("wifi", docId, wifiDoc).then(function () {
+      return wifiDoc;
+    });
+  }
+
   function addReport(d) {
     var obj = withFloorNames({
       id: newId(d.team === "Logistics" ? "LGR" : d.team === "Competition" ? "CMP" : "RPT"), ts: stamp(), floor: d.floor || "", room: d.room || "", issue: clip(d.issue, 80), details: clip(d.details, 500),
@@ -733,7 +869,14 @@
       throw err;
     });
   }
-  function resetDemo() {}
+  function resetDemo() {
+    if (!LIVE) {
+      cache = { rooms: [], wifi: [], team: [], inventory: [], reports: [], meetups: [] };
+      ready = {};
+      started = false;
+      readyP = new Promise(function (r) { readyResolve = r; });
+    }
+  }
   function onChange(cb) { listeners.push(cb); }
 
   window.TechOpsStore = {
@@ -741,8 +884,9 @@
     login: login, restore: restore, peekUser: peekUser, logout: logout, currentUser: function () { return user; }, sessionGraceMs: GRACE,
     canAccess: canAccess, teamDisplayName: teamDisplayName, workspaceFor: workspaceFor,
     start: start, loadAll: loadAll, onChange: onChange,
-    addReport: addReport, addMeetup: addMeetup, update: update, claimReport: claimReport, resolveReport: resolveReport, handOutReport: handOutReport, resetDemo: resetDemo,
+    recordWifiReading: recordWifiReading, addReport: addReport, addMeetup: addMeetup, update: update, claimReport: claimReport, resolveReport: resolveReport, handOutReport: handOutReport, resetDemo: resetDemo,
     isTutorialCompleted: isTutorialCompleted, setTutorialCompleted: setTutorialCompleted,
     isTutorialMode: isTutorialMode, enterTutorialMode: enterTutorialMode, exitTutorialMode: exitTutorialMode
   };
+  window.Store = window.TechOpsStore;
 })();
