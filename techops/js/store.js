@@ -1,31 +1,53 @@
 /**
- * TechOps data layer (Firebase).
+ * TechOps & Venue Operations data layer — 100% Firebase Cloud Firestore (`space-apps-cairo-volunteer`).
  *
- *  AUTH  : volunteers sign in with their Volunteer Code. The code is the document id in the `volunteers`
- *          collection ({ "Name", "Volunteer Code", "Team" }); the app reads `Team` from there to pick the workspace.
- *          Firebase Anonymous Auth gives the browser an identity; `sessions/{uid}` links it to the code so the
- *          Firestore rules can tell who is a TechOps volunteer (see firebase/firestore.rules).
- *  DATA  : Firestore collections rooms, wifi, team, inventory, reports, meetups, streamed in real time
- *          with onSnapshot (reports are limited to team == "TechOps").
- *  LOCAL : when js/firebase-config.js is empty the same API runs against bundled DUMMY data kept in
- *          localStorage, so the UI can be previewed without a Firebase project.
+ *  AUTH  : Volunteers sign in with their Volunteer Code. The code is looked up directly in the Firestore
+ *          `volunteers` collection ({ "Name", "Volunteer Code", "Team" }); the app reads `Team` from there
+ *          to pick the workspace and enforce access control.
+ *  DATA  : All collections (`rooms`, `wifi`, `team`, `inventory`, `reports`, `meetups`) are streamed and mutated
+ *          live from Firebase Firestore with `onSnapshot` — no local or static seed files are used.
  */
 (function () {
   var FB = window.TECHOPS_FIREBASE || {}, D = window.TechOpsData;
-  /* Firebase Auth requires http/https; when opened directly via file://, run cleanly against bundled local data with zero console errors. */
-  var IS_FILE = typeof location !== "undefined" && location.protocol === "file:";
-  var LIVE = !!(FB.apiKey && FB.projectId && !IS_FILE);
+  var LIVE = !!(FB.apiKey && FB.projectId);
   var SDK_PRIMARY = "https://www.gstatic.com/firebasejs/10.12.2/";
   var SDK_FALLBACK = "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/";
   var COLS = ["rooms", "wifi", "team", "inventory", "reports", "meetups"];
   var KEYFIELD = { rooms: "code", wifi: "id", team: "name", inventory: "id", reports: "id", meetups: "id" };
   var NUMERIC = { capacity: 1, x: 1, y: 1, mbps: 1, latency: 1, qty: 1 };
   var FLOOR_NAMES = { B: "Basement", G: "Ground Floor", F: "First Floor", S: "Second Floor" };
-  var TYPE_LABEL = { "chairs": "Classroom", "small lecture": "Small Lecture Hall", "bring your device": "Bring Your Own Device", "lecture": "Lecture Hall" };
-  var SESSION_KEY = "techops_volunteer_code", SESSION_SEEN = "techops_session_seen", SESSION_USER = "techops_volunteer_user", LOCAL_KEY = "techops_local_db_v1";
-  /* SECURITY: the volunteer login lives in sessionStorage (it dies with the tab, never survives a browser restart) and
-   * also expires when the person was away from the site for longer than SESSION_GRACE_MS (default 5 min). */
+  var FLOOR_SHORT = { B: "Basement", G: "Ground", F: "First", S: "Second" };
+  var TYPE_LABEL = {
+    "chairs": "Classroom",
+    "cr": "Classroom",
+    "classroom": "Classroom",
+    "small lecture": "Small Lecture Hall",
+    "slh": "Small Lecture Hall",
+    "small lecture hall": "Small Lecture Hall",
+    "bring your device": "Bring Your Own Device",
+    "byod": "Bring Your Own Device",
+    "bring your own device": "Bring Your Own Device",
+    "lecture": "Lecture Hall",
+    "lh": "Lecture Hall",
+    "lecture hall": "Lecture Hall",
+    "outer stage": "Outer Stage",
+    "stage": "Outer Stage",
+    "prayer room": "Prayer Room",
+    "cafeteria": "Cafeteria",
+    "break area": "Break Area"
+  };
+  var SESSION_KEY = "techops_volunteer_code", SESSION_SEEN = "techops_session_seen", SESSION_USER = "techops_volunteer_user";
   var GRACE = Number((window.TECHOPS_CONFIG || {}).SESSION_GRACE_MS) || (24 * 60 * 60 * 1000);
+
+  /* Purge any legacy local/static cache keys so only live Firebase Firestore data is ever used */
+  try {
+    localStorage.removeItem("techops_local_db_v1");
+    localStorage.removeItem("techops_firestore_cache_v2");
+    localStorage.removeItem("rooms_fb_v2");
+    localStorage.removeItem("rooms");
+    localStorage.removeItem("nasa_gsheet_url");
+  } catch (e) {}
+
   function sget(k) {
     try {
       return sessionStorage.getItem(k) || localStorage.getItem(k) || "";
@@ -59,6 +81,7 @@
   }
   function markSeen() { if (sget(SESSION_KEY)) sset(SESSION_SEEN, String(Date.now())); }
   function sessionFresh() { var t = Number(sget(SESSION_SEEN)) || 0; return !!t && Date.now() - t <= GRACE; }
+
   /* Which task queue this browser reads: "TechOps", "Logistics", or "Competition" (strictly isolated per role). */
   var TEAM = "TechOps";
   function setTeam(u) {
@@ -67,10 +90,6 @@
     else TEAM = "TechOps";
   }
 
-  function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
-  function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  function lget(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
-  function lset(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function stamp(d) {
     d = d || new Date();
@@ -82,7 +101,13 @@
     return isNaN(d) ? null : d;
   }
   function floorId(name) {
-    for (var id in FLOOR_NAMES) if (FLOOR_NAMES[id].toLowerCase() === String(name || "").trim().toLowerCase()) return id;
+    var s = String(name || "").trim().toLowerCase();
+    if (!s) return "";
+    if (s === "b" || s.indexOf("basement") === 0) return "B";
+    if (s === "g" || s.indexOf("ground") === 0) return "G";
+    if (s === "f" || s.indexOf("first") === 0) return "F";
+    if (s === "s" || s.indexOf("second") === 0) return "S";
+    for (var id in FLOOR_NAMES) if (FLOOR_NAMES[id].toLowerCase() === s) return id;
     return "";
   }
   function newId(prefix) {
@@ -100,48 +125,13 @@
     return (e && e.message) || "Something went wrong.";
   }
 
-  /* ---------------------------------------------------------------- shared state */
-  var cache = {}, ready = {}, listeners = [], user = null, started = false, lastError = null;
+  /* ---------------------------------------------------------------- live state (backed strictly by Firestore) */
+  var cache = { rooms: [], wifi: [], team: [], inventory: [], reports: [], meetups: [] };
+  var ready = {}, listeners = [], user = null, started = false, lastError = null;
   var emitT = 0, readyResolve, readyP = new Promise(function (r) { readyResolve = r; });
-  var CACHE_KEY = "techops_firestore_cache_v2";
-
-  function loadPersistedCache() {
-    var raw = jget(CACHE_KEY, null);
-    if (raw && typeof raw === "object") {
-      COLS.forEach(function (c) {
-        if (Array.isArray(raw[c]) && raw[c].length > 0) {
-          cache[c] = raw[c];
-        }
-      });
-    }
-    var seed = window.TECHOPS_SEED || {};
-    COLS.forEach(function (c) {
-      if (!cache[c] || cache[c].length === 0) {
-        if (seed[c]) {
-          cache[c] = Object.keys(seed[c]).map(function (k) {
-            var o = Object.assign({}, seed[c][k]);
-            o._id = k;
-            return o;
-          });
-        } else {
-          cache[c] = [];
-        }
-      }
-    });
-  }
-
-  function savePersistedCache() {
-    try {
-      jset(CACHE_KEY, cache);
-    } catch (e) {}
-  }
-
-  /* Hydrate cache immediately on script execution for instantaneous 0ms initial render */
-  loadPersistedCache();
 
   function emit() { clearTimeout(emitT); emitT = setTimeout(function () { listeners.forEach(function (f) { f({ kind: "data" }); }); }, 25); }
   function checkReady() {
-    savePersistedCache();
     var critical = (TEAM === "TechOps") ? COLS : ["reports", "rooms"];
     if (critical.every(function (c) { return ready[c]; })) {
       if (readyResolve) readyResolve();
@@ -153,7 +143,7 @@
     return cache.reports.filter(function (r) { return r && (r.id === id || r._id === id); })[0] || null;
   }
 
-  /* ---------------------------------------------------------------- Firebase backend */
+  /* ---------------------------------------------------------------- Firebase Firestore backend */
   var fb = { db: null, auth: null, unsubs: [], boot: null };
   function loadScript(name) {
     if (window.firebase && window.firebase.app) {
@@ -185,14 +175,9 @@
     fb.boot = loadScript("firebase-app-compat")
       .then(function () { return Promise.all([loadScript("firebase-auth-compat"), loadScript("firebase-firestore-compat")]); })
       .then(function () {
-        /* Omit authDomain so Firebase Auth does not inject the OAuth /__/auth/iframe element (we only use Anonymous Auth). */
         if (!firebase.apps.length) firebase.initializeApp({ apiKey: FB.apiKey, projectId: FB.projectId, appId: FB.appId });
-        fb.auth = firebase.auth(); fb.db = firebase.firestore();
-        try {
-          if (fb.db.enablePersistence) {
-            fb.db.enablePersistence({ synchronizeTabs: true }).catch(function () {});
-          }
-        } catch (e) {}
+        fb.auth = firebase.auth();
+        fb.db = firebase.firestore();
       }).catch(function (err) {
         fb.boot = null;
         throw err;
@@ -201,45 +186,87 @@
   };
   fb.authUser = function () {
     return fb.init().then(function () {
-      return new Promise(function (res) { var off = fb.auth.onAuthStateChanged(function (u) { off(); res(u); }); });
+      return new Promise(function (res) {
+        try {
+          var off = fb.auth.onAuthStateChanged(function (u) { off(); res(u); }, function () { res(null); });
+        } catch (e) {
+          res(null);
+        }
+      });
     });
   };
   fb.signedIn = function () {
     return fb.authUser().then(function (u) {
-      return u || fb.auth.signInAnonymously().then(function (r) { return r.user; });
+      if (u) return u;
+      return fb.auth.signInAnonymously().then(function (r) { return r.user; });
     }).catch(function (err) {
-      if (err && err.code === "auth/unauthorized-domain") {
-        throw fail("auth", "This domain is not authorized in Firebase Console yet. Please add logistics.spaceappscairo.com to Authentication -> Settings -> Authorized Domains.");
-      }
+      /* If opened via file:// or if Anonymous Auth is restricted by browser environment,
+         still allow direct Firestore queries against space-apps-cairo-volunteer. */
+      if (fb.db) return null;
       throw err;
     });
   };
   fb.getVolunteer = function (code) {
-    return fb.signedIn().then(function () { return fb.db.collection("volunteers").doc(code).get(); })
-      .then(function (d) { return d.exists ? d.data() : null; });
+    return fb.signedIn().then(function () {
+      return fb.db.collection("volunteers").doc(code).get();
+    }).then(function (d) {
+      if (d && d.exists) {
+        return Object.assign({ "Volunteer Code": d.id }, d.data());
+      }
+      /* Fallback query in case a volunteer document was created with an auto-generated ID in Firebase Console */
+      return fb.db.collection("volunteers").where("Volunteer Code", "==", code).limit(1).get().then(function (snap) {
+        if (snap && !snap.empty) {
+          var doc = snap.docs[0];
+          return Object.assign({ "Volunteer Code": code }, doc.data());
+        }
+        return fb.db.collection("volunteers").where("code", "==", code).limit(1).get().then(function (snap2) {
+          if (snap2 && !snap2.empty) {
+            var doc2 = snap2.docs[0];
+            return Object.assign({ "Volunteer Code": code }, doc2.data());
+          }
+          return null;
+        });
+      });
+    });
   };
   fb.bindSession = function (code) {
-    return fb.signedIn().then(function (u) { return fb.db.collection("sessions").doc(u.uid).set({ code: code, at: stamp() }); });
+    return fb.signedIn().then(function (u) {
+      if (!u || !u.uid) return Promise.resolve();
+      return fb.db.collection("sessions").doc(u.uid).set({ code: code, at: stamp() }).catch(function () {});
+    });
   };
   fb.start = function () {
+    fb.stop();
     var prep = (user && user.code) ? fb.bindSession(user.code) : fb.signedIn();
     return prep.then(function () {
       COLS.forEach(function (col) {
         var ref = fb.db.collection(col);
         if (col === "reports") ref = ref.where("team", "==", TEAM);
         fb.unsubs.push(ref.onSnapshot(function (snap) {
+          lastError = null;
           cache[col] = snap.docs.map(function (d) { var o = d.data(); o._id = d.id; return o; });
           ready[col] = true; checkReady(); emit();
-        }, function (err) { lastError = err; ready[col] = true; checkReady(); emit(); }));
+        }, function (err) {
+          lastError = err;
+          ready[col] = true; checkReady(); emit();
+        }));
       });
     });
   };
-  fb.set = function (col, id, obj) { return fb.signedIn().then(function () { return fb.db.collection(col).doc(id).set(obj); }); };
-  fb.update = function (col, id, fields) { return fb.signedIn().then(function () { return fb.db.collection(col).doc(id).update(fields); }); };
+  fb.set = function (col, id, obj) {
+    return fb.signedIn().then(function () {
+      return fb.db.collection(col).doc(id).set(obj, { merge: true });
+    });
+  };
+  fb.update = function (col, id, fields) {
+    return fb.signedIn().then(function () {
+      return fb.db.collection(col).doc(id).update(fields);
+    });
+  };
   /* Transactional: two volunteers can never claim the same task. */
   fb.mutateReport = function (id, fn) {
-    var ref = fb.db.collection("reports").doc(id);
     return fb.signedIn().then(function () {
+      var ref = fb.db.collection("reports").doc(id);
       return fb.db.runTransaction(function (tx) {
         return tx.get(ref).then(function (snap) {
           if (!snap.exists) {
@@ -253,60 +280,56 @@
     });
   };
   fb.stop = function () { fb.unsubs.forEach(function (u) { u(); }); fb.unsubs = []; };
-  fb.signOut = function () { return fb.init().then(function () { return fb.auth.signOut(); }); };
+  fb.signOut = function () { return fb.init().then(function () { return fb.auth.signOut().catch(function () {}); }); };
 
-  /* ---------------------------------------------------------------- Local preview backend (dummy data) */
-  var channel = ("BroadcastChannel" in window) ? new BroadcastChannel("techops_local") : null;
-  var loc = {
-    db: function () {
-      var d = jget(LOCAL_KEY, null);
-      var seed = window.TECHOPS_SEED || {};
-      if (!d) {
-        d = JSON.parse(JSON.stringify(seed));
-        jset(LOCAL_KEY, d);
-      } else if (seed.volunteers) {
-        /* Auto-sync new volunteers from seed into existing cached localStorage */
-        d.volunteers = Object.assign({}, seed.volunteers, d.volunteers || {});
-      }
-      return d;
-    },
-    save: function (d) { jset(LOCAL_KEY, d); if (channel) channel.postMessage({ at: Date.now() }); },
-    refresh: function () {
-      var d = loc.db();
-      COLS.forEach(function (c) {
-        cache[c] = Object.keys(d[c] || {}).map(function (k) { var o = Object.assign({}, d[c][k]); o._id = k; return o; });
-        ready[c] = true;
-      });
-      cache.reports = cache.reports.filter(function (r) { return (r.team || "TechOps") === TEAM; });
-      checkReady();
-    },
-    getVolunteer: function (code) {
-      var d = loc.db();
-      var seedV = (window.TECHOPS_SEED && window.TECHOPS_SEED.volunteers) || {};
-      return Promise.resolve((d.volunteers && d.volunteers[code]) || seedV[code] || null);
-    },
-    set: function (col, id, obj) { var d = loc.db(); (d[col] = d[col] || {})[id] = obj; loc.save(d); loc.refresh(); emit(); return Promise.resolve(); },
-    update: function (col, id, fields) {
-      var d = loc.db(); if (!d[col] || !d[col][id]) return Promise.reject(fail("missing", "Record not found."));
-      Object.assign(d[col][id], fields); loc.save(d); loc.refresh(); emit(); return Promise.resolve();
-    },
-    mutateReport: function (id, fn) {
-      var d = loc.db(), r = d.reports && d.reports[id];
-      if (!r) return Promise.reject(fail("missing", "This task no longer exists."));
-      try { Object.assign(r, fn(r)); } catch (e) { return Promise.reject(e); }
-      loc.save(d); loc.refresh(); emit(); return Promise.resolve();
-    }
-  };
-  function backend() { return LIVE ? fb : loc; }
+  function backend() { return fb; }
 
   /* ---------------------------------------------------------------- normalise */
   function normaliseRoom(r) {
-    var t = String(r["Room Type"] || "").trim();
+    var code = String(r.code || r._id || "").trim();
+    var fl = r.floor || floorId(r.floorName || r.Floor) || "G";
+    var flName = FLOOR_NAMES[fl] || "";
+    var rawType = String(r.type || r["Room Type"] || r.roomType || "").trim();
+    var displayType = TYPE_LABEL[rawType.toLowerCase()] || rawType || "Classroom";
+    var teamsList = Array.isArray(r.teams)
+      ? r.teams.map(function (s) { return String(s || "").trim(); }).filter(Boolean)
+      : (r.teams ? String(r.teams).split(/[;,]/).map(function (s) { return s.trim(); }).filter(Boolean) : []);
+    var capVal = r.cap !== undefined && r.cap !== ""
+      ? Number(r.cap)
+      : (r.capacity !== undefined && r.capacity !== "" ? Number(r.capacity) : 0);
+    var rawMode = String(r.mode || r.zone || r.assigned || "Unassigned").trim();
+    var normMode = /^participants$/i.test(rawMode)
+      ? "Participants"
+      : /^volunteers$/i.test(rawMode)
+        ? "Volunteers"
+        : /^judges$/i.test(rawMode)
+          ? "Judges"
+          : /^mentors$/i.test(rawMode)
+            ? "Mentors"
+            : /^vips?$/i.test(rawMode)
+              ? "VIPs"
+              : (rawMode || "Unassigned");
+    var rawAccess = String(r.access || "").trim().toLowerCase();
+    var normAccess = (rawAccess === "no" || rawAccess === "restricted" || r.type === "X") ? "no" : "ok";
+    var vcapVal = r.vcap !== undefined && r.vcap !== "" ? Number(r.vcap) : 0;
+
     return {
-      code: r.code || r._id, floor: r.floor || floorId(r.floorName),
-      wing: r.Wing || "", roomNo: r["Room No."] || "", type: TYPE_LABEL[t.toLowerCase()] || t,
-      capacity: Number(r["Assigned Capacity"]) || 0, physicalCapacity: Number(r["Physical Capacity"]) || 0,
-      zone: r.zone || "", assigned: r["Room Use / Function"] || "", contact: ""
+      code: code,
+      name: r.name || "",
+      floor: fl,
+      floorName: flName,
+      type: displayType,
+      capacity: capVal,
+      cap: capVal,
+      mode: normMode,
+      zone: normMode,
+      assigned: normMode === "Unassigned" ? "" : normMode,
+      resp: r.resp || "",
+      access: normAccess,
+      chal: r.chal || "",
+      teams: teamsList,
+      vteam: r.vteam || "",
+      vcap: vcapVal
     };
   }
   function normalise(col, docs) {
@@ -343,12 +366,12 @@
   function initTutorialReports() {
     return [
       { id: "TUT-TO-01", ts: stamp(), floor: "G", floorName: "Ground Floor", room: "C026", issue: "Internet is lagging", details: "[Training Ticket] Wi-Fi speed dropping intermittently for Team Aurora during presentation setup.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Aurora", team: "TechOps" },
-      { id: "TUT-TO-02", ts: stamp(), floor: "F", floorName: "First Floor", room: "B133", issue: "Need TechOps assistance", details: "[Training Ticket] Projector HDMI resolution is not detected by presenter laptop.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Judges Panel 1", team: "TechOps" },
+      { id: "TUT-TO-02", ts: stamp(), floor: "F", floorName: "First Floor", room: "C133", issue: "Need TechOps assistance", details: "[Training Ticket] Projector HDMI resolution is not detected by presenter laptop.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Judges Panel 1", team: "TechOps" },
       { id: "TUT-TO-03", ts: stamp(), floor: "F", floorName: "First Floor", room: "C139", issue: "Electricity / Power problem", details: "[Training Ticket] Outlet tripped at back desk, requesting power extension strip.", status: "In Progress", assigned: "Mohamed Khairy", claimedAt: stamp(), resolvedAt: "", reporter: "Team Nova", team: "TechOps" },
 
-      { id: "TUT-LG-01", ts: stamp(), floor: "S", floorName: "Second Floor", room: "C231", issue: "Help request", details: "[Training Ticket] Lost participant badge, requesting replacement lanyard and badge.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Vega", team: "Logistics" },
-      { id: "TUT-LG-02", ts: stamp(), floor: "F", floorName: "First Floor", room: "H113", issue: "Prayer request", details: "[Training Ticket] Nearest direction to Women prayer hall.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Participant Sarah", team: "Logistics" },
-      { id: "TUT-LG-03", ts: stamp(), floor: "G", floorName: "Ground Floor", room: "S016", issue: "Go to a place", details: "[Training Ticket] Guidance escort from entrance to main auditorium.", status: "In Progress", assigned: "Norhan Yasser", claimedAt: stamp(), resolvedAt: "", reporter: "Guest Speaker", team: "Logistics" },
+      { id: "TUT-LG-01", ts: stamp(), floor: "S", floorName: "Second Floor", room: "B231", issue: "Help request", details: "[Training Ticket] Lost participant badge, requesting replacement lanyard and badge.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Vega", team: "Logistics" },
+      { id: "TUT-LG-02", ts: stamp(), floor: "F", floorName: "First Floor", room: "A113", issue: "Prayer request", details: "[Training Ticket] Nearest direction to Women prayer hall.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Participant Sarah", team: "Logistics" },
+      { id: "TUT-LG-03", ts: stamp(), floor: "G", floorName: "Ground Floor", room: "B016", issue: "Go to a place", details: "[Training Ticket] Guidance escort from entrance to main auditorium.", status: "In Progress", assigned: "Norhan Yasser", claimedAt: stamp(), resolvedAt: "", reporter: "Guest Speaker", team: "Logistics" },
 
       { id: "TUT-CMP-01", ts: stamp(), floor: "", floorName: "", room: "", issue: "Discord issue", details: "[Training Ticket] Discord server invite link expired for two teammates joining late.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Team Orion · @mariam_a", team: "Competition" },
       { id: "TUT-CMP-02", ts: stamp(), floor: "F", floorName: "First Floor", room: "B130", issue: "Judge & Room Inquiry", details: "[Training Ticket] Lead evaluator requested room guidance to mentor and judging lab B130.", status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: "Evaluation Desk", team: "Competition" },
@@ -389,11 +412,6 @@
     _tutorialMode = false;
     _tutorialRole = null;
     _tutorialReports = null;
-    if (!LIVE) {
-      loc.refresh();
-      COLS.forEach(function (c) { ready[c] = true; });
-      if (readyResolve) readyResolve();
-    }
     emit();
   }
 
@@ -401,25 +419,25 @@
   function start() {
     if (started) return readyP;
     started = true;
-    if (LIVE) {
-      fb.start().catch(function (e) { lastError = e; COLS.forEach(function (c) { ready[c] = true; }); checkReady(); emit(); });
-    } else {
-      loc.refresh();
-      if (channel) channel.onmessage = function () { loc.refresh(); emit(); };
-      window.addEventListener("storage", function (e) { if (e.key === LOCAL_KEY) { loc.refresh(); emit(); } });
-    }
-    setTimeout(readyResolve, 4000);
+    fb.start().catch(function (e) {
+      lastError = e;
+      COLS.forEach(function (c) { ready[c] = true; });
+      checkReady();
+      emit();
+    });
+    setTimeout(readyResolve, 5000);
     return readyP;
   }
   function loadAll() {
-    /* Stale-while-revalidate / Cache-first: if in-memory/persisted cache exists, return immediately (0ms) */
-    var hasData = COLS.some(function (c) { return cache[c] && cache[c].length > 0; });
-    var p = (_tutorialMode || hasData) ? Promise.resolve() : readyP;
+    if (!started) start();
+    var critical = (TEAM === "TechOps") ? COLS : ["reports", "rooms"];
+    var isSynced = critical.every(function (c) { return ready[c]; });
+    var p = (_tutorialMode || isSynced) ? Promise.resolve() : readyP;
     return p.then(function () {
       var geo = {};
       if (D && D.ALL) D.ALL.forEach(function (g) { geo[g.code] = 1; });
-      var isSynced = !LIVE || ((TEAM === "TechOps" ? COLS : ["reports", "rooms"]).every(function (c) { return ready[c]; }));
-      var out = { meta: { live: LIVE, online: !lastError, synced: isSynced, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
+      var nowSynced = critical.every(function (c) { return ready[c]; });
+      var out = { meta: { live: LIVE, online: !lastError, synced: nowSynced, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
       COLS.forEach(function (c) { out[c] = normalise(c, cache[c] || []); });
       if (_tutorialMode && _tutorialReports) {
         var tr = String(_tutorialRole || TEAM || (user && (user.role || user.team)) || "").toLowerCase();
@@ -431,9 +449,9 @@
       } else {
         out.reports = (out.reports || []).filter(function (r) { return (r.team || "TechOps") === TEAM; });
       }
-      /* only rooms that exist on the floor plans can be drawn / routed to */
+      /* allRooms = every room document in Firestore (Maps also needs STAGE, PR-F, PR-M, etc.); rooms = only the ones that have geometry */
+      out.allRooms = out.rooms.slice();
       if (D && D.ALL) out.rooms = out.rooms.filter(function (r) { return geo[r.code]; });
-      /* Wi-Fi readings only count when the point is physically INSIDE a room: corridor / hall / outer-stage points are erased */
       if (D && D.roomAt) out.wifi = out.wifi.filter(function (w) { var g = D.roomAt(w.floor, w.x, w.y); if (g) w.room = g.code; return !!g; });
       return out;
     });
@@ -441,11 +459,14 @@
 
   /* ---------------------------------------------------------------- auth & RBAC */
   function normalizeCode(c) { return String(c || "").trim().toUpperCase().replace(/\s+/g, ""); }
-  function toUser(v) {
-    if (!v || !v.Name) return null;
-    var team = String(v.Team || "");
-    var role = String(v.Role || (team.toLowerCase() === "admin" ? "Admin" : team));
-    return { name: String(v.Name), code: String(v["Volunteer Code"] || ""), team: team, role: role };
+  function toUser(v, fallbackCode) {
+    if (!v) return null;
+    var name = v.Name || v.name || "";
+    if (!name) return null;
+    var code = String(v["Volunteer Code"] || v.code || v.volunteerCode || fallbackCode || "");
+    var team = String(v.Team || v.team || "Volunteers");
+    var role = String(v.Role || v.role || (team.toLowerCase() === "admin" ? "Admin" : team));
+    return { name: String(name), code: code, team: team, role: role };
   }
   function saveSessionUser(code, u) {
     sset(SESSION_KEY, code);
@@ -477,7 +498,6 @@
     if (t === "Admin" || r === "Admin") return true;
     var m = String(moduleId || "").trim().toLowerCase();
     if (m === "poster" || m === "overview") return true;
-    /* Tech Ops has its own dedicated Maps & Route tab inside Tech Ops, so they do not use the external Maps module */
     if (m === "maps") return t !== "TechOps";
     if (m === "logistics") return t === "Logistics";
     if (m === "competition" || m === "dispatch") return t === "Competition" || t === "Dispatch";
@@ -504,61 +524,76 @@
   function login(code) {
     code = normalizeCode(code);
     if (!/^[A-Z0-9_-]{2,40}$/.test(code)) return Promise.reject(fail("invalid", "That volunteer code is not valid."));
-    return backend().getVolunteer(code).then(function (v) {
-      var u = toUser(v);
-      if (!u) throw fail("invalid", "We couldn't find that volunteer code. Check it and try again.");
-      return (LIVE ? fb.bindSession(code) : Promise.resolve()).then(function () { user = u; setTeam(u); saveSessionUser(code, u); return u; });
+    return fb.getVolunteer(code).then(function (v) {
+      var u = toUser(v, code);
+      if (!u) throw fail("invalid", "We couldn't find that volunteer code in Firebase. Check it and try again.");
+      var prevTeam = TEAM;
+      user = u;
+      setTeam(u);
+      saveSessionUser(code, u);
+      if (started && prevTeam !== TEAM) {
+        ready.reports = false;
+        fb.start().catch(function () {});
+      }
+      return fb.bindSession(code).then(function () { return u; });
     });
   }
   function restore() {
     var code = sget(SESSION_KEY);
     if (!code) { clearSessionStorage(); return Promise.resolve(null); }
-    if (!sessionFresh()) { clearSessionStorage(); if (LIVE) fb.signOut().catch(function () {}); return Promise.resolve(null); }
+    if (!sessionFresh()) { clearSessionStorage(); fb.signOut().catch(function () {}); return Promise.resolve(null); }
     var cached = peekUser();
-    if (cached) {
-      if (LIVE) fb.bindSession(code).catch(function () {});
-      return Promise.resolve(cached);
-    }
-    var check = LIVE ? fb.getVolunteer(code) : loc.getVolunteer(code);
-    return check.then(function (v) {
-      user = toUser(v); setTeam(user);
+    /* Always verify against Firestore `volunteers` collection in the background/foreground */
+    return fb.getVolunteer(code).then(function (v) {
+      var prevTeam = TEAM;
+      user = toUser(v, code);
+      setTeam(user);
       if (!user) {
         clearSessionStorage();
-      } else {
-        saveSessionUser(code, user);
-        if (LIVE) fb.bindSession(code).catch(function () {});
+        return null;
       }
+      saveSessionUser(code, user);
+      if (started && prevTeam !== TEAM) {
+        ready.reports = false;
+        fb.start().catch(function () {});
+      }
+      fb.bindSession(code).catch(function () {});
       return user;
-    }, function () { return null; });
+    }, function () {
+      return cached || null;
+    });
   }
   function logout() {
     user = null; clearSessionStorage(); TEAM = "TechOps";
-    started = false; ready = {}; cache = {}; readyP = new Promise(function (r) { readyResolve = r; });
-    if (LIVE) { fb.stop(); return fb.signOut().catch(function () {}); }
-    return Promise.resolve();
+    started = false; ready = {};
+    cache = { rooms: [], wifi: [], team: [], inventory: [], reports: [], meetups: [] };
+    readyP = new Promise(function (r) { readyResolve = r; });
+    fb.stop();
+    return fb.signOut().catch(function () {});
   }
 
-  /* ---------------------------------------------------------------- writes */
+  /* ---------------------------------------------------------------- writes (strictly to Firebase Firestore) */
   function guard(p) {
     return p.catch(function (e) { if (window.TO) TO.toast("Couldn't save", friendly(e), "bad"); throw e; });
   }
-  function update(name, keyValue, fields) { return guard(backend().update(name, keyValue, withFloorNames(Object.assign({}, fields)))); }
+  function update(name, keyValue, fields) {
+    return guard(backend().update(name, keyValue, withFloorNames(Object.assign({}, fields))));
+  }
   function addReport(d) {
     var obj = withFloorNames({
       id: newId(d.team === "Logistics" ? "LGR" : d.team === "Competition" ? "CMP" : "RPT"), ts: stamp(), floor: d.floor || "", room: d.room || "", issue: clip(d.issue, 80), details: clip(d.details, 500),
       status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: clip(d.reporter, 60), team: d.team === "Logistics" || d.team === "Competition" ? d.team : "TechOps"
     });
-    return backend().set("reports", obj.id, obj).then(function () { return { id: obj.id, demo: !LIVE }; });
+    return backend().set("reports", obj.id, obj).then(function () { return { id: obj.id, demo: false }; });
   }
   function addMeetup(d) {
     var obj = withFloorNames({
       id: newId("MTG"), ts: stamp(), by: d.by, target: d.target, byFloor: d.byFloor, byRoom: d.byRoom,
       targetFloor: d.targetFloor || "", targetRoom: d.targetRoom || "", meetAt: d.meetAt || "", note: clip(d.note, 300), status: d.status || "Pending"
     });
-    return guard(backend().set("meetups", obj.id, obj)).then(function () { return { id: obj.id, demo: !LIVE }; });
+    return guard(backend().set("meetups", obj.id, obj)).then(function () { return { id: obj.id, demo: false }; });
   }
-  /* One-click claim: assigns the task to the signed-in volunteer and moves it to "In Progress".
-   * Performs an instant optimistic update (<16ms) in local cache, then syncs with Firestore in the background. */
+  /* One-click claim: assigns the task to the signed-in volunteer and moves it to "In Progress". */
   function claimReport(id) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
     if (String(id).indexOf("TUT-") === 0) {
@@ -589,7 +624,6 @@
       target.assigned = user.name;
       target.status = "In Progress";
       target.claimedAt = stamp();
-      savePersistedCache();
       emit();
     }
 
@@ -600,14 +634,12 @@
     })).catch(function (err) {
       if (target && backup) {
         Object.assign(target, backup);
-        savePersistedCache();
         emit();
       }
       throw err;
     });
   }
-  /* One-click resolve: only the volunteer who claimed the task can resolve it.
-   * Performs an instant optimistic update (<16ms) in local cache, then syncs with Firestore in the background. */
+  /* One-click resolve: only the volunteer who claimed the task can resolve it. */
   function resolveReport(id) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
     if (String(id).indexOf("TUT-") === 0) {
@@ -636,7 +668,6 @@
       target.status = "Resolved";
       target.resolvedAt = stamp();
       target.assigned = target.assigned || user.name;
-      savePersistedCache();
       emit();
     }
 
@@ -648,7 +679,6 @@
     })).catch(function (err) {
       if (target && backup) {
         Object.assign(target, backup);
-        savePersistedCache();
         emit();
       }
       throw err;
@@ -665,8 +695,7 @@
     window.addEventListener("pageshow", function () { if (!expireIfStale()) markSeen(); });
     window.addEventListener("pagehide", markSeen);
   } catch (e) {}
-  /* Dispatch only: pass a request you claimed to a Tech Ops / Logistics member (they then see it as theirs).
-   * Performs an instant optimistic update (<16ms) in local cache, then syncs with Firestore in the background. */
+  /* Dispatch only: pass a request you claimed to a Tech Ops / Logistics member. */
   function handOutReport(id, member) {
     if (!user) return Promise.reject(fail("auth", "Sign in first."));
     member = clip(String(member || "").trim(), 60);
@@ -689,7 +718,6 @@
       target.assigned = member;
       target.handedBy = user.name;
       target.handedAt = stamp();
-      savePersistedCache();
       emit();
     }
 
@@ -700,13 +728,12 @@
     })).catch(function (err) {
       if (target && backup) {
         Object.assign(target, backup);
-        savePersistedCache();
         emit();
       }
       throw err;
     });
   }
-  function resetDemo() { if (LIVE) return; localStorage.removeItem(LOCAL_KEY); localStorage.removeItem(CACHE_KEY); loc.refresh(); emit(); }
+  function resetDemo() {}
   function onChange(cb) { listeners.push(cb); }
 
   window.TechOpsStore = {

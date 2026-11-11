@@ -44,7 +44,7 @@
       <h1 id="gate-title">Venue Maps</h1>
       <p>Enter your volunteer code to open floor blueprints and wayfinding.</p>
       <form action="javascript:void(0);" id="gate-form" autocomplete="off" novalidate>
-        <input id="gate-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="VOLUNTEER CODE" aria-label="Volunteer code">
+        <input id="gate-code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Volunteer code" aria-label="Volunteer code">
         <div class="gate-err" id="gate-err" role="alert" hidden></div>
         <button type="submit" id="gate-btn">Open Maps</button>
       </form>
@@ -106,17 +106,6 @@
         <span id="team-workspace-label">Workspace</span>
       </a>
 
-      <!-- Google Sheet Realtime Database Button -->
-      <button class="btn btn-sheet" id="gsheet-btn" style="display:none" aria-label="Configure Google Sheet Database">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="8" y1="13" x2="16" y2="13"/>
-          <line x1="8" y1="17" x2="16" y2="17"/>
-          <polyline points="10 9 9 9 8 9"/>
-        </svg>
-        <span class="btn-text">Google Sheet</span>
-      </button>
 
       <!-- Theme Toggle Button -->
       <button class="btn" id="theme-toggle" aria-label="Toggle Theme">
@@ -279,7 +268,7 @@
       </div>
       <input id="df" list="dl" placeholder="From (e.g. ENTRANCE, C026)" autocomplete="off">
       <label for="dt" style="font-size:11.5px;font-weight:600;color:var(--ink-bright);display:block;margin:8px 0 3px">Destination:</label>
-      <input id="dt" list="dl" placeholder="To (e.g. S140, B133, H113)" autocomplete="off">
+      <input id="dt" list="dl" placeholder="To (e.g. C140, C133, A113)" autocomplete="off">
       <datalist id="dl"></datalist>
       <div style="display:flex;gap:6px;margin:8px 0 0">
         <button class="btn on" id="dgo" style="flex:1">Show Route</button>
@@ -307,61 +296,6 @@
   </div>
 
   <!-- =======================================================================
-       Google Sheets Database Configuration Modal
-       ======================================================================= -->
-  <div class="bd" id="gsheet-modal">
-    <div class="modal gsheet-modal-box" role="dialog" aria-modal="true">
-      <div class="mh">
-        <div>
-          <h2>Google Sheets Database</h2>
-          <div class="pill">Live Event Configuration · All 85 Rooms</div>
-        </div>
-        <button class="x" id="gsheet-close" aria-label="Close">×</button>
-      </div>
-
-      <div class="gsheet-content">
-        <p class="gsheet-desc">
-          Manage room allocations, lead managers, capacities, challenge tracks, and team names directly inside a Google Sheet. Any update made in Google Sheets syncs instantly to this website.
-        </p>
-
-        <label for="gsheet-url-input">Google Sheet Link or ID</label>
-        <div class="gsheet-input-row">
-          <input id="gsheet-url-input" value="https://docs.google.com/spreadsheets/d/1E4-_JjPiIhed005w43jl1s-FfmRiAzNaISEfJZihAbQ/edit" placeholder="https://docs.google.com/spreadsheets/d/.../edit" autocomplete="off">
-          <button class="btn on" id="gsheet-save-btn">Connect &amp; Sync</button>
-        </div>
-
-        <div id="gsheet-status" class="sheet-status-badge">
-          Status: Ready to sync
-        </div>
-
-        <div class="gsheet-actions">
-          <button class="btn" id="gsheet-sync-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-            Sync Now
-          </button>
-          <button class="btn" id="gsheet-open-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Open in Google Sheets
-          </button>
-          <a class="btn" href="data/templates/rooms_database_template.csv" download="NASA_Space_Apps_Cairo_Rooms_Template.csv">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download CSV Template
-          </a>
-        </div>
-
-        <div class="sec" style="margin-top:16px">
-          <h4>How to Set Up in 2 Minutes:</h4>
-          <ol class="gsheet-steps">
-            <li>Download the CSV template or open your Google Sheet.</li>
-            <li>In Google Sheets, click <b>File &gt; Import &gt; Upload</b> and choose the CSV template (all 85 rooms are already filled in).</li>
-            <li>Click the green <b>Share</b> button in Google Sheets, choose <b>"Anyone with the link can view"</b>, copy the link, and paste it above.</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- =======================================================================
        Room Details Dialog
        ======================================================================= -->
   <div class="bd" id="bd">
@@ -370,7 +304,6 @@
 
   <script src="scripts/services/config.js"></script>
   <script src="scripts/services/firebase-config.js"></script>
-  <script src="scripts/services/seed-data.js"></script>
   <script src="scripts/services/common.js"></script>
   <script src="scripts/services/store.js"></script>
   <script src="scripts/components/tutorial.js"></script>

@@ -55,10 +55,10 @@ VOLUNTEERS = [
 
 # dummy Logistics tasks (QR help form): kind of help + where. Replaced by real requests during the event.
 LOGISTICS_REPORTS = [
-    ("LGR-0001", "2026-11-06 11:40:00", "G", "C026", "Go to a place", "Wants to go to: S140 (First Floor)", "Resolved", "Norhan Yasser", "Team Aurora"),
+    ("LGR-0001", "2026-11-06 11:40:00", "G", "C026", "Go to a place", "Wants to go to: C140 (First Floor)", "Resolved", "Norhan Yasser", "Team Aurora"),
     ("LGR-0002", "2026-11-06 12:02:00", "F", "C139", "Prayer request", "Prayer area: Men", "In Progress", "Logistics Lead", ""),
-    ("LGR-0003", "2026-11-06 12:10:00", "S", "C231", "Help request", "Lost my badge, need a replacement", "New", "", "Team Vega"),
-    ("LGR-0004", "2026-11-06 12:14:00", "G", "S016", "Go to a place", "Wants to go to: Main Entrance", "New", "", ""),
+    ("LGR-0003", "2026-11-06 12:10:00", "S", "B231", "Help request", "Lost my badge, need a replacement", "New", "", "Team Vega"),
+    ("LGR-0004", "2026-11-06 12:14:00", "G", "B016", "Go to a place", "Wants to go to: Main Entrance", "New", "", ""),
 ]
 
 # dummy Competition Team tasks (remote requests from QR help form, no floor/room needed). Replaced by real requests during the event.

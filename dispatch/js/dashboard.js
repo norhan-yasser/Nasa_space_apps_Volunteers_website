@@ -244,7 +244,7 @@
       $("status-pill").className = "pill-status demo";
       $("status-text").textContent = Store.isLive() ? "Sign in required" : "Local preview";
       var ln = $("login-note");
-      if (!Store.isLive()) { ln.hidden = false; ln.innerHTML = "Preview mode Competition Team codes: <b>CT-001</b>, <b>CT-002</b>."; }
+      if (ln) ln.hidden = true;
       var inp = $("login-code"); inp.value = ""; setTimeout(function () { try { inp.focus(); } catch (e) {} }, 120);
       return;
     }

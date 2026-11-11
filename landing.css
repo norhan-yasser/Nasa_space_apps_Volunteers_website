@@ -507,18 +507,20 @@ h1 {
 
 @media (max-width: 1100px) { .hub-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) {
-  .portal-top { padding: 10px 14px; gap: 8px; flex-wrap: wrap; }
-  .portal-brand-logo { height: 28px; }
+  .portal-top { padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+  .portal-brand img { height: 26px; max-width: 105px; object-fit: contain; }
   .portal-brand-text-wrap { display: none; }
-  .portal-user-chip { padding: 3px 8px 3px 5px; gap: 6px; }
-  .portal-user-meta small { display: none; }
-  .hero { padding: 20px 14px 10px; }
+  .portal-user-chip { padding: 3px 8px 3px 5px; gap: 6px; max-width: 100%; }
+  .portal-meta small { display: none; }
+  .portal-meta b { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .intro { padding: 20px 14px 36px; }
+  h1 { font-size: clamp(30px, 8vw, 42px); }
   .access-bar { flex-direction: column; align-items: stretch; padding: 14px; gap: 12px; }
   .access-form { width: 100%; }
-  .access-form input { flex: 1; min-width: 0; width: auto; min-height: 42px; }
-  .access-form .btn { min-height: 42px; }
-  .hub-wrap { padding: 6px 14px 32px; }
-  .hub-grid { grid-template-columns: 1fr; gap: 12px; }
+  .access-form input { flex: 1; min-width: 0; width: auto; min-height: 44px; font-size: 14px; }
+  .access-form button { min-height: 44px; padding: 10px 16px; }
+  .role-banner { width: 100%; font-size: 12.5px; padding: 10px 12px; line-height: 1.45; }
+  .hub-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 18px; }
   .hub-card { padding: 18px 16px 16px; min-height: 0; }
 }
 

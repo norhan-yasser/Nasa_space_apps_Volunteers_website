@@ -828,6 +828,12 @@ main {
   stroke-width: 3.5 !important;
 }
 
+.rm.rm-label-hit:hover {
+  fill-opacity: 0.18 !important;
+  stroke-opacity: 0.65 !important;
+  stroke-width: 2 !important;
+}
+
 .rm.sel {
   stroke-width: 4 !important;
 }
@@ -1308,18 +1314,25 @@ main {
     min-width: 0;
     padding: 2px;
     gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
   }
   .floor-all-btn {
     padding: 5px 7px;
     font-size: 11px;
     gap: 3px;
+    touch-action: pan-x pan-y;
   }
   #tabs {
     gap: 2px;
+    flex-shrink: 0;
   }
   #tabs .btn {
     padding: 5px 6.5px;
     font-size: 11px;
+    touch-action: pan-x pan-y;
   }
   .filter-toggle-btn {
     padding: 5px 8px;
@@ -1343,6 +1356,9 @@ main {
   .leg {
     flex-wrap: nowrap;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
     white-space: nowrap;
     gap: 12px;
     margin-top: 8px;
@@ -1390,6 +1406,14 @@ main {
   }
   .kv {
     grid-template-columns: 110px 1fr;
+  }
+  .modal {
+    padding: 16px;
+    max-height: 88vh;
+  }
+  .modal-actions .btn {
+    min-width: 100%;
+    min-height: 42px;
   }
 }
 

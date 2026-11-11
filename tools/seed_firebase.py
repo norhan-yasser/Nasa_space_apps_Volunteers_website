@@ -46,6 +46,7 @@ def main():
     ap.add_argument("--key", help="service account JSON")
     ap.add_argument("--volunteers", help="real roster JSON (replaces the dummy volunteers)")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--only", help="upload only these collections, comma separated (e.g. --only rooms,wifi). Use it to avoid overwriting live volunteers / reports.")
     ap.add_argument("--keep-existing-reports", action="store_true", help="do not overwrite reports/meetups already in Firestore")
     args = ap.parse_args()
 
@@ -53,6 +54,13 @@ def main():
         data = json.load(f)
     if args.volunteers:
         data["volunteers"] = load_volunteers(args.volunteers)
+
+    if args.only:
+        keep = {c.strip() for c in args.only.split(",") if c.strip()}
+        unknown = keep - set(data)
+        if unknown:
+            sys.exit(f"Unknown collection(s): {sorted(unknown)}")
+        data = {c: d for c, d in data.items() if c in keep}
 
     for col, docs in data.items():
         print(f"{col:11s} {len(docs):4d} documents")

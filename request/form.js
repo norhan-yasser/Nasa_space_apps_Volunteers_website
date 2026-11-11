@@ -13,15 +13,40 @@
   floorSel.innerHTML = '<option value="">Select floor…</option>' + D.FLOORS.map(function (f) {
     return '<option value="' + f.id + '">' + esc(f.name) + "</option>";
   }).join("");
-  function fillRooms(sel) {
-    var f = D.FLOORS.filter(function (x) { return x.id === floorSel.value; })[0];
-    if (!f) { roomSel.innerHTML = '<option value="">First select a floor…</option>'; return; }
-    roomSel.innerHTML = '<option value="">Select your room…</option>' + f.rooms.map(function (r) {
-      return '<option value="' + esc(r.code) + '">' + esc(r.code) + "</option>";
-    }).join("");
-    if (sel) roomSel.value = sel;
+
+  var liveRoomsByFloor = null;
+  function getFloorRooms(floorId) {
+    if (liveRoomsByFloor && liveRoomsByFloor[floorId] && liveRoomsByFloor[floorId].length) {
+      return liveRoomsByFloor[floorId];
+    }
+    var f = D.FLOORS.filter(function (x) { return x.id === floorId; })[0];
+    return f ? f.rooms : [];
   }
-  floorSel.onchange = function () { fillRooms(); };
+
+  function fillRooms(sel) {
+    var curSel = sel !== undefined ? sel : roomSel.value;
+    if (!floorSel.value) { roomSel.innerHTML = '<option value="">First select a floor…</option>'; return; }
+    var list = getFloorRooms(floorSel.value);
+    roomSel.innerHTML = '<option value="">Select your room…</option>' + list.map(function (r) {
+      var lbl = r.code + (r.name ? " · " + r.name : "");
+      return '<option value="' + esc(r.code) + '">' + esc(lbl) + "</option>";
+    }).join("");
+    if (curSel) roomSel.value = curSel;
+  }
+
+  function fillDestinations() {
+    var curDest = destSel.value;
+    destSel.innerHTML = '<option value="">Choose a place…</option><option value="ENTRANCE|Main Entrance">Main Entrance</option>' + D.FLOORS.map(function (f) {
+      var list = getFloorRooms(f.id);
+      return '<optgroup label="' + esc(f.name) + '">' + list.map(function (r) {
+        var lbl = r.code + (r.name ? " (" + r.name + ")" : "");
+        return '<option value="' + esc(r.code + "|" + f.name) + '">' + esc(lbl) + "</option>";
+      }).join("") + "</optgroup>";
+    }).join("");
+    if (curDest) destSel.value = curDest;
+  }
+
+  floorSel.onchange = function () { fillRooms(""); };
   var qf = (q.get("floor") || "").toUpperCase(), qr = (q.get("room") || "").toUpperCase();
   if (D.FLOORS.some(function (f) { return f.id === qf; })) { floorSel.value = qf; fillRooms(qr); }
   else if (qr) {
@@ -29,12 +54,28 @@
       if (D.FLOORS[i].rooms.some(function (r) { return r.code === qr; })) { floorSel.value = D.FLOORS[i].id; fillRooms(qr); break; }
     }
   }
+  fillDestinations();
 
-  destSel.innerHTML = '<option value="">Choose a place…</option><option value="ENTRANCE|Main Entrance">Main Entrance</option>' + D.FLOORS.map(function (f) {
-    return '<optgroup label="' + esc(f.name) + '">' + f.rooms.map(function (r) {
-      return '<option value="' + esc(r.code + "|" + f.name) + '">' + esc(r.code) + "</option>";
-    }).join("") + "</optgroup>";
-  }).join("");
+  function syncRoomsFromFirestore() {
+    if (!Store || !Store.loadAll) return;
+    Store.loadAll().then(function (data) {
+      var rooms = data && (data.rooms && data.rooms.length ? data.rooms : data.allRooms);
+      if (!rooms || !rooms.length) return;
+      var byFl = { B: [], G: [], F: [], S: [] };
+      rooms.forEach(function (r) {
+        if (!r || !r.code || r.access === "no") return;
+        if (byFl[r.floor]) byFl[r.floor].push(r);
+      });
+      liveRoomsByFloor = byFl;
+      fillRooms();
+      fillDestinations();
+    }).catch(function () {});
+  }
+  if (Store) {
+    if (Store.start) Store.start();
+    syncRoomsFromFirestore();
+    if (Store.onChange) Store.onChange(syncRoomsFromFirestore);
+  }
 
   function card(name, value, icon, label, hint) {
     return '<label class="issue-opt"><input type="radio" name="' + name + '" value="' + esc(value) + '">' +

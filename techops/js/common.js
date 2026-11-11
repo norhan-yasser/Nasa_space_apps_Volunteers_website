@@ -44,14 +44,92 @@
   }
 
   var audioCtx;
-  function beep() {
+  function ensureAudioUnlocked() {
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx && audioCtx.state === "suspended") { audioCtx.resume().catch(function () {}); }
-      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
-      o.type = "sine"; o.frequency.value = 880; g.gain.value = 0.08;
-      o.connect(g); g.connect(audioCtx.destination);
-      o.start(); o.frequency.setValueAtTime(660, audioCtx.currentTime + 0.12); o.stop(audioCtx.currentTime + 0.26);
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume().catch(function () {});
+      }
+    } catch (e) {}
+  }
+  ["pointerdown", "touchstart", "click", "keydown"].forEach(function (ev) {
+    document.addEventListener(ev, ensureAudioUnlocked, { passive: true, once: false });
+  });
+
+  function beep() {
+    try {
+      ensureAudioUnlocked();
+      if (!audioCtx) return;
+      var now = audioCtx.currentTime;
+
+      /* Master compressor to maximize loudness cleanly without harsh clipping */
+      var comp = audioCtx.createDynamicsCompressor ? audioCtx.createDynamicsCompressor() : null;
+      var master = audioCtx.createGain();
+      master.gain.setValueAtTime(1.0, now);
+      if (comp) {
+        comp.threshold.setValueAtTime(-18, now);
+        comp.knee.setValueAtTime(10, now);
+        comp.ratio.setValueAtTime(8, now);
+        comp.attack.setValueAtTime(0.002, now);
+        comp.release.setValueAtTime(0.12, now);
+        master.connect(comp);
+        comp.connect(audioCtx.destination);
+      } else {
+        master.connect(audioCtx.destination);
+      }
+
+      /* Classic loud "Ring-Ring!" bell cadence: two 0.55s ringing bursts with 20Hz bell-clapper modulation */
+      var rings = [
+        { start: 0.00, dur: 0.55 },
+        { start: 0.72, dur: 0.60 }
+      ];
+
+      rings.forEach(function (r) {
+        var t0 = now + r.start;
+        var t1 = t0 + r.dur;
+
+        /* Dual-bell resonant frequencies (C6 1046.5Hz + E6 1318.5Hz) */
+        var bell1 = audioCtx.createOscillator();
+        var bell2 = audioCtx.createOscillator();
+        bell1.type = "triangle";
+        bell2.type = "sine";
+        bell1.frequency.setValueAtTime(1046.5, t0);
+        bell2.frequency.setValueAtTime(1318.5, t0);
+
+        /* 20 Hz LFO (low-frequency oscillator) creates the rapid "brrrring" clapper strike effect */
+        var lfo = audioCtx.createOscillator();
+        var lfoGain = audioCtx.createGain();
+        lfo.type = "sine";
+        lfo.frequency.setValueAtTime(20, t0);
+        lfoGain.gain.setValueAtTime(0.45, t0);
+
+        var modGain = audioCtx.createGain();
+        modGain.gain.setValueAtTime(0.55, t0);
+        lfo.connect(lfoGain);
+        lfoGain.connect(modGain.gain);
+
+        var env = audioCtx.createGain();
+        env.gain.setValueAtTime(0.001, t0);
+        env.gain.linearRampToValueAtTime(0.95, t0 + 0.015);
+        env.gain.setValueAtTime(0.95, t1 - 0.06);
+        env.gain.exponentialRampToValueAtTime(0.001, t1 + 0.12);
+
+        bell1.connect(modGain);
+        bell2.connect(modGain);
+        modGain.connect(env);
+        env.connect(master);
+
+        bell1.start(t0);
+        bell2.start(t0);
+        lfo.start(t0);
+        bell1.stop(t1 + 0.14);
+        bell2.stop(t1 + 0.14);
+        lfo.stop(t1 + 0.14);
+      });
+
+      if (navigator.vibrate) {
+        navigator.vibrate([450, 180, 500]);
+      }
     } catch (e) {}
   }
 

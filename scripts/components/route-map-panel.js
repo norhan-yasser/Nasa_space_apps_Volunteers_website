@@ -209,7 +209,7 @@
     // Load Floor Image
     var imgDir = (isSub ? "../" : "") + "assets/floors/";
     var floorFiles = { B: "0.png", G: "1.png", F: "2.png", S: "3.png" };
-    this.imgEl.src = imgDir + (floorFiles[floor] || "1.png");
+    this.imgEl.src = imgDir + (floorFiles[floor] || "1.png") + "?v=20261111-d252";
 
     this._drawRoute(roomCode, rObj);
 

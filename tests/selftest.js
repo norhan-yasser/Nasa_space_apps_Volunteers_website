@@ -78,11 +78,11 @@
     /* 5c. Map route link helper (Show Route integration) */
     if (root.TO && root.TO.routeHref) {
       ok("Show Route: standard room routes from ENTRANCE",
-        root.TO.routeHref({ room: "C231", issue: "Help request", details: "Lost badge" }, "../maps.html") === "../maps.html?from=ENTRANCE&to=C231");
+        root.TO.routeHref({ room: "B231", issue: "Help request", details: "Lost badge" }, "../maps.html") === "../maps.html?from=ENTRANCE&to=B231");
       ok("Show Route: 'Go to a place' routes from participant room to destination",
-        root.TO.routeHref({ room: "C026", issue: "Go to a place", details: "Wants to go to: S140 (First Floor)" }, "../maps.html") === "../maps.html?from=C026&to=S140");
+        root.TO.routeHref({ room: "C026", issue: "Go to a place", details: "Wants to go to: C140 (First Floor)" }, "../maps.html") === "../maps.html?from=C026&to=C140");
       ok("Show Route: 'Prayer' routes from participant room to Basement prayer room",
-        root.TO.routeHref({ room: "H113", issue: "Prayer", details: "Prayer area: Women" }, "../maps.html") === "../maps.html?from=H113&to=PR-F");
+        root.TO.routeHref({ room: "A113", issue: "Prayer", details: "Prayer area: Women" }, "../maps.html") === "../maps.html?from=A113&to=PR-F");
       ok("Show Route: remote Competition request has empty route href",
         root.TO.routeHref({ room: "", issue: "Discord issue", details: "Invite expired" }, "../maps.html") === "");
     }

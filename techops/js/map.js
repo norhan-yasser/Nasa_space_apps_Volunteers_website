@@ -212,8 +212,11 @@
       var row = self.rooms[r.code] || {}, z = D.ZONES[row.zone], col = z ? z.color : (r.kind && D.PLACE_STYLE[r.kind] ? D.PLACE_STYLE[r.kind].color : "#64748b");
       var dim = self.zoneFilter && row.zone !== self.zoneFilter;
       var sel = self.selected === r.code;
+      var isTextOnly = r.code === "CAFETERIA";
       if (heat) {
-        h += '<polygon class="rm' + (sel ? " sel" : "") + '" data-code="' + r.code + '" points="' + pts(r) + '" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.55)" stroke-width="2.5"/>';
+        h += '<polygon class="rm' + (sel ? " sel" : "") + '" data-code="' + r.code + '" points="' + pts(r) + '" fill="' + (isTextOnly ? "rgba(255,255,255,.001)" : "rgba(255,255,255,.04)") + '" stroke="' + (isTextOnly && !sel ? "none" : "rgba(255,255,255,.55)") + '" stroke-width="2.5"/>';
+      } else if (isTextOnly) {
+        h += '<polygon class="rm rm-label-hit' + (sel ? " sel" : "") + (dim ? " dim" : "") + '" data-code="' + r.code + '" points="' + pts(r) + '" fill="' + col + '" fill-opacity="' + (sel ? ".25" : ".001") + '" stroke="' + col + '" stroke-opacity="' + (sel ? "1" : "0") + '" stroke-width="2.5"/>';
       } else {
         h += '<polygon class="rm' + (sel ? " sel" : "") + (dim ? " dim" : "") + '" data-code="' + r.code + '" points="' + pts(r) + '" fill="' + col + '" fill-opacity=".85" stroke="' + col + '" stroke-width="3"/>';
         h += '<text x="' + r.cx + '" y="' + (r.cy + 6) + '" text-anchor="middle" font-size="17" font-weight="800" fill="#fff" stroke="rgba(0,0,0,.65)" stroke-width="4" paint-order="stroke" pointer-events="none" opacity="' + (dim ? .25 : 1) + '">' + r.code + "</text>";

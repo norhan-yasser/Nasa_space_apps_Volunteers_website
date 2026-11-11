@@ -88,9 +88,9 @@
         badge: "Mission Briefing · Step 3/4",
         sandboxText: "Interactive Practice",
         mapPreview: {
-          room: "C231",
+          room: "B231",
           floor: "S",
-          label: "Room C231 · Second Floor"
+          label: "Room B231 · Second Floor"
         }
       },
       {
@@ -326,7 +326,7 @@
       var floor = mp.floor || "G";
       var floorFiles = { B: "0.png", G: "1.png", F: "2.png", S: "3.png" };
       var isSub = typeof location !== "undefined" && /\/(techops|logistics|dispatch|request|tests)\//i.test(location.pathname);
-      var imgSrc = (isSub ? "../" : "") + "assets/floors/" + (floorFiles[floor] || "1.png");
+      var imgSrc = (isSub ? "../" : "") + "assets/floors/" + (floorFiles[floor] || "1.png") + "?v=20261111";
       var rObj = null;
       var D = window.TechOpsData || {};
       if (D.ALL && D.ALL.length) {

@@ -75,6 +75,19 @@
   font-size: 13.5px;
   color: var(--mut);
 }
+@media (max-width: 768px) {
+  .dp-alarm {
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    border-radius: 12px;
+    word-break: break-word;
+  }
+  .dp-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
 @media (max-width: 560px) {
   .dp-tile .n { font-size: 28px; }
 }

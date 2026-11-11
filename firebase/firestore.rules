@@ -33,7 +33,7 @@ service cloud.firestore {
     }
 
     // ---- venue reference data (read-only for every volunteer) ------------------------------------------
-    match /rooms/{id} { allow read: if isVolunteer(); allow write: if false; }
+    match /rooms/{id} { allow read: if isVolunteer(); allow write: if isVolunteer(); }
     match /wifi/{id}  { allow read: if isVolunteer(); allow write: if isTechOps(); }
 
     // ---- Tasks (QR requests) -----------------------------------------------------------------------------

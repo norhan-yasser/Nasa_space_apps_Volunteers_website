@@ -3,904 +3,1641 @@
     "NSAC-2026": {
       "Name": "NASA Space Apps Volunteer",
       "Volunteer Code": "NSAC-2026",
-      "Team": "Volunteers"
+      "Team": "Volunteers",
+      "Role": "Volunteers"
     },
     "MAP-001": {
       "Name": "Maps Volunteer 1",
       "Volunteer Code": "MAP-001",
-      "Team": "Volunteers"
+      "Team": "Volunteers",
+      "Role": "Volunteers"
     },
     "MAP-002": {
       "Name": "Maps Volunteer 2",
       "Volunteer Code": "MAP-002",
-      "Team": "Volunteers"
+      "Team": "Volunteers",
+      "Role": "Volunteers"
     },
     "MAP-003": {
       "Name": "Maps Volunteer 3",
       "Volunteer Code": "MAP-003",
-      "Team": "Volunteers"
+      "Team": "Volunteers",
+      "Role": "Volunteers"
     },
     "TO-001": {
       "Name": "Mohamed Khairy",
       "Volunteer Code": "TO-001",
-      "Team": "TechOps"
+      "Team": "TechOps",
+      "Role": "TechOps"
     },
     "TO-002": {
       "Name": "Omar",
       "Volunteer Code": "TO-002",
-      "Team": "TechOps"
+      "Team": "TechOps",
+      "Role": "TechOps"
     },
     "TO-003": {
       "Name": "Lojine",
       "Volunteer Code": "TO-003",
-      "Team": "TechOps"
+      "Team": "TechOps",
+      "Role": "TechOps"
     },
     "TO-004": {
       "Name": "Karim",
       "Volunteer Code": "TO-004",
-      "Team": "TechOps"
+      "Team": "TechOps",
+      "Role": "TechOps"
     },
     "TO-005": {
       "Name": "Tasbeeh",
       "Volunteer Code": "TO-005",
-      "Team": "TechOps"
+      "Team": "TechOps",
+      "Role": "TechOps"
     },
     "TO-006": {
       "Name": "Nour",
       "Volunteer Code": "TO-006",
-      "Team": "TechOps"
+      "Team": "TechOps",
+      "Role": "TechOps"
     },
     "TO-007": {
       "Name": "Youssef",
       "Volunteer Code": "TO-007",
-      "Team": "TechOps"
+      "Team": "TechOps",
+      "Role": "TechOps"
     },
     "TO-008": {
       "Name": "Hana",
       "Volunteer Code": "TO-008",
-      "Team": "TechOps"
+      "Team": "TechOps",
+      "Role": "TechOps"
     },
     "CT-001": {
       "Name": "Competition Lead",
       "Volunteer Code": "CT-001",
-      "Team": "Competition"
+      "Team": "Competition",
+      "Role": "Competition"
     },
     "CT-002": {
       "Name": "Competition Volunteer",
       "Volunteer Code": "CT-002",
-      "Team": "Competition"
+      "Team": "Competition",
+      "Role": "Competition"
     },
     "CT-003": {
       "Name": "Competition Coordinator",
       "Volunteer Code": "CT-003",
-      "Team": "Competition"
+      "Team": "Competition",
+      "Role": "Competition"
     },
     "CT-004": {
       "Name": "Competition Support",
       "Volunteer Code": "CT-004",
-      "Team": "Competition"
+      "Team": "Competition",
+      "Role": "Competition"
     },
     "LG-001": {
       "Name": "Norhan Yasser",
       "Volunteer Code": "LG-001",
-      "Team": "Logistics"
+      "Team": "Logistics",
+      "Role": "Logistics"
     },
     "LG-002": {
       "Name": "Logistics Lead",
       "Volunteer Code": "LG-002",
-      "Team": "Logistics"
+      "Team": "Logistics",
+      "Role": "Logistics"
     },
     "LG-003": {
       "Name": "Logistics Volunteer",
       "Volunteer Code": "LG-003",
-      "Team": "Logistics"
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "C101": {
+      "Name": "Ahmad Hatem",
+      "Volunteer Code": "C101",
+      "Team": "Volunteers",
+      "Role": "Volunteers"
+    },
+    "C102": {
+      "Name": "Ahmed Mohamed ",
+      "Volunteer Code": "C102",
+      "Team": "Volunteers",
+      "Role": "Volunteers"
+    },
+    "C103": {
+      "Name": "Basmala Ekramy",
+      "Volunteer Code": "C103",
+      "Team": "Volunteers",
+      "Role": "Volunteers"
+    },
+    "C104": {
+      "Name": "Esraa Sheren ",
+      "Volunteer Code": "C104",
+      "Team": "Volunteers",
+      "Role": "Volunteers"
+    },
+    "C105": {
+      "Name": "Farida Hamid",
+      "Volunteer Code": "C105",
+      "Team": "Volunteers",
+      "Role": "Volunteers"
+    },
+    "C106": {
+      "Name": "Habiba Alaaeldin ",
+      "Volunteer Code": "C106",
+      "Team": "Volunteers",
+      "Role": "Volunteers"
+    },
+    "L101": {
+      "Name": "Abdelaziz Mohamed",
+      "Volunteer Code": "L101",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L102": {
+      "Name": "Abdelrahman Gohar",
+      "Volunteer Code": "L102",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L103": {
+      "Name": "Adham shokry ",
+      "Volunteer Code": "L103",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L104": {
+      "Name": "Afaf Kamel ",
+      "Volunteer Code": "L104",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L105": {
+      "Name": "Afnan Mohammed",
+      "Volunteer Code": "L105",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L106": {
+      "Name": "Ahmed Ehab",
+      "Volunteer Code": "L106",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L107": {
+      "Name": "Ahmed Fahmy",
+      "Volunteer Code": "L107",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L108": {
+      "Name": "Ahmed Khaled",
+      "Volunteer Code": "L108",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L109": {
+      "Name": "Ali eldeen Usama",
+      "Volunteer Code": "L109",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L111": {
+      "Name": "Amr Mohamed",
+      "Volunteer Code": "L111",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L112": {
+      "Name": "Anas Ayman",
+      "Volunteer Code": "L112",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L113": {
+      "Name": "Aya Gamal",
+      "Volunteer Code": "L113",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L115": {
+      "Name": "Bassant Eliwa",
+      "Volunteer Code": "L115",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L117": {
+      "Name": "Fatma Ashraf",
+      "Volunteer Code": "L117",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L118": {
+      "Name": "Mariam Mohamed ",
+      "Volunteer Code": "L118",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L119": {
+      "Name": "Martina Samy",
+      "Volunteer Code": "L119",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L120": {
+      "Name": "Menna Nour El Deen",
+      "Volunteer Code": "L120",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L122": {
+      "Name": "Mohamed Atif ",
+      "Volunteer Code": "L122",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L123": {
+      "Name": "Mohamed Mostafa ",
+      "Volunteer Code": "L123",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L125": {
+      "Name": "Muhammad Ahmad  ",
+      "Volunteer Code": "L125",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L126": {
+      "Name": "Norhan Yasser",
+      "Volunteer Code": "L126",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L127": {
+      "Name": "Rahma Mahmoud ",
+      "Volunteer Code": "L127",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L129": {
+      "Name": "Sally Mohamed ",
+      "Volunteer Code": "L129",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L130": {
+      "Name": "Salma Ali",
+      "Volunteer Code": "L130",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L131": {
+      "Name": "Tasnim Hamdy ",
+      "Volunteer Code": "L131",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L132": {
+      "Name": "Yousef Mokhles ",
+      "Volunteer Code": "L132",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L134": {
+      "Name": "Youssef Hany ",
+      "Volunteer Code": "L134",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L135": {
+      "Name": "Zyad Ahmed",
+      "Volunteer Code": "L135",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L136": {
+      "Name": "Alaa Mohamed",
+      "Volunteer Code": "L136",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L137": {
+      "Name": "Hanaa Ahmed ",
+      "Volunteer Code": "L137",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L138": {
+      "Name": "Alaa Ali",
+      "Volunteer Code": "L138",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L139": {
+      "Name": "Esraa Ali ",
+      "Volunteer Code": "L139",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L140": {
+      "Name": "Basant Moustafa ",
+      "Volunteer Code": "L140",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L141": {
+      "Name": "Youanna Samir ",
+      "Volunteer Code": "L141",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L142": {
+      "Name": "Mohamed Gohar ",
+      "Volunteer Code": "L142",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L143": {
+      "Name": "Ahmed Emad ",
+      "Volunteer Code": "L143",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "L144": {
+      "Name": "Yassmine Mohamed ",
+      "Volunteer Code": "L144",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "LD102": {
+      "Name": "Youssif Ahmed",
+      "Volunteer Code": "LD102",
+      "Team": "Competition",
+      "Role": "Competition"
+    },
+    "LD107": {
+      "Name": "Kareem Raafat ",
+      "Volunteer Code": "LD107",
+      "Team": "Logistics",
+      "Role": "Logistics"
+    },
+    "LD110": {
+      "Name": "Mohamed Gamal",
+      "Volunteer Code": "LD110",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T101": {
+      "Name": "Abdullah Hussein",
+      "Volunteer Code": "T101",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T102": {
+      "Name": "Ali Abdelaziz ",
+      "Volunteer Code": "T102",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T103": {
+      "Name": "Ali Elsayed",
+      "Volunteer Code": "T103",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T104": {
+      "Name": "Hassan Mohamed",
+      "Volunteer Code": "T104",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T105": {
+      "Name": "Kareem salem ",
+      "Volunteer Code": "T105",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T106": {
+      "Name": "Lojine Wael ",
+      "Volunteer Code": "T106",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T107": {
+      "Name": "Malak Mohamed ",
+      "Volunteer Code": "T107",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T108": {
+      "Name": "Mohamed Khairy",
+      "Volunteer Code": "T108",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T109": {
+      "Name": "Naira Farhat ",
+      "Volunteer Code": "T109",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T110": {
+      "Name": "Omar Mohamed ",
+      "Volunteer Code": "T110",
+      "Team": "TechOps",
+      "Role": "TechOps"
+    },
+    "T111": {
+      "Name": "Tasbeeh mahmoud ",
+      "Volunteer Code": "T111",
+      "Team": "TechOps",
+      "Role": "TechOps"
     }
   },
   "rooms": {
-    "CLINIC-003": {
-      "Floor": "Ground",
-      "Wing": "Wing A",
-      "Room No.": "003",
-      "Room Type": "",
-      "Physical Capacity": 0,
-      "Assigned Capacity": 0,
-      "Room Use / Function": "Clinic",
-      "code": "CLINIC-003",
-      "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": ""
+    "A113": {
+      "code": "A113",
+      "name": "",
+      "floor": "F",
+      "type": "Lecture Hall",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "Eng. Tasbeeh",
+      "cap": 100,
+      "chal": "Planetary Landers: Hazard Navigation",
+      "teams": [
+        "Cosmic Navigators",
+        "Orion Orbiters",
+        "Lunar Dynamics"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "S015": {
-      "Floor": "Ground",
-      "Wing": "Wing B",
-      "Room No.": "015",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "Volunteers",
-      "code": "S015",
-      "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": "Volunteers"
+    "A114": {
+      "code": "A114",
+      "name": "",
+      "floor": "F",
+      "type": "Lecture Hall",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "",
+      "cap": 100,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "S016": {
-      "Floor": "Ground",
-      "Wing": "Wing B",
-      "Room No.": "016",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "Volunteers",
-      "code": "S016",
-      "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": "Volunteers"
+    "A209": {
+      "code": "A209",
+      "name": "",
+      "floor": "S",
+      "type": "Lecture Hall",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "",
+      "cap": 0,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "C017": {
-      "Floor": "Ground",
-      "Wing": "Wing B",
-      "Room No.": "017",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "Volunteers",
-      "code": "C017",
-      "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": "Volunteers"
-    },
-    "MEETING-ROOM": {
-      "Floor": "Ground",
-      "Wing": "Wing B",
-      "Room No.": "Meeting room",
-      "Room Type": "",
-      "Physical Capacity": 0,
-      "Assigned Capacity": 0,
-      "Room Use / Function": "Meeting room",
-      "code": "MEETING-ROOM",
-      "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": ""
+    "A210": {
+      "code": "A210",
+      "name": "",
+      "floor": "S",
+      "type": "Lecture Hall",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "",
+      "cap": 0,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
     "AUDITORIUM": {
-      "Floor": "Ground",
-      "Wing": "Wing D",
-      "Room No.": "Auditorium",
-      "Room Type": "",
-      "Physical Capacity": 0,
-      "Assigned Capacity": 0,
-      "Room Use / Function": "Auditorium",
       "code": "AUDITORIUM",
+      "name": "",
       "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": ""
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Unassigned",
+      "resp": "",
+      "cap": 0,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "VIP": {
-      "Floor": "Ground",
-      "Wing": "Wing D",
-      "Room No.": "VIP",
-      "Room Type": "",
-      "Physical Capacity": 0,
-      "Assigned Capacity": 0,
-      "Room Use / Function": "VIP Room beside the auditorium",
-      "code": "VIP",
+    "B015": {
+      "code": "B015",
+      "name": "",
       "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": "VIPs"
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "",
+      "cap": 40,
+      "chal": "",
+      "teams": [],
+      "vteam": "Logistics",
+      "vcap": 40
     },
-    "C026": {
-      "Floor": "Ground",
-      "Wing": "Wing C",
-      "Room No.": "026",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "Judge",
-      "code": "C026",
+    "B016": {
+      "code": "B016",
+      "name": "",
       "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": "Judges"
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "",
+      "cap": 30,
+      "chal": "",
+      "teams": [],
+      "vteam": "Materials",
+      "vcap": 0
     },
-    "C027": {
-      "Floor": "Ground",
-      "Wing": "Wing C",
-      "Room No.": "027",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "Judge",
-      "code": "C027",
+    "B017": {
+      "code": "B017",
+      "name": "",
       "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": "Judges"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "",
+      "cap": 25,
+      "chal": "",
+      "teams": [],
+      "vteam": "Materials",
+      "vcap": 25
     },
-    "S034": {
-      "Floor": "Ground",
-      "Wing": "Wing C",
-      "Room No.": "034",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "Volunteers",
-      "code": "S034",
-      "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": "Volunteers"
-    },
-    "S035": {
-      "Floor": "Ground",
-      "Wing": "Wing C",
-      "Room No.": "035",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "Volunteers",
-      "code": "S035",
-      "floor": "G",
-      "floorName": "Ground Floor",
-      "zone": "Volunteers"
-    },
-    "H113": {
-      "Floor": "First",
-      "Wing": "Wing A",
-      "Room No.": "113",
-      "Room Type": "Lecture",
-      "Physical Capacity": 0,
-      "Assigned Capacity": 100,
-      "Room Use / Function": "girls Rest",
-      "code": "H113",
+    "B122": {
+      "code": "B122",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Volunteers"
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 30,
+      "chal": "Lunar Landing Site Navigator",
+      "teams": [
+        "Al Ostora",
+        "Apollo 26",
+        "FASA Destination",
+        "KAIROS",
+        "MAJIX",
+        "Something is there."
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "H114": {
-      "Floor": "First",
-      "Wing": "Wing A",
-      "Room No.": "114",
-      "Room Type": "Lecture",
-      "Physical Capacity": 0,
-      "Assigned Capacity": 100,
-      "Room Use / Function": "girls Rest",
-      "code": "H114",
+    "B123": {
+      "code": "B123",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Volunteers"
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 30,
+      "chal": "Lunar Landing Site Navigator; Field Shift: Adapting Farms with NASA Data",
+      "teams": [
+        "Eternal Light",
+        "SHOTSPOT",
+        "Vector moon",
+        "Data Astronauts",
+        "GHEIT NASA",
+        "RootRise",
+        "SiriusTa"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "S122": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "122",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "participants",
-      "code": "S122",
+    "B124": {
+      "code": "B124",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Field Shift: Adapting Farms with NASA Data; Harmonization of MODIS and VIIRS Hot Spots",
+      "teams": [
+        "5 On An Official Mission",
+        "Blink Farm",
+        "MISSION EL GHEET",
+        "Neural Nile",
+        "Terra Bytes",
+        "Earth Guardians Ai"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "S123": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "123",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "participants",
-      "code": "S123",
+    "B125": {
+      "code": "B125",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Harmonization of MODIS and VIIRS Hot Spots",
+      "teams": [
+        "2Late",
+        "ASTRIX",
+        "Better Call NASA",
+        "Supernova-X"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "C124": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "124",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C124",
+    "B126": {
+      "code": "B126",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Harmonization of MODIS and VIIRS Hot Spots",
+      "teams": [
+        "Almatafi",
+        "Gaia Saviours",
+        "Hotspot Hunters",
+        "Not found",
+        "Zij"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "C125": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "125",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C125",
+    "B127": {
+      "code": "B127",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
-    },
-    "C126": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "126",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C126",
-      "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
-    },
-    "C127": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "127",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C127",
-      "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Harmonization of MODIS and VIIRS Hot Spots",
+      "teams": [
+        "Fruit of Concept",
+        "Harmonix",
+        "Insider Lens",
+        "Mo Fire Mo Problem",
+        "On Fire",
+        "OnFire🔥"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
     "B128": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "128",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
       "code": "B128",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Build a Junior Astronaut Mission Trainer",
+      "teams": [
+        "AlienZzz",
+        "BuzzKhateer",
+        "Galactico",
+        "M1SSIONX",
+        "MISSION ODYSSEY"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
     "B129": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "129",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "Volunteers",
       "code": "B129",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Volunteers"
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "",
+      "cap": 25,
+      "chal": "",
+      "teams": [],
+      "vteam": "Competition",
+      "vcap": 0
     },
     "B130": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "130",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "Mentor",
       "code": "B130",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Mentors"
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Mentors",
+      "resp": "",
+      "cap": 25,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
     "B131": {
-      "Floor": "First",
-      "Wing": "Wing B",
-      "Room No.": "131",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "Mentor",
       "code": "B131",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Mentors"
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Mentors",
+      "resp": "",
+      "cap": 25,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "B132": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "132",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "B132",
-      "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+    "B224": {
+      "code": "B224",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "Infinite galaxia",
+        "Link Space",
+        "Mafeesh Kalam",
+        "RunTime In Space",
+        "Space monkeys🚀"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "B133": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "133",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "Judge",
-      "code": "B133",
-      "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Judges"
+    "B225": {
+      "code": "B225",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "Ajnova",
+        "OffWorld",
+        "OrbitCode",
+        "Remontada",
+        "We Are Aliens"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "B134": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "134",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "Judge",
-      "code": "B134",
-      "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Judges"
+    "B226": {
+      "code": "B226",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "Asteron",
+        "Auroraa",
+        "GRAVITY ZERO",
+        "NASA NUSC",
+        "SPARC"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "B135": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "135",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "Judge",
-      "code": "B135",
+    "B227": {
+      "code": "B227",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "ASTRA",
+        "MOONSDAY",
+        "OrbitNexus",
+        "Out of_Orbit",
+        "Toy Story"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "B228": {
+      "code": "B228",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "ASTRA TECH",
+        "Astro_Sync",
+        "Pluto's Revenge",
+        "SEVAS",
+        "Wekalet FASA",
+        "ZeroG"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "B229": {
+      "code": "B229",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "AstroByteX",
+        "Atheera",
+        "BioAdapt",
+        "Careyonda",
+        "Egyptian lotus",
+        "Nova",
+        "Orchest",
+        "Partnersxcrime",
+        "Tennysons",
+        "Vision Maker"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "B230": {
+      "code": "B230",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Space Mission Design Game; Planet X and SPHEREx",
+      "teams": [
+        "SpaceSync",
+        "TORVIX",
+        "التربيزه العاليه",
+        "Anvild",
+        "Nova Rover Systems"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "B231": {
+      "code": "B231",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Space Mission Design Game",
+      "teams": [
+        "Astroware",
+        "Atlantis505",
+        "Clair Obscur: Expedition 67",
+        "Madar",
+        "Orbital Think Tank"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "BREAK-1": {
+      "code": "BREAK-1",
+      "name": "Break Area",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Judges"
+      "type": "Break Area",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "Logistics Team",
+      "cap": 80,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
+    },
+    "BREAK-2": {
+      "code": "BREAK-2",
+      "name": "Break Area",
+      "floor": "S",
+      "type": "Break Area",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "Logistics Team",
+      "cap": 80,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
+    },
+    "C026": {
+      "code": "C026",
+      "name": "",
+      "floor": "G",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "Eng. Mohamed Khairy",
+      "cap": 25,
+      "chal": "Imager for Magnetopause-to-Aurora Exploration",
+      "teams": [
+        "Artemis Coders",
+        "Aurora Hunters",
+        "Polar Orbiters"
+      ],
+      "vteam": "TechOps",
+      "vcap": 12
+    },
+    "C027": {
+      "code": "C027",
+      "name": "",
+      "floor": "G",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "Eng. Karim",
+      "cap": 28,
+      "chal": "Community Mapping: Earth Observations",
+      "teams": [
+        "GeoPioneers",
+        "TerraNova Sync"
+      ],
+      "vteam": "Website & PR",
+      "vcap": 22
+    },
+    "C034": {
+      "code": "C034",
+      "name": "",
+      "floor": "G",
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "",
+      "cap": 30,
+      "chal": "",
+      "teams": [],
+      "vteam": "P&C & Store team",
+      "vcap": 16
+    },
+    "C035": {
+      "code": "C035",
+      "name": "",
+      "floor": "G",
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "",
+      "cap": 30,
+      "chal": "",
+      "teams": [],
+      "vteam": "outreach",
+      "vcap": 26
+    },
+    "C132": {
+      "code": "C132",
+      "name": "",
+      "floor": "F",
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Build a Junior Astronaut Mission Trainer",
+      "teams": [
+        "Ape-ollo 11",
+        "maro",
+        "Obsidianite",
+        "Space benders",
+        "SpaceMates 🚀"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "C133": {
+      "code": "C133",
+      "name": "",
+      "floor": "F",
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "Eng. Omar",
+      "cap": 25,
+      "chal": "Build a Junior Astronaut Mission Trainer",
+      "teams": [
+        "Astronuts",
+        "NANOARC",
+        "Shadow",
+        "SU NASA",
+        "Tatta7 on the Moon"
+      ],
+      "vteam": "Tech Ops & Hardware Strike Team",
+      "vcap": 16
+    },
+    "C134": {
+      "code": "C134",
+      "name": "",
+      "floor": "F",
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Build a Junior Astronaut Mission Trainer; Abandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars",
+      "teams": [
+        "Astro Van",
+        "Wings of wax",
+        "WR2_3ENAB",
+        "Astrological",
+        "legacy pioneer",
+        "The Nebula Narrators"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "C135": {
+      "code": "C135",
+      "name": "",
+      "floor": "F",
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Abandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars",
+      "teams": [
+        "AstroPy",
+        "hero one",
+        "Ra7aL",
+        "The Cosmicians",
+        "الترابيزة العالية اوي"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
     "C136": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "136",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
       "code": "C136",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "The Earth Information Jukebox; Create Health Monitoring Software for Astronauts on Space Missions;",
+      "teams": [
+        "Astro Vitals26",
+        "Bit & Beat",
+        "Hope",
+        "Morgan Ahmed Morgan",
+        "Sherket Moqawlat",
+        "Terraphony",
+        "Vael"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
     "C137": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "137",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
       "code": "C137",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "AstroResponse",
+        "Digital Minds",
+        "HALO: Health & Autonomic Longevity in Orbit Space",
+        "NaN",
+        "The Plot Twist"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
     "C138": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "138",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
       "code": "C138",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "ASTRA HEALTH",
+        "BetaFox",
+        "CrewSync",
+        "Intersteller overdrive",
+        "Zero-G Pulse"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
     "C139": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "139",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
       "code": "C139",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "BEFORE 404",
+        "Five Stars & a Moon",
+        "Promise",
+        "Vitanaut",
+        "Vuki"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "S140": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "140",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "participants",
-      "code": "S140",
+    "C140": {
+      "code": "C140",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "Eng. Lojine",
+      "cap": 30,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "ASTRA VITAL",
+        "CUPIQ",
+        "Engineers Might Fly",
+        "Far Zenith",
+        "MEGA",
+        "Myths"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "S141": {
-      "Floor": "First",
-      "Wing": "Wing C",
-      "Room No.": "141",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "participants",
-      "code": "S141",
+    "C141": {
+      "code": "C141",
+      "name": "",
       "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 30,
+      "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "67",
+        "AstroCare",
+        "LOOP",
+        "Lunaries Team",
+        "masa",
+        "QORVYX"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "C152": {
-      "Floor": "First",
-      "Wing": "Wing D",
-      "Room No.": "152",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C152",
-      "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
-    },
-    "C153": {
-      "Floor": "First",
-      "Wing": "Wing D",
-      "Room No.": "153",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C153",
-      "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
-    },
-    "C154": {
-      "Floor": "First",
-      "Wing": "Wing D",
-      "Room No.": "154",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C154",
-      "floor": "F",
-      "floorName": "First Floor",
-      "zone": "Participants"
-    },
-    "H209": {
-      "Floor": "Second",
-      "Wing": "Wing A",
-      "Room No.": "209",
-      "Room Type": "Lecture",
-      "Physical Capacity": 0,
-      "Assigned Capacity": 0,
-      "Room Use / Function": "men Rest",
-      "code": "H209",
+    "C233": {
+      "code": "C233",
+      "name": "",
       "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Volunteers"
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Judges",
+      "resp": "",
+      "cap": 25,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "H210": {
-      "Floor": "Second",
-      "Wing": "Wing A",
-      "Room No.": "210",
-      "Room Type": "Lecture",
-      "Physical Capacity": 0,
-      "Assigned Capacity": 0,
-      "Room Use / Function": "men Rest",
-      "code": "H210",
+    "C234": {
+      "code": "C234",
+      "name": "",
       "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Volunteers"
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Judges",
+      "resp": "",
+      "cap": 25,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "C224": {
-      "Floor": "Second",
-      "Wing": "Wing B",
-      "Room No.": "224",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C224",
+    "C235": {
+      "code": "C235",
+      "name": "",
       "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Judges",
+      "resp": "",
+      "cap": 25,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "C225": {
-      "Floor": "Second",
-      "Wing": "Wing B",
-      "Room No.": "225",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C225",
+    "C236": {
+      "code": "C236",
+      "name": "",
       "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "C226": {
-      "Floor": "Second",
-      "Wing": "Wing B",
-      "Room No.": "226",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C226",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "C227": {
-      "Floor": "Second",
-      "Wing": "Wing B",
-      "Room No.": "227",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C227",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "C228": {
-      "Floor": "Second",
-      "Wing": "Wing B",
-      "Room No.": "228",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C228",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "C229": {
-      "Floor": "Second",
-      "Wing": "Wing B",
-      "Room No.": "229",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C229",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "C230": {
-      "Floor": "Second",
-      "Wing": "Wing B",
-      "Room No.": "230",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C230",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "C231": {
-      "Floor": "Second",
-      "Wing": "Wing B",
-      "Room No.": "231",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "C231",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "B233": {
-      "Floor": "Second",
-      "Wing": "Wing C",
-      "Room No.": "233",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "B233",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "B234": {
-      "Floor": "Second",
-      "Wing": "Wing C",
-      "Room No.": "234",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "B234",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "B235": {
-      "Floor": "Second",
-      "Wing": "Wing C",
-      "Room No.": "235",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "B235",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
-    },
-    "B236": {
-      "Floor": "Second",
-      "Wing": "Wing C",
-      "Room No.": "236",
-      "Room Type": "Bring your device",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
-      "code": "B236",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+      "type": "Bring Your Own Device",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "NASA Space Apps Cairo Mentors",
+      "cap": 25,
+      "chal": "",
+      "teams": [],
+      "vteam": "Technical Mentors Command",
+      "vcap": 20
     },
     "C240": {
-      "Floor": "Second",
-      "Wing": "Wing C",
-      "Room No.": "240",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "participants",
       "code": "C240",
+      "name": "",
       "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Judges",
+      "resp": "",
+      "cap": 25,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "S241": {
-      "Floor": "Second",
-      "Wing": "Wing C",
-      "Room No.": "241",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "participants",
-      "code": "S241",
+    "C241": {
+      "code": "C241",
+      "name": "",
       "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 30,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "S242": {
-      "Floor": "Second",
-      "Wing": "Wing C",
-      "Room No.": "242",
-      "Room Type": "Small lecture",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "participants",
-      "code": "S242",
+    "C242": {
+      "code": "C242",
+      "name": "",
       "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+      "type": "Small Lecture Hall",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 30,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "C252": {
-      "Floor": "Second",
-      "Wing": "Wing D",
-      "Room No.": "252",
-      "Room Type": "Chairs",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "SU Tech students participants",
-      "code": "C252",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+    "CAFETERIA": {
+      "code": "CAFETERIA",
+      "name": "Cafeteria",
+      "floor": "G",
+      "type": "Cafeteria",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "Logistics & Catering Lead",
+      "cap": 150,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "C256": {
-      "Floor": "Second",
-      "Wing": "Wing D",
-      "Room No.": "256",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "SU Tech students participants",
-      "code": "C256",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+    "CLINIC-003": {
+      "code": "CLINIC-003",
+      "name": "",
+      "floor": "G",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Unassigned",
+      "resp": "",
+      "cap": 0,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "C257": {
-      "Floor": "Second",
-      "Wing": "Wing D",
-      "Room No.": "257",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "SU Tech students participants",
-      "code": "C257",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+    "D152": {
+      "code": "D152",
+      "name": "",
+      "floor": "F",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity Combustion Data",
+      "teams": [
+        "CCP",
+        "IGNIS",
+        "PyroNova",
+        "Starry Night",
+        "T3ban-Abdel_Rahem"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "C258": {
-      "Floor": "Second",
-      "Wing": "Wing D",
-      "Room No.": "258",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "SU Tech students participants",
-      "code": "C258",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+    "D153": {
+      "code": "D153",
+      "name": "",
+      "floor": "F",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity Combustion Data",
+      "teams": [
+        "AstroSpark",
+        "EmberNova",
+        "Engigrammers",
+        "Power of 1000 sun",
+        "Zero Flare"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "C259": {
-      "Floor": "Second",
-      "Wing": "Wing D",
-      "Room No.": "259",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "SU Tech students participants",
-      "code": "C259",
-      "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+    "D154": {
+      "code": "D154",
+      "name": "",
+      "floor": "F",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity Combustion Data",
+      "teams": [
+        "AL AMN",
+        "Early Echo",
+        "Ignis 9th",
+        "R^2",
+        "Sakan Sapce",
+        "VOIID"
+      ],
+      "vteam": "",
+      "vcap": 0
     },
-    "C260": {
-      "Floor": "Second",
-      "Wing": "Wing D",
-      "Room No.": "260",
-      "Room Type": "Chairs",
-      "Physical Capacity": 28,
-      "Assigned Capacity": 25,
-      "Room Use / Function": "SU Tech students participants",
-      "code": "C260",
+    "D252": {
+      "code": "D252",
+      "name": "",
       "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 30,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     },
-    "C265": {
-      "Floor": "Second",
-      "Wing": "Wing D",
-      "Room No.": "265",
-      "Room Type": "Chairs",
-      "Physical Capacity": 56,
-      "Assigned Capacity": 30,
-      "Room Use / Function": "SU Tech students participants",
-      "code": "C265",
+    "D256": {
+      "code": "D256",
+      "name": "",
       "floor": "S",
-      "floorName": "Second Floor",
-      "zone": "Participants"
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars; Interplanetary Survival Guide: Martian Map",
+      "teams": [
+        "Astra Impact",
+        "NOCTRA",
+        "Sa7ara To Space",
+        "Alexstra",
+        "MarMap",
+        "WASP-12B"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "D257": {
+      "code": "D257",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Interplanetary Survival Guide: Martian Map",
+      "teams": [
+        "AstroMonster inc",
+        "meteoroid",
+        "NOVALITH",
+        "Odyssey Catography",
+        "RED PLANET LAB"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "D258": {
+      "code": "D258",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Interplanetary Survival Guide: Martian Map",
+      "teams": [
+        "Astravox",
+        "MARS INVADERS",
+        "NWC(No Werks Chicken)",
+        "RobEn"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "D259": {
+      "code": "D259",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Space Mission Design Game ; Dancing with the SARs",
+      "teams": [
+        "Apollo V",
+        "Hazl2om in space",
+        "VECTOR PRIME",
+        "0xNEBULA",
+        "AQUA SAR",
+        "NABAٔ"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "D260": {
+      "code": "D260",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 25,
+      "chal": "Be An Earth System Trend Detective!",
+      "teams": [
+        "$Earth’s Data Analysis Application",
+        "falak masr",
+        "Hot Source",
+        "NUN",
+        "TheOutliers",
+        "Urbanova"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "D265": {
+      "code": "D265",
+      "name": "",
+      "floor": "S",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Participants",
+      "resp": "",
+      "cap": 30,
+      "chal": "Be An Earth System Trend Detective! ;  Create Health Monitoring Software for Astronauts on Space Missions",
+      "teams": [
+        "Green planet",
+        "SU-Space",
+        "Tech Ghosts",
+        "Ed3olna Neksab"
+      ],
+      "vteam": "",
+      "vcap": 0
+    },
+    "MEETING-ROOM": {
+      "code": "MEETING-ROOM",
+      "name": "",
+      "floor": "G",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "Unassigned",
+      "resp": "",
+      "cap": 0,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
+    },
+    "PR-F": {
+      "code": "PR-F",
+      "name": "Female",
+      "floor": "B",
+      "type": "Prayer Room",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "Logistics & Facilities Team",
+      "cap": 30,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
+    },
+    "PR-M": {
+      "code": "PR-M",
+      "name": "Men",
+      "floor": "B",
+      "type": "Prayer Room",
+      "access": "ok",
+      "mode": "Volunteers",
+      "resp": "Logistics & Facilities Team",
+      "cap": 40,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
+    },
+    "STAGE": {
+      "code": "STAGE",
+      "name": "Outer Stage",
+      "floor": "G",
+      "type": "Outer Stage",
+      "access": "ok",
+      "mode": "VIPs",
+      "resp": "Stage Management Team",
+      "cap": 400,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
+    },
+    "VIP": {
+      "code": "VIP",
+      "name": "",
+      "floor": "G",
+      "type": "Classroom",
+      "access": "ok",
+      "mode": "VIPs",
+      "resp": "",
+      "cap": 0,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
     }
   },
   "wifi": {
-    "WF-S034": {
-      "id": "WF-S034",
+    "WF-C034": {
+      "id": "WF-C034",
       "floorName": "Ground Floor",
-      "label": "Room S034",
+      "label": "Room C034",
       "x": 136,
       "y": 244,
       "mbps": 59,
       "latency": 96,
       "updated": "2026-11-06 12:30",
-      "room": "S034",
+      "room": "C034",
       "floor": "G"
     },
-    "WF-S035": {
-      "id": "WF-S035",
+    "WF-C035": {
+      "id": "WF-C035",
       "floorName": "Ground Floor",
-      "label": "Room S035",
+      "label": "Room C035",
       "x": 136,
       "y": 353,
       "mbps": 72,
       "latency": 78,
       "updated": "2026-11-06 12:30",
-      "room": "S035",
+      "room": "C035",
       "floor": "G"
     },
     "WF-C027": {
@@ -927,64 +1664,64 @@
       "room": "C026",
       "floor": "G"
     },
-    "WF-C017": {
-      "id": "WF-C017",
+    "WF-B017": {
+      "id": "WF-B017",
       "floorName": "Ground Floor",
-      "label": "Room C017",
+      "label": "Room B017",
       "x": 1180,
       "y": 280,
       "mbps": 44,
       "latency": 109,
       "updated": "2026-11-06 12:30",
-      "room": "C017",
+      "room": "B017",
       "floor": "G"
     },
-    "WF-S016": {
-      "id": "WF-S016",
+    "WF-B016": {
+      "id": "WF-B016",
       "floorName": "Ground Floor",
-      "label": "Room S016",
+      "label": "Room B016",
       "x": 1277,
       "y": 219,
       "mbps": 90,
       "latency": 69,
       "updated": "2026-11-06 12:30",
-      "room": "S016",
+      "room": "B016",
       "floor": "G"
     },
-    "WF-S015": {
-      "id": "WF-S015",
+    "WF-B015": {
+      "id": "WF-B015",
       "floorName": "Ground Floor",
-      "label": "Room S015",
+      "label": "Room B015",
       "x": 1325,
       "y": 306,
       "mbps": 90,
       "latency": 62,
       "updated": "2026-11-06 12:30",
-      "room": "S015",
+      "room": "B015",
       "floor": "G"
     },
-    "WF-S140": {
-      "id": "WF-S140",
+    "WF-C140": {
+      "id": "WF-C140",
       "floorName": "First Floor",
-      "label": "Room S140",
+      "label": "Room C140",
       "x": 178,
       "y": 224,
       "mbps": 67,
       "latency": 86,
       "updated": "2026-11-06 12:30",
-      "room": "S140",
+      "room": "C140",
       "floor": "F"
     },
-    "WF-S141": {
-      "id": "WF-S141",
+    "WF-C141": {
+      "id": "WF-C141",
       "floorName": "First Floor",
-      "label": "Room S141",
+      "label": "Room C141",
       "x": 178,
       "y": 336,
       "mbps": 64,
       "latency": 87,
       "updated": "2026-11-06 12:30",
-      "room": "S141",
+      "room": "C141",
       "floor": "F"
     },
     "WF-C139": {
@@ -1035,52 +1772,52 @@
       "room": "C136",
       "floor": "F"
     },
-    "WF-B135": {
-      "id": "WF-B135",
+    "WF-C135": {
+      "id": "WF-C135",
       "floorName": "First Floor",
-      "label": "Room B135",
+      "label": "Room C135",
       "x": 511,
       "y": 261,
       "mbps": 98,
       "latency": 55,
       "updated": "2026-11-06 12:30",
-      "room": "B135",
+      "room": "C135",
       "floor": "F"
     },
-    "WF-B134": {
-      "id": "WF-B134",
+    "WF-C134": {
+      "id": "WF-C134",
       "floorName": "First Floor",
-      "label": "Room B134",
+      "label": "Room C134",
       "x": 564,
       "y": 261,
       "mbps": 77,
       "latency": 79,
       "updated": "2026-11-06 12:30",
-      "room": "B134",
+      "room": "C134",
       "floor": "F"
     },
-    "WF-B133": {
-      "id": "WF-B133",
+    "WF-C133": {
+      "id": "WF-C133",
       "floorName": "First Floor",
-      "label": "Room B133",
+      "label": "Room C133",
       "x": 614,
       "y": 261,
       "mbps": 90,
       "latency": 64,
       "updated": "2026-11-06 12:30",
-      "room": "B133",
+      "room": "C133",
       "floor": "F"
     },
-    "WF-B132": {
-      "id": "WF-B132",
+    "WF-C132": {
+      "id": "WF-C132",
       "floorName": "First Floor",
-      "label": "Room B132",
+      "label": "Room C132",
       "x": 665,
       "y": 261,
       "mbps": 60,
       "latency": 90,
       "updated": "2026-11-06 12:30",
-      "room": "B132",
+      "room": "C132",
       "floor": "F"
     },
     "WF-B131": {
@@ -1131,160 +1868,160 @@
       "room": "B128",
       "floor": "F"
     },
-    "WF-C127": {
-      "id": "WF-C127",
+    "WF-B127": {
+      "id": "WF-B127",
       "floorName": "First Floor",
-      "label": "Room C127",
+      "label": "Room B127",
       "x": 1162,
       "y": 260,
       "mbps": 60,
       "latency": 89,
       "updated": "2026-11-06 12:30",
-      "room": "C127",
+      "room": "B127",
       "floor": "F"
     },
-    "WF-C126": {
-      "id": "WF-C126",
+    "WF-B126": {
+      "id": "WF-B126",
       "floorName": "First Floor",
-      "label": "Room C126",
+      "label": "Room B126",
       "x": 1210,
       "y": 260,
       "mbps": 82,
       "latency": 76,
       "updated": "2026-11-06 12:30",
-      "room": "C126",
+      "room": "B126",
       "floor": "F"
     },
-    "WF-C125": {
-      "id": "WF-C125",
+    "WF-B125": {
+      "id": "WF-B125",
       "floorName": "First Floor",
-      "label": "Room C125",
+      "label": "Room B125",
       "x": 1258,
       "y": 260,
       "mbps": 88,
       "latency": 68,
       "updated": "2026-11-06 12:30",
-      "room": "C125",
+      "room": "B125",
       "floor": "F"
     },
-    "WF-C124": {
-      "id": "WF-C124",
+    "WF-B124": {
+      "id": "WF-B124",
       "floorName": "First Floor",
-      "label": "Room C124",
+      "label": "Room B124",
       "x": 1308,
       "y": 260,
       "mbps": 31,
       "latency": 116,
       "updated": "2026-11-06 12:30",
-      "room": "C124",
+      "room": "B124",
       "floor": "F"
     },
-    "WF-S123": {
-      "id": "WF-S123",
+    "WF-B123": {
+      "id": "WF-B123",
       "floorName": "First Floor",
-      "label": "Room S123",
+      "label": "Room B123",
       "x": 1416,
       "y": 189,
       "mbps": 52,
       "latency": 102,
       "updated": "2026-11-06 12:30",
-      "room": "S123",
+      "room": "B123",
       "floor": "F"
     },
-    "WF-S122": {
-      "id": "WF-S122",
+    "WF-B122": {
+      "id": "WF-B122",
       "floorName": "First Floor",
-      "label": "Room S122",
+      "label": "Room B122",
       "x": 1446,
       "y": 296,
       "mbps": 74,
       "latency": 83,
       "updated": "2026-11-06 12:30",
-      "room": "S122",
+      "room": "B122",
       "floor": "F"
     },
-    "WF-H114": {
-      "id": "WF-H114",
+    "WF-A114": {
+      "id": "WF-A114",
       "floorName": "First Floor",
-      "label": "Room H114",
+      "label": "Room A114",
       "x": 1496,
       "y": 512,
       "mbps": 14,
       "latency": 136,
       "updated": "2026-11-06 12:30",
-      "room": "H114",
+      "room": "A114",
       "floor": "F"
     },
-    "WF-H113": {
-      "id": "WF-H113",
+    "WF-A113": {
+      "id": "WF-A113",
       "floorName": "First Floor",
-      "label": "Room H113",
+      "label": "Room A113",
       "x": 1540,
       "y": 600,
       "mbps": 9,
       "latency": 136,
       "updated": "2026-11-06 12:30",
-      "room": "H113",
+      "room": "A113",
       "floor": "F"
     },
-    "WF-C154": {
-      "id": "WF-C154",
+    "WF-D154": {
+      "id": "WF-D154",
       "floorName": "First Floor",
-      "label": "Room C154",
+      "label": "Room D154",
       "x": 406,
       "y": 574,
       "mbps": 85,
       "latency": 68,
       "updated": "2026-11-06 12:30",
-      "room": "C154",
+      "room": "D154",
       "floor": "F"
     },
-    "WF-C153": {
-      "id": "WF-C153",
+    "WF-D153": {
+      "id": "WF-D153",
       "floorName": "First Floor",
-      "label": "Room C153",
+      "label": "Room D153",
       "x": 456,
       "y": 574,
       "mbps": 88,
       "latency": 64,
       "updated": "2026-11-06 12:30",
-      "room": "C153",
+      "room": "D153",
       "floor": "F"
     },
-    "WF-C152": {
-      "id": "WF-C152",
+    "WF-D152": {
+      "id": "WF-D152",
       "floorName": "First Floor",
-      "label": "Room C152",
+      "label": "Room D152",
       "x": 507,
       "y": 574,
       "mbps": 76,
       "latency": 75,
       "updated": "2026-11-06 12:30",
-      "room": "C152",
+      "room": "D152",
       "floor": "F"
     },
-    "WF-S241": {
-      "id": "WF-S241",
+    "WF-C241": {
+      "id": "WF-C241",
       "floorName": "Second Floor",
-      "label": "Room S241",
+      "label": "Room C241",
       "x": 172,
       "y": 211,
       "mbps": 21,
       "latency": 125,
       "updated": "2026-11-06 12:30",
-      "room": "S241",
+      "room": "C241",
       "floor": "S"
     },
-    "WF-S242": {
-      "id": "WF-S242",
+    "WF-C242": {
+      "id": "WF-C242",
       "floorName": "Second Floor",
-      "label": "Room S242",
+      "label": "Room C242",
       "x": 172,
       "y": 322,
       "mbps": 79,
       "latency": 74,
       "updated": "2026-11-06 12:30",
-      "room": "S242",
+      "room": "C242",
       "floor": "S"
     },
     "WF-C240": {
@@ -1299,244 +2036,256 @@
       "room": "C240",
       "floor": "S"
     },
-    "WF-B236": {
-      "id": "WF-B236",
+    "WF-C236": {
+      "id": "WF-C236",
       "floorName": "Second Floor",
-      "label": "Room B236",
+      "label": "Room C236",
       "x": 488,
       "y": 244,
       "mbps": 81,
       "latency": 75,
       "updated": "2026-11-06 12:30",
-      "room": "B236",
+      "room": "C236",
       "floor": "S"
     },
-    "WF-B235": {
-      "id": "WF-B235",
+    "WF-C235": {
+      "id": "WF-C235",
       "floorName": "Second Floor",
-      "label": "Room B235",
+      "label": "Room C235",
       "x": 535,
       "y": 244,
       "mbps": 91,
       "latency": 68,
       "updated": "2026-11-06 12:30",
-      "room": "B235",
+      "room": "C235",
       "floor": "S"
     },
-    "WF-B234": {
-      "id": "WF-B234",
+    "WF-C234": {
+      "id": "WF-C234",
       "floorName": "Second Floor",
-      "label": "Room B234",
+      "label": "Room C234",
       "x": 583,
       "y": 244,
       "mbps": 61,
       "latency": 88,
       "updated": "2026-11-06 12:30",
-      "room": "B234",
+      "room": "C234",
       "floor": "S"
     },
-    "WF-B233": {
-      "id": "WF-B233",
+    "WF-C233": {
+      "id": "WF-C233",
       "floorName": "Second Floor",
-      "label": "Room B233",
+      "label": "Room C233",
       "x": 634,
       "y": 244,
       "mbps": 75,
       "latency": 76,
       "updated": "2026-11-06 12:30",
-      "room": "B233",
+      "room": "C233",
       "floor": "S"
     },
-    "WF-C231": {
-      "id": "WF-C231",
+    "WF-B231": {
+      "id": "WF-B231",
       "floorName": "Second Floor",
-      "label": "Room C231",
+      "label": "Room B231",
       "x": 940,
       "y": 239,
       "mbps": 95,
       "latency": 60,
       "updated": "2026-11-06 12:30",
-      "room": "C231",
+      "room": "B231",
       "floor": "S"
     },
-    "WF-C230": {
-      "id": "WF-C230",
+    "WF-B230": {
+      "id": "WF-B230",
       "floorName": "Second Floor",
-      "label": "Room C230",
+      "label": "Room B230",
       "x": 986,
       "y": 240,
       "mbps": 69,
       "latency": 84,
       "updated": "2026-11-06 12:30",
-      "room": "C230",
+      "room": "B230",
       "floor": "S"
     },
-    "WF-C229": {
-      "id": "WF-C229",
+    "WF-B229": {
+      "id": "WF-B229",
       "floorName": "Second Floor",
-      "label": "Room C229",
+      "label": "Room B229",
       "x": 1034,
       "y": 239,
       "mbps": 63,
       "latency": 88,
       "updated": "2026-11-06 12:30",
-      "room": "C229",
+      "room": "B229",
       "floor": "S"
     },
-    "WF-C228": {
-      "id": "WF-C228",
+    "WF-B228": {
+      "id": "WF-B228",
       "floorName": "Second Floor",
-      "label": "Room C228",
+      "label": "Room B228",
       "x": 1082,
       "y": 238,
       "mbps": 77,
       "latency": 81,
       "updated": "2026-11-06 12:30",
-      "room": "C228",
+      "room": "B228",
       "floor": "S"
     },
-    "WF-C227": {
-      "id": "WF-C227",
+    "WF-B227": {
+      "id": "WF-B227",
       "floorName": "Second Floor",
-      "label": "Room C227",
+      "label": "Room B227",
       "x": 1130,
       "y": 239,
       "mbps": 82,
       "latency": 70,
       "updated": "2026-11-06 12:30",
-      "room": "C227",
+      "room": "B227",
       "floor": "S"
     },
-    "WF-C226": {
-      "id": "WF-C226",
+    "WF-B226": {
+      "id": "WF-B226",
       "floorName": "Second Floor",
-      "label": "Room C226",
+      "label": "Room B226",
       "x": 1176,
       "y": 239,
       "mbps": 81,
       "latency": 72,
       "updated": "2026-11-06 12:30",
-      "room": "C226",
+      "room": "B226",
       "floor": "S"
     },
-    "WF-C225": {
-      "id": "WF-C225",
+    "WF-B225": {
+      "id": "WF-B225",
       "floorName": "Second Floor",
-      "label": "Room C225",
+      "label": "Room B225",
       "x": 1225,
       "y": 239,
       "mbps": 72,
       "latency": 83,
       "updated": "2026-11-06 12:30",
-      "room": "C225",
+      "room": "B225",
       "floor": "S"
     },
-    "WF-C224": {
-      "id": "WF-C224",
+    "WF-B224": {
+      "id": "WF-B224",
       "floorName": "Second Floor",
-      "label": "Room C224",
+      "label": "Room B224",
       "x": 1274,
       "y": 239,
       "mbps": 77,
       "latency": 75,
       "updated": "2026-11-06 12:30",
-      "room": "C224",
+      "room": "B224",
       "floor": "S"
     },
-    "WF-H210": {
-      "id": "WF-H210",
+    "WF-A210": {
+      "id": "WF-A210",
       "floorName": "Second Floor",
-      "label": "Room H210",
+      "label": "Room A210",
       "x": 1480,
       "y": 464,
       "mbps": 36,
       "latency": 117,
       "updated": "2026-11-06 12:30",
-      "room": "H210",
+      "room": "A210",
       "floor": "S"
     },
-    "WF-H209": {
-      "id": "WF-H209",
+    "WF-A209": {
+      "id": "WF-A209",
       "floorName": "Second Floor",
-      "label": "Room H209",
+      "label": "Room A209",
       "x": 1539,
       "y": 557,
       "mbps": 35,
       "latency": 118,
       "updated": "2026-11-06 12:30",
-      "room": "H209",
+      "room": "A209",
       "floor": "S"
     },
-    "WF-C260": {
-      "id": "WF-C260",
+    "WF-D260": {
+      "id": "WF-D260",
       "floorName": "Second Floor",
-      "label": "Room C260",
+      "label": "Room D260",
       "x": 146,
       "y": 538,
       "mbps": 6,
       "latency": 141,
       "updated": "2026-11-06 12:30",
-      "room": "C260",
+      "room": "D260",
       "floor": "S"
     },
-    "WF-C259": {
-      "id": "WF-C259",
+    "WF-D259": {
+      "id": "WF-D259",
       "floorName": "Second Floor",
-      "label": "Room C259",
+      "label": "Room D259",
       "x": 198,
       "y": 538,
       "mbps": 11,
       "latency": 136,
       "updated": "2026-11-06 12:30",
-      "room": "C259",
+      "room": "D259",
       "floor": "S"
     },
-    "WF-C258": {
-      "id": "WF-C258",
+    "WF-D258": {
+      "id": "WF-D258",
       "floorName": "Second Floor",
-      "label": "Room C258",
+      "label": "Room D258",
       "x": 292,
       "y": 538,
       "mbps": 79,
       "latency": 72,
       "updated": "2026-11-06 12:30",
-      "room": "C258",
+      "room": "D258",
       "floor": "S"
     },
-    "WF-C257": {
-      "id": "WF-C257",
+    "WF-D257": {
+      "id": "WF-D257",
       "floorName": "Second Floor",
-      "label": "Room C257",
+      "label": "Room D257",
       "x": 340,
       "y": 538,
       "mbps": 81,
       "latency": 74,
       "updated": "2026-11-06 12:30",
-      "room": "C257",
+      "room": "D257",
       "floor": "S"
     },
-    "WF-C256": {
-      "id": "WF-C256",
+    "WF-D256": {
+      "id": "WF-D256",
       "floorName": "Second Floor",
-      "label": "Room C256",
+      "label": "Room D256",
       "x": 388,
       "y": 538,
       "mbps": 58,
       "latency": 97,
       "updated": "2026-11-06 12:30",
-      "room": "C256",
+      "room": "D256",
       "floor": "S"
     },
-    "WF-C265": {
-      "id": "WF-C265",
+    "WF-D252": {
+      "id": "WF-D252",
       "floorName": "Second Floor",
-      "label": "Room C265",
+      "label": "Room D252",
+      "x": 553,
+      "y": 452,
+      "mbps": 68,
+      "latency": 24,
+      "updated": "2026-11-11 15:35",
+      "room": "D252",
+      "floor": "S"
+    },
+    "WF-D265": {
+      "id": "WF-D265",
+      "floorName": "Second Floor",
+      "label": "Room D265",
       "x": 564,
       "y": 655,
       "mbps": 105,
       "latency": 52,
       "updated": "2026-11-06 12:30",
-      "room": "C265",
+      "room": "D265",
       "floor": "S"
     }
   },
@@ -1546,7 +2295,7 @@
       "role": "TechOps Lead",
       "phone": "+20 100 000 0001",
       "floorName": "First Floor",
-      "room": "B133",
+      "room": "C133",
       "status": "Available",
       "focus": "Overall coordination",
       "floor": "F"
@@ -1556,7 +2305,7 @@
       "role": "Hardware & Equipment",
       "phone": "+20 100 000 0002",
       "floorName": "First Floor",
-      "room": "B133",
+      "room": "C133",
       "status": "Available",
       "focus": "Cables, power strips, projectors",
       "floor": "F"
@@ -1566,7 +2315,7 @@
       "role": "Network Engineer",
       "phone": "+20 100 000 0003",
       "floorName": "First Floor",
-      "room": "H113",
+      "room": "A113",
       "status": "On a task",
       "focus": "Wi-Fi access points",
       "floor": "F"
@@ -1596,7 +2345,7 @@
       "role": "Floor Support (Second)",
       "phone": "+20 100 000 0006",
       "floorName": "Second Floor",
-      "room": "C231",
+      "room": "B231",
       "status": "Busy",
       "focus": "Participant help desk",
       "floor": "S"
@@ -1606,7 +2355,7 @@
       "role": "Live Stream & AV",
       "phone": "+20 100 000 0007",
       "floorName": "Ground Floor",
-      "room": "S016",
+      "room": "B016",
       "status": "On a task",
       "focus": "Judges rooms AV",
       "floor": "G"
@@ -1616,7 +2365,7 @@
       "role": "Floor Support (Ground)",
       "phone": "+20 100 000 0008",
       "floorName": "Ground Floor",
-      "room": "C017",
+      "room": "B017",
       "status": "Available",
       "focus": "Registration support",
       "floor": "G"
@@ -1682,7 +2431,7 @@
       "qty": 1,
       "holder": "Karim",
       "team": "Team Cosmos",
-      "room": "H113",
+      "room": "A113",
       "floorName": "First Floor",
       "status": "Lent out",
       "updated": "2026-11-06 11:45",
@@ -1708,7 +2457,7 @@
       "qty": 2,
       "holder": "Youssef",
       "team": "Judges Panel 1",
-      "room": "S016",
+      "room": "B016",
       "floorName": "Ground Floor",
       "status": "Lent out",
       "updated": "2026-11-06 11:45",
@@ -1734,7 +2483,7 @@
       "qty": 3,
       "holder": "Lojine",
       "team": "Team Nova",
-      "room": "H210",
+      "room": "A210",
       "floorName": "Second Floor",
       "status": "Lent out",
       "updated": "2026-11-06 11:45",
@@ -1747,7 +2496,7 @@
       "qty": 3,
       "holder": "Lojine",
       "team": "Team Odyssey",
-      "room": "H114",
+      "room": "A114",
       "floorName": "First Floor",
       "status": "Lent out",
       "updated": "2026-11-06 11:45",
@@ -1786,7 +2535,7 @@
       "qty": 2,
       "holder": "Nour",
       "team": "Team Sirius",
-      "room": "C231",
+      "room": "B231",
       "floorName": "Second Floor",
       "status": "Lent out",
       "updated": "2026-11-06 11:45",
@@ -1812,7 +2561,7 @@
       "qty": 4,
       "holder": "Youssef",
       "team": "Judges Panel 2",
-      "room": "S015",
+      "room": "B015",
       "floorName": "Ground Floor",
       "status": "Lent out",
       "updated": "2026-11-06 11:45",
@@ -1863,7 +2612,7 @@
       "id": "RPT-0001",
       "ts": "2026-11-06 10:12:00",
       "floorName": "Second Floor",
-      "room": "C227",
+      "room": "B227",
       "issue": "Internet is lagging",
       "details": "Video call drops every few minutes",
       "status": "Resolved",
@@ -1878,7 +2627,7 @@
       "id": "RPT-0002",
       "ts": "2026-11-06 11:05:00",
       "floorName": "First Floor",
-      "room": "H113",
+      "room": "A113",
       "issue": "Internet is lagging",
       "details": "Very slow for the whole room",
       "status": "In Progress",
@@ -1923,7 +2672,7 @@
       "id": "RPT-0005",
       "ts": "2026-11-06 12:08:00",
       "floorName": "Second Floor",
-      "room": "C259",
+      "room": "D259",
       "issue": "Internet is lagging",
       "details": "Cannot upload files",
       "status": "New",
@@ -1955,7 +2704,7 @@
       "floor": "G",
       "room": "C026",
       "issue": "Go to a place",
-      "details": "Wants to go to: S140 (First Floor)",
+      "details": "Wants to go to: C140 (First Floor)",
       "status": "Resolved",
       "assigned": "Norhan Yasser",
       "claimedAt": "2026-11-06 11:40:00",
@@ -1983,7 +2732,7 @@
       "id": "LGR-0003",
       "ts": "2026-11-06 12:10:00",
       "floor": "S",
-      "room": "C231",
+      "room": "B231",
       "issue": "Help request",
       "details": "Lost my badge, need a replacement",
       "status": "New",
@@ -1998,7 +2747,7 @@
       "id": "LGR-0004",
       "ts": "2026-11-06 12:14:00",
       "floor": "G",
-      "room": "S016",
+      "room": "B016",
       "issue": "Go to a place",
       "details": "Wants to go to: Main Entrance",
       "status": "New",
@@ -2077,10 +2826,10 @@
       "by": "Mohamed Khairy",
       "target": "Lojine",
       "byFloorName": "First Floor",
-      "byRoom": "B133",
+      "byRoom": "C133",
       "targetFloorName": "First Floor",
-      "targetRoom": "H113",
-      "meetAt": "H113",
+      "targetRoom": "A113",
+      "meetAt": "A113",
       "note": "Need to check the access point",
       "status": "On the way",
       "byFloor": "F",
@@ -2092,10 +2841,10 @@
       "by": "Omar",
       "target": "Nour",
       "byFloorName": "First Floor",
-      "byRoom": "B133",
+      "byRoom": "C133",
       "targetFloorName": "Second Floor",
-      "targetRoom": "C231",
-      "meetAt": "B133",
+      "targetRoom": "B231",
+      "meetAt": "C133",
       "note": "Bring spare HDMI cable",
       "status": "Pending",
       "byFloor": "F",

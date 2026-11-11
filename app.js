@@ -1,7 +1,7 @@
 /**
  * NASA Space Apps Challenge - Cairo Venue & Floor Operations
  * Clean, Professional Operations & Floor Navigation System
- * Google Sheets Realtime Database Integration
+ * Rooms & volunteers live in Firebase Firestore
  */
 
 const W = 1673, H = 940;
@@ -28,11 +28,15 @@ const TYPES = {
 /* codes whose first letter is NOT their type */
 const SPECIAL_TYPE = { STAGE: "T", CAFETERIA: "A", "BREAK-1": "K", "BREAK-2": "K" };
 
+/* Room codes now start with the WING letter (A lower-right, B upper-right, C upper-left, D lower-left), not the space type.
+   The space type (colour on the plan) is kept here: B = Bring Your Own Device, C = Classroom, S = Small Lecture Hall, H = Lecture Hall. */
+const ROOM_TYPE = {"C034":"S", "C035":"S", "C027":"C", "C026":"C", "B017":"C", "B016":"S", "B015":"S", "C140":"S", "C141":"S", "C139":"C", "C138":"C", "C137":"C", "C136":"C", "C135":"B", "C134":"B", "C133":"B", "C132":"B", "B131":"B", "B130":"B", "B129":"B", "B128":"B", "B127":"C", "B126":"C", "B125":"C", "B124":"C", "B123":"S", "B122":"S", "A114":"H", "A113":"H", "D154":"C", "D153":"C", "D152":"C", "C241":"S", "C242":"S", "C240":"C", "C236":"B", "C235":"B", "C234":"B", "C233":"B", "B231":"C", "B230":"C", "B229":"C", "B228":"C", "B227":"C", "B226":"C", "B225":"C", "B224":"C", "A210":"H", "A209":"H", "D260":"C", "D259":"C", "D258":"C", "D257":"C", "D256":"C", "D252":"C", "D265":"C"};
+
 const IMG = {
-  B: "assets/floors/0.png",
-  G: "assets/floors/1.png",
-  F: "assets/floors/2.png",
-  S: "assets/floors/3.png"
+  B: "assets/floors/0.png?v=20261111",
+  G: "assets/floors/1.png?v=20261111",
+  F: "assets/floors/2.png?v=20261111",
+  S: "assets/floors/3.png?v=20261111-d252"
 };
 /* Room geometry (pixels of the original image). Rect = 4 numbers, polygon = flat x,y pairs. Placeholder outlines: refine in the editor. */
 const R=(a,b)=>a.map((c,i)=>[c,...b[i]]);
@@ -43,29 +47,29 @@ const FLOORS=[
 {id:"B",name:"Basement",rooms:[
 ["PR-F",[970,382,1048,505]],["PR-M",[1087,382,1188,575]]]},
 {id:"G",name:"Ground Floor",rooms:[
-["S034",[86,201,185,287]],["S035",[87,312,185,394]],["C027",[511,240,558,320]],["C026",[559,240,607,320]],["C017",[1157,240,1202,320]],
-["S016",[1259,273,1220,208,1295,165,1333,229]],["S015",[1309,360,1270,295,1341,252,1381,316]],["X",[87,536,187,690]],["X",[978,347,1199,390]],["X",[978,538,1245,609]],
+["C034",[86,201,185,287]],["C035",[87,312,185,394]],["C027",[511,240,558,320]],["C026",[559,240,607,320]],["B017",[1157,240,1202,320]],
+["B016",[1259,273,1220,208,1295,165,1333,229]],["B015",[1309,360,1270,295,1341,252,1381,316]],["X",[87,536,187,690]],["X",[978,347,1199,390]],["X",[978,538,1245,609]],
 ["X",[934,636,1153,716]],
-/* Cafeteria: the open area east of the auditorium block, labelled on the ground plan */
-["CAFETERIA",[990,396,1250,528]],
+/* Cafeteria: clickable directly on the "Cafeteria" label on the ground plan (no surrounding box) */
+["CAFETERIA",[1070,429,1225,468]],
 /* Outer Stage (outdoor, east of the building) - only data kept: the people responsible for arranging it */
 ["STAGE",[1462,182,1660,213,1617,499,1414,470]]]},
 {id:"F",name:"First Floor",rooms:[
-["S140",[126,178,229,269]],["S141",[126,295,230,378]],["C139",[283,218,335,304]],["C138",[334,218,384,304]],["C137",[384,218,434,304]],
-["C136",[434,218,485,304]],["B135",[485,218,537,304]],["B134",[537,218,591,304]],["B133",[589,218,639,304]],["B132",[639,218,691,304]],
-["B131",[940,218,994,303]],["B130",[991,218,1040,303]],["B129",[1039,217,1089,303]],["B128",[1088,217,1138,303]],["C127",[1138,217,1185,303]],
-["C126",[1185,217,1235,303]],["C125",[1234,217,1283,303]],["C124",[1283,217,1333,303]],["S123",[1396,248,1355,178,1437,130,1478,201]],["S122",[1403,368,1362,298,1489,224,1530,294]],
-["H114",[1466,568,1432,510,1527,455,1561,513]],["H113",[1516,658,1477,591,1563,542,1602,608]],["C154",[381,530,430,617]],["C153",[431,530,481,618]],["C152",[480,530,534,618]],
+["C140",[126,178,229,269]],["C141",[126,295,230,378]],["C139",[283,218,335,304]],["C138",[334,218,384,304]],["C137",[384,218,434,304]],
+["C136",[434,218,485,304]],["C135",[485,218,537,304]],["C134",[537,218,591,304]],["C133",[589,218,639,304]],["C132",[639,218,691,304]],
+["B131",[940,218,994,303]],["B130",[991,218,1040,303]],["B129",[1039,217,1089,303]],["B128",[1088,217,1138,303]],["B127",[1138,217,1185,303]],
+["B126",[1185,217,1235,303]],["B125",[1234,217,1283,303]],["B124",[1283,217,1333,303]],["B123",[1396,248,1355,178,1437,130,1478,201]],["B122",[1403,368,1362,298,1489,224,1530,294]],
+["A114",[1466,568,1432,510,1527,455,1561,513]],["A113",[1516,658,1477,591,1563,542,1602,608]],["D154",[381,530,430,617]],["D153",[431,530,481,618]],["D152",[480,530,534,618]],
 ["X",[125,529,228,618]],["X",[280,529,381,617]],["X",[124,647,228,696]],["X",[279,647,379,728]],["X",[1088,526,1186,610]],
 ["X",[1185,526,1286,610]],["X",[1286,526,1387,610]],["X",[1088,640,1186,724]],["X",[1185,640,1284,724]],
 /* Break area (labelled BREAK on the plan, east of the auditorium) */
 ["BREAK-1",[942,431,1086,578]]]},
 {id:"S",name:"Second Floor",rooms:[
-["S241",[119,165,224,257]],["S242",[120,282,225,363]],["C240",[274,203,324,286]],["B236",[465,203,512,286]],["B235",[511,203,559,286]],
-["B234",[559,203,607,286]],["B233",[607,203,661,286]],["C231",[916,199,963,279]],["C230",[962,199,1011,280]],["C229",[1010,198,1058,280]],
-["C228",[1058,197,1105,280]],["C227",[1106,198,1153,280]],["C226",[1152,198,1200,280]],["C225",[1201,198,1249,280]],["C224",[1249,198,1300,280]],
-["H210",[1448,534,1403,462,1512,394,1557,465]],["H209",[1506,629,1460,555,1573,486,1618,559]],["C260",[119,492,173,585]],["C259",[172,492,223,585]],["C258",[268,492,317,585]],
-["C257",[316,492,364,584]],["C256",[363,492,412,584]],["C265",[617,698,512,698,512,612,617,612]],["X",[322,203,370,286]],["X",[371,203,417,286]],
+["C241",[119,165,224,257]],["C242",[120,282,225,363]],["C240",[274,203,324,286]],["C236",[465,203,512,286]],["C235",[511,203,559,286]],
+["C234",[559,203,607,286]],["C233",[607,203,661,286]],["B231",[916,199,963,279]],["B230",[962,199,1011,280]],["B229",[1010,198,1058,280]],
+["B228",[1058,197,1105,280]],["B227",[1106,198,1153,280]],["B226",[1152,198,1200,280]],["B225",[1201,198,1249,280]],["B224",[1249,198,1300,280]],
+["A210",[1448,534,1403,462,1512,394,1557,465]],["A209",[1506,629,1460,555,1573,486,1618,559]],["D260",[119,492,173,585]],["D259",[172,492,223,585]],["D258",[268,492,317,585]],
+["D257",[316,492,364,584]],["D256",[363,492,412,584]],["D252",[520,404,585,500]],["D265",[617,698,512,698,512,612,617,612]],["X",[322,203,370,286]],["X",[371,203,417,286]],
 ["X",[417,203,464,286]],["X",[397,315,489,364]],["X",[907,242,917,282,914,376,665,375,662,246,717,192,862,191]],["X",[894,405,870,552,714,552,685,406]],["X",[1364,220,1324,154,1409,103,1449,168]],
 ["X",[1420,312,1377,243,1462,190,1505,259]],["X",[1053,504,1146,575]],["X",[1146,504,1249,575]],["X",[1249,504,1346,575]],["X",[1008,612,1147,703]],
 ["X",[1247,619,1243,698,1148,699,1146,624,1153,615,1237,612]],["X",[268,618,364,698]],["X",[162,611,223,660]],["X",[413,493,463,584]],["X",[464,493,518,584]],
@@ -86,7 +90,7 @@ FLOORS.forEach(f => {
       code: x ? "X-" + f.id + String(n).padStart(2, "0") : c,
       name: ROOM_NAMES[c] || null,   /* restricted rooms carry no public label or code */
       floor: f.id,
-      type: SPECIAL_TYPE[c] || c[0],   /* PR-* = P (prayer room) */
+      type: SPECIAL_TYPE[c] || ROOM_TYPE[c] || c[0],   /* PR-* = P (prayer room) */
       pts,
       bb: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]
     };
@@ -95,30 +99,111 @@ FLOORS.forEach(f => {
 
 const ALL = FLOORS.flatMap(f => f.rooms);
 
-/* Data layer (local browser storage with Google Sheets real-time sync) */
+/* Data layer: Firebase Firestore (collection `rooms`, shared with the Tech Ops map) is the single source of truth.
+   `DB` is an in-memory view of the live Firestore `rooms` collection (no local or static cache fallback). */
 let DB = {};
 try {
-  DB = JSON.parse(localStorage.getItem("rooms") || "{}");
+  localStorage.removeItem("rooms_fb_v2");
+  localStorage.removeItem("rooms");
+  localStorage.removeItem("nasa_gsheet_url");
 } catch (e) {}
 
-// Pre-fill default assignments if empty
-if (Object.keys(DB).length === 0) {
-  DB = {
-    C026: { resp: "Eng. Mohamed Khairy", cap: 35, mode: "Participants", access: "ok", chal: "Imager for Magnetopause-to-Aurora Exploration", teams: ["Artemis Coders", "Aurora Hunters", "Polar Orbiters"] },
-    C027: { resp: "Eng. Karim", cap: 28, mode: "Participants", access: "ok", chal: "Community Mapping: Earth Observations", teams: ["GeoPioneers", "TerraNova Sync"] },
-    H113: { resp: "Eng. Tasbeeh", cap: 120, mode: "Participants", access: "ok", chal: "Planetary Landers: Hazard Navigation", teams: ["Cosmic Navigators", "Orion Orbiters", "Lunar Dynamics", "DeepSpace Apollo"] },
-    B133: { resp: "Eng. Omar", cap: 16, mode: "Volunteers", access: "ok", vteam: "Tech Ops & Hardware Strike Team", vcap: 16 },
-    S140: { resp: "Eng. Lojine", cap: 45, mode: "Participants", access: "ok", chal: "Seismic Detection Across the Solar System", teams: ["AstroSeismo", "QuakeVoyagers"] },
-    B236: { resp: "NASA Space Apps Cairo Mentors", cap: 20, mode: "Volunteers", access: "ok", vteam: "Technical Mentors & VIP Command", vcap: 20 }
-  };
-  try { localStorage.setItem("rooms", JSON.stringify(DB)); } catch (e) {}
+const save = () => {};
+
+const SPACE_TYPE_CODE = {
+  "bring your own device": "B",
+  "byod": "B",
+  "lecture hall": "H",
+  "lecture": "H",
+  "small lecture hall": "S",
+  "small lecture": "S",
+  "classroom": "C",
+  "chairs": "C",
+  "outer stage": "T",
+  "stage": "T",
+  "prayer room": "P",
+  "cafeteria": "A",
+  "break area": "K"
+};
+
+/* ==========================================================================
+   Firebase Firestore Real-Time Rooms Integration
+   ========================================================================== */
+function refreshAfterRoomsChange() {
+  if (typeof floor === "undefined") return;
+  if (sel && $("bd") && $("bd").classList.contains("show")) {
+    show(sel);
+  }
+  if (floor) { draw(); return; }
+  if (!ROUTE) {
+    const prevFrom = $("qw-from") ? $("qw-from").value : "";
+    const prevTo = $("qw-to") ? $("qw-to").value : "";
+    home();
+    if ($("qw-from") && prevFrom) $("qw-from").value = prevFrom;
+    if ($("qw-to") && prevTo) $("qw-to").value = prevTo;
+  }
 }
 
-const save = () => {
-  try {
-    localStorage.setItem("rooms", JSON.stringify(DB));
-  } catch (e) {}
-};
+function syncRoomsFromStore(rooms) {
+  if (!rooms || !rooms.length) return;
+  const next = {};
+  rooms.forEach(r => {
+    if (!r || !r.code) return;
+    const typeCode = SPACE_TYPE_CODE[String(r.type || "").toLowerCase()] || "";
+    const mapRoom = ALL.find(x => x.code === r.code);
+    if (mapRoom) {
+      if (typeCode) mapRoom.type = typeCode;
+      if (r.name) mapRoom.name = r.name;
+    }
+    next[r.code] = {
+      name: r.name || ROOM_NAMES[r.code] || "",
+      spaceType: r.type || (mapRoom ? TYPES[mapRoom.type] : "") || "",
+      resp: r.resp || "",
+      cap: r.cap === undefined || r.cap === "" ? "" : r.cap,
+      mode: r.mode || "Unassigned",
+      access: r.access || (r.type === "X" ? "no" : "ok"),
+      chal: r.chal || "",
+      teams: (r.teams && r.teams.length) ? r.teams : [],
+      vteam: r.vteam || "",
+      vcap: r.vcap === undefined || r.vcap === "" ? "" : r.vcap
+    };
+  });
+  DB = next;   /* mirror Firestore live */
+  refreshAfterRoomsChange();
+}
+
+function updateMapsStatusPill(m) {
+  const pill = $("maps-status-pill");
+  if (!pill || !m) return;
+  const isLive = m.live, isOnline = m.online, isSynced = m.synced;
+  pill.className = "pill-status " + (!isOnline ? "demo" : isLive ? (isSynced ? "live" : "demo") : "demo");
+  const span = pill.querySelector("span");
+  if (span) span.textContent = !isOnline ? "Offline" : isSynced ? "Live" : "Connecting...";
+  pill.title = "Connected to Firebase Firestore (space-apps-cairo-volunteer)";
+}
+
+function pullRoomsFromStore() {
+  const S = window.TechOpsStore;
+  if (!S) return;
+  S.loadAll().then(data => {
+    /* allRooms = every room document, also the ones that have no TechOps geometry (e.g. STAGE) */
+    const list = data && (data.allRooms || data.rooms);
+    if (list && list.length) syncRoomsFromStore(list);
+    updateMapsStatusPill(data && data.meta);
+  }).catch(() => {});
+}
+
+function initFirebaseRooms() {
+  const S = window.TechOpsStore;
+  if (!S) return;
+  if (S.start) S.start();
+  pullRoomsFromStore();
+  if (!window.__roomsLiveBound) {
+    window.__roomsLiveBound = true;
+    S.onChange(pullRoomsFromStore);   /* Firestore onSnapshot -> every change shows up live */
+  }
+}
+initFirebaseRooms();
 
 const D = r => DB[r.code] || {};
 const access = r => D(r).access || (r.type == "X" ? "no" : "ok");
@@ -162,181 +247,6 @@ function updateThemeButton(theme) {
   if (mText) mText.textContent = label;
 }
 
-/* Google Sheets Realtime Database Engine */
-const DEFAULT_SHEET_ID = "1E4-_JjPiIhed005w43jl1s-FfmRiAzNaISEfJZihAbQ";
-let GSHEET_URL = localStorage.getItem("nasa_gsheet_url") || DEFAULT_SHEET_ID;
-
-function extractSheetId(urlOrId) {
-  if (!urlOrId) return "";
-  const match = urlOrId.match(/\/d\/([a-zA-Z0-9-_]+)/);
-  return match ? match[1] : urlOrId.trim();
-}
-
-// Robust RFC-4180 CSV parser
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let val = '';
-  let inQuotes = false;
-  
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    const next = text[i + 1];
-    
-    if (inQuotes) {
-      if (ch === '"' && next === '"') {
-        val += '"';
-        i++;
-      } else if (ch === '"') {
-        inQuotes = false;
-      } else {
-        val += ch;
-      }
-    } else {
-      if (ch === '"') {
-        inQuotes = true;
-      } else if (ch === ',') {
-        row.push(val.trim());
-        val = '';
-      } else if (ch === '\r' || ch === '\n') {
-        row.push(val.trim());
-        val = '';
-        if (row.length > 1 || row[0] !== '') {
-          rows.push(row);
-        }
-        row = [];
-        if (ch === '\r' && next === '\n') i++;
-      } else {
-        val += ch;
-      }
-    }
-  }
-  if (val || row.length) {
-    row.push(val.trim());
-    if (row.length > 1 || row[0] !== '') rows.push(row);
-  }
-  return rows;
-}
-
-function loadGoogleSheetJSONP(sheetId) {
-  return new Promise((resolve, reject) => {
-    const callbackName = "handleGSheet_" + Math.random().toString(36).substring(2, 9);
-    const script = document.createElement("script");
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error("Request timed out"));
-    }, 10000);
-
-    function cleanup() {
-      clearTimeout(timeout);
-      if (script.parentNode) script.parentNode.removeChild(script);
-      delete window[callbackName];
-    }
-
-    window[callbackName] = function(data) {
-      cleanup();
-      if (!data || !data.table) {
-        reject(new Error("Invalid spreadsheet format"));
-        return;
-      }
-      resolve(data.table);
-    };
-
-    script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?headers=1&tqx=responseHandler:${callbackName}`;
-    script.onerror = () => {
-      cleanup();
-      reject(new Error("Failed to load Google Sheet script"));
-    };
-    document.head.appendChild(script);
-  });
-}
-
-async function syncFromGoogleSheet(urlOrId, silent = false) {
-  const statusEl = $("gsheet-status");
-  const sheetId = extractSheetId(urlOrId || GSHEET_URL);
-  
-  if (!sheetId) {
-    if (!silent && statusEl) {
-      statusEl.className = "sheet-status-badge warning";
-      statusEl.textContent = "Please enter a valid Google Sheet URL or ID";
-    }
-    return false;
-  }
-
-  if (statusEl && !silent) {
-    statusEl.className = "sheet-status-badge syncing";
-    statusEl.textContent = "Syncing with Google Sheets…";
-  }
-
-  try {
-    const table = await loadGoogleSheetJSONP(sheetId);
-    let updatedCount = 0;
-
-    for (const row of table.rows) {
-      if (!row || !row.c) continue;
-      const getVal = (idx) => {
-        const cell = row.c[idx];
-        return cell && cell.v !== null && cell.v !== undefined ? String(cell.v).trim() : "";
-      };
-
-      const code = getVal(0).toUpperCase();
-      if (!code) continue;
-
-      const floorName = getVal(1);
-      const spaceType = getVal(2);
-      const accRaw = getVal(3).toLowerCase();
-      const modeRaw = getVal(4);
-      const respRaw = getVal(5);
-      const capRaw = getVal(6);
-      const chalRaw = getVal(7);
-      const teamsRaw = getVal(8);
-      const vteamRaw = getVal(9);
-      const vcapRaw = getVal(10);
-
-      const parsedTeams = teamsRaw ? teamsRaw.split(/[;,]/).map(s => s.trim()).filter(Boolean) : [];
-
-      DB[code] = {
-        resp: respRaw,
-        cap: capRaw === "" ? "" : Math.max(0, parseInt(capRaw) || 0),
-        mode: modeRaw || "Unassigned",
-        access: accRaw.startsWith("res") || accRaw === "no" ? "no" : "ok",
-        chal: chalRaw,
-        teams: parsedTeams,
-        vteam: vteamRaw,
-        vcap: vcapRaw === "" ? "" : Math.max(0, parseInt(vcapRaw) || 0)
-      };
-      updatedCount++;
-    }
-
-    save();
-    GSHEET_URL = sheetId;
-    localStorage.setItem("nasa_gsheet_url", sheetId);
-
-    if (statusEl) {
-      statusEl.className = "sheet-status-badge success";
-      statusEl.textContent = `✓ Synced: ${updatedCount} rooms updated from Google Sheets`;
-    }
-
-    if (floor) {
-      draw();
-    } else if (!ROUTE) {
-      const prevFrom = $("qw-from") ? $("qw-from").value : "";
-      const prevTo = $("qw-to") ? $("qw-to").value : "";
-      home();
-      if ($("qw-from") && prevFrom) $("qw-from").value = prevFrom;
-      if ($("qw-to") && prevTo) $("qw-to").value = prevTo;
-    }
-    return true;
-  } catch (err) {
-    console.warn("Google Sheet sync error:", err);
-    if (statusEl && !silent) {
-      statusEl.className = "sheet-status-badge error";
-      statusEl.textContent = "Sync failed. Ensure sheet is set to 'Anyone with link can view'.";
-    }
-    return false;
-  }
-}
-
 /* Views & Navigation */
 function home() {
   floor = null;
@@ -377,7 +287,7 @@ function home() {
         </div>
         <div class="qw-input-col">
           <label for="qw-to">Destination:</label>
-          <input id="qw-to" list="dl" placeholder="Room code (e.g. S140, B133, H113)" autocomplete="off">
+          <input id="qw-to" list="dl" placeholder="Room code (e.g. C140, C133, A113)" autocomplete="off">
         </div>
         <div class="qw-action-col">
           <button class="btn on qw-btn" id="qw-go">Find Path →</button>
@@ -494,9 +404,12 @@ function draw() {
     const dim = (ft && r.type != ft) || (fa && access(r) != fa) || (fs && mode(r) != fs);
     const isSel = r === sel;
     const no = access(r) == "no";
+    const isTextOnly = r.code === "CAFETERIA";
     const c = isSel && !no ? COL.sel : color(r);
     const p = r.pts.map(q => q.join(",")).join(" ");
-    return `<polygon class="rm ${r.type == 'T' ? 'stage' : ''} ${isSel ? 'sel' : ''}" data-c="${r.code}" points="${p}" fill="${c}" fill-opacity="${dim ? .03 : isSel ? .55 : no ? .42 : .22}" stroke="${c}" stroke-width="${isSel ? 3.5 : 2}" stroke-opacity="${dim ? .2 : 1}" tabindex="0" aria-label="${no ? 'Restricted area' : 'Room ' + r.code}"/>`;
+    const fillOp = isTextOnly ? (isSel ? .28 : .001) : (dim ? .03 : isSel ? .55 : no ? .42 : .22);
+    const strokeOp = isTextOnly ? (isSel ? 1 : 0) : (dim ? .2 : 1);
+    return `<polygon class="rm ${r.type == 'T' ? 'stage' : ''} ${isTextOnly ? 'rm-label-hit' : ''} ${isSel ? 'sel' : ''}" data-c="${r.code}" points="${p}" fill="${c}" fill-opacity="${fillOp}" stroke="${c}" stroke-width="${isSel ? 3.5 : 2}" stroke-opacity="${strokeOp}" tabindex="0" aria-label="${no ? 'Restricted area' : 'Room ' + r.code}"/>`;
   }).join("") + bathsSvg() + exitsSvg() + stairsSvg() + routeSvg();
 
   $("svg").querySelectorAll(".rm").forEach(e => {
@@ -734,12 +647,13 @@ function show(r) {
   draw();
   const d = D(r), a = access(r), m = $("modal");
   const tag = `<span class="tag" style="background:${a == "no" ? COL.no : COL.ok}">${a == "no" ? "Restricted" : "Accessible"}</span>`;
+  const typeLabel = d.spaceType || TYPES[r.type] || "Room";
   
   let h = `
     <div class="mh">
       <div>
         <h2>${r.type == "T" ? "Outer Stage" : a == "no" ? "Restricted Area" : r.code}</h2>
-        <div class="pill">${a == "no" ? "Restricted" : (r.name ? esc(r.name) + " · " : "") + TYPES[r.type]} · ${FLOORS.find(f => f.id == r.floor).name}</div>
+        <div class="pill">${a == "no" ? "Restricted" : (r.name ? esc(r.name) + " · " : "") + esc(typeLabel)} · ${FLOORS.find(f => f.id == r.floor).name}</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         ${tag}
@@ -762,10 +676,10 @@ function show(r) {
   } else if (r.type == "P" || r.type == "A" || r.type == "K") {
     h += `
       <div class="sec">
-        <h4>${TYPES[r.type]}</h4>
+        <h4>${esc(typeLabel)}</h4>
         <div class="kv">
           ${row("Person responsible", d.resp)}
-          ${row("Space Capacity", d.cap != null && d.cap !== "" ? d.cap + " people" : "")}
+          ${row("Space Capacity", d.cap != null && d.cap !== "" && d.cap !== 0 ? d.cap + " people" : "")}
         </div>
       </div>
     `;
@@ -774,7 +688,10 @@ function show(r) {
     h += `
       <div class="sec">
         <h4>Stage Management</h4>
-        <div class="kv">${row("Total people responsible", names.length ? String(names.length) : "")}</div>
+        <div class="kv">
+          ${row("Total people responsible", names.length ? String(names.length) : "")}
+          ${d.cap ? row("Space Capacity", d.cap + " people") : ""}
+        </div>
         <div style="margin-top:10px">
           <div class="pill" style="margin-bottom:6px">Responsible for arranging the stage</div>
           ${names.length ? names.map(x => `<span class="chip">${esc(x)}</span>`).join("") : "<span class='na'>Not assigned</span>"}
@@ -783,12 +700,13 @@ function show(r) {
     `;
   } else {
     const t = teams(r);
+    const capDisplay = d.cap != null && d.cap !== "" && d.cap !== 0 ? d.cap + " people" : "";
     h += `
       <div class="sec">
         <h4>Room Assignment Details</h4>
         <div class="kv">
           ${row("Lead Manager", d.resp)}
-          ${row("Space Capacity", d.cap != null && d.cap !== "" ? d.cap + " people" : "")}
+          ${row("Space Capacity", capDisplay)}
           ${row("Assignment Type", mode(r) == "Unassigned" ? "" : mode(r))}
         </div>
       </div>
@@ -815,7 +733,7 @@ function show(r) {
           <h4>Volunteer Squad</h4>
           <div class="kv">
             ${row("Volunteer Team", d.vteam)}
-            ${row("Team Capacity", d.vcap != null && d.vcap !== "" ? d.vcap + " people" : "")}
+            ${row("Team Capacity", d.vcap != null && d.vcap !== "" && d.vcap !== 0 ? d.vcap + " people" : "")}
           </div>
         </div>
       `;
@@ -871,8 +789,6 @@ addEventListener("keydown", e => {
     close(); 
     $("res").hidden = true;
     $("dir").style.display = "none";
-    const gModal = $("gsheet-modal");
-    if (gModal) gModal.classList.remove("show");
   }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() == "k") {
     e.preventDefault();
@@ -1096,8 +1012,8 @@ const CORRIDORS = {
     [[243, 266], [244, 549], [243, 631]],                        // far-west vertical corridor
     [[622, 319], [622, 592], [616, 622]],                        // west inner hall
     [[940, 318], [1317, 317], [1335, 328]],                      // north-east corridor
-    [[1335, 328], [1372, 305]],                                  // to S122 / S123
-    [[1335, 328], [1332, 341], [1461, 588], [1448, 625]],        // diagonal wing to H113 / H114
+    [[1335, 328], [1372, 305]],                                  // to B122 / B123
+    [[1335, 328], [1332, 341], [1461, 588], [1448, 625]],        // diagonal wing to A113 / A114
     [[1030, 318], [1008, 330], [1005, 420], [1005, 594], [1030, 626]],   // east inner hall
     [[243, 631], [601, 632], [616, 622], [734, 611], [751, 598], [855, 597], [925, 596], [962, 621], [1030, 626], [1448, 625]]   // main east-west spine
   ],
@@ -1106,7 +1022,7 @@ const CORRIDORS = {
     [[243, 250], [243, 596]],                                    // far-west vertical corridor
     [[598, 303], [598, 596]],                                    // west inner hall
     [[920, 294], [1290, 294], [1298, 300]],                      // north-east corridor
-    [[1298, 300], [1296, 320], [1411, 499], [1400, 536], [1417, 590]],   // diagonal wing to H209 / H210
+    [[1298, 300], [1296, 320], [1411, 499], [1400, 536], [1417, 590]],   // diagonal wing to A209 / A210
     [[1036, 294], [975, 296], [971, 462], [980, 472], [980, 489], [966, 503], [968, 585], [985, 597]],   // east inner hall
     [[134, 598], [973, 592], [1018, 600], [1078, 596], [1383, 597], [1417, 590]]  // main east-west spine
   ]
@@ -1115,20 +1031,21 @@ const CORRIDORS = {
 /* Door points. A "row" is a line of rooms along one corridor: the door
    x comes from each room's centre, y is the room's corridor-side wall. */
 const DOOR_ROWS = [
-  { f: "G", y: 323, dx: 0,   codes: ["C027", "C026", "C017"] },
-  { f: "F", y: 305, dx: 0,   codes: ["C139", "C138", "C137", "C136", "B135", "B134", "B133", "B132"] },
-  { f: "F", y: 305, dx: 0,  codes: ["B131", "B130", "B129", "B128", "C127", "C126", "C125", "C124"] },
-  { f: "F", y: 622, dx: 0,   codes: ["C154", "C153", "C152"] },
-  { f: "S", y: 287, dx: 0,   codes: ["C240", "B236", "B235", "B234", "B233"] },
-  { f: "S", y: 287, dx: 0,   codes: ["C231", "C230", "C229", "C228", "C227", "C226", "C225", "C224"] },
-  { f: "S", y: 588, dx: 0,   codes: ["C260", "C259", "C258", "C257", "C256"] },
-  { f: "S", y: 616, dx: 0,   codes: ["C265"] }
+  { f: "G", y: 323, dx: 0,   codes: ["C027", "C026", "B017"] },
+  { f: "F", y: 305, dx: 0,   codes: ["C139", "C138", "C137", "C136", "C135", "C134", "C133", "C132"] },
+  { f: "F", y: 305, dx: 0,  codes: ["B131", "B130", "B129", "B128", "B127", "B126", "B125", "B124"] },
+  { f: "F", y: 622, dx: 0,   codes: ["D154", "D153", "D152"] },
+  { f: "S", y: 287, dx: 0,   codes: ["C240", "C236", "C235", "C234", "C233"] },
+  { f: "S", y: 287, dx: 0,   codes: ["B231", "B230", "B229", "B228", "B227", "B226", "B225", "B224"] },
+  { f: "S", y: 588, dx: 0,   codes: ["D260", "D259", "D258", "D257", "D256"] },
+  { f: "S", y: 616, dx: 0,   codes: ["D265"] }
 ];
 const DOOR_PTS = {
-  S034: [178, 298], S035: [184, 340], S016: [1257, 273], S015: [1275, 323],
-  S140: [232, 265], S141: [232, 338], S123: [1383, 238], S122: [1392, 284],
-  H114: [1438, 520], H113: [1482, 612],
-  S241: [232, 250], S242: [232, 322], H210: [1408, 468], H209: [1466, 560]
+  C034: [178, 298], C035: [184, 340], B016: [1257, 273], B015: [1275, 323],
+  C140: [232, 265], C141: [232, 338], B123: [1383, 238], B122: [1392, 284],
+  A114: [1438, 520], A113: [1482, 612],
+  C241: [232, 250], C242: [232, 322], A210: [1408, 468], A209: [1466, 560],
+  D252: [586, 452]
 };
 
 DOOR_PTS.STAGE = [1422, 420];
@@ -1595,63 +1512,11 @@ if (themeToggleBtn) {
   themeToggleBtn.onclick = toggleTheme;
 }
 
-/* Google Sheet Modal Handlers */
-const gsheetBtn = $("gsheet-btn");
-const gsheetModal = $("gsheet-modal");
-const gsheetClose = $("gsheet-close");
-const gsheetSyncBtn = $("gsheet-sync-btn");
-const gsheetSaveBtn = $("gsheet-save-btn");
-const gsheetOpenBtn = $("gsheet-open-btn");
-const gsheetInput = $("gsheet-url-input");
-
-if (gsheetBtn && gsheetModal) {
-  gsheetBtn.onclick = () => {
-    if (gsheetInput) gsheetInput.value = GSHEET_URL || "";
-    gsheetModal.classList.add("show");
-  };
-}
-
-if (gsheetClose && gsheetModal) {
-  gsheetClose.onclick = () => gsheetModal.classList.remove("show");
-}
-
-if (gsheetModal) {
-  gsheetModal.onclick = e => {
-    if (e.target.id === "gsheet-modal") gsheetModal.classList.remove("show");
-  };
-}
-
-if (gsheetSaveBtn) {
-  gsheetSaveBtn.onclick = async () => {
-    const val = gsheetInput ? gsheetInput.value.trim() : "";
-    if (val) {
-      await syncFromGoogleSheet(val, false);
-    }
-  };
-}
-
-if (gsheetSyncBtn) {
-  gsheetSyncBtn.onclick = async () => {
-    await syncFromGoogleSheet(GSHEET_URL, false);
-  };
-}
-
-if (gsheetOpenBtn) {
-  gsheetOpenBtn.onclick = () => {
-    const id = extractSheetId(GSHEET_URL || (gsheetInput ? gsheetInput.value : ""));
-    if (id) {
-      window.open(`https://docs.google.com/spreadsheets/d/${id}/edit`, "_blank");
-    } else {
-      window.open("https://sheets.new", "_blank");
-    }
-  };
-}
-
 /* Init */
 initTheme();
 home();
 
-// Auto-sync from Google Sheet and apply any URL route parameters once the volunteer code gate is open
+// Apply any URL route parameters (?from=...&to=...) once the volunteer code gate is open
 function applyUrlRoute() {
   if (window.__urlRouteApplied) return;
   const params = new URLSearchParams(location.search);
@@ -1733,10 +1598,7 @@ function applyUrlRoute() {
 }
 
 function onMapsUnlocked() {
-  if (!window.__sheetSyncStarted && GSHEET_URL) {
-    window.__sheetSyncStarted = true;
-    syncFromGoogleSheet(GSHEET_URL, true);
-  }
+  initFirebaseRooms();
   applyUrlRoute();
   if (window.NasaTutorial && window.TechOpsStore && !window.TechOpsStore.isTutorialCompleted("maps")) {
     if (typeof open === "function") { try { open("G"); } catch (e) {} }

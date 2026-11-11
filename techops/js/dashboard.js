@@ -331,7 +331,7 @@
 
   function myCurrentRoom() {
     var meMember = S.me && S.data.team.filter(function (t) { return t.name === S.me; })[0];
-    return meMember ? meMember.room : "B133";
+    return meMember ? meMember.room : "C133";
   }
 
   /* Plan and display fastest walking route between any two rooms */
@@ -493,15 +493,23 @@
   function renderSide() {
     var d = S.data, side = $("side");
     if (S.selected && d.roomMap[S.selected]) {
-      var r = d.roomMap[S.selected], w = wifiFor(r.code), z = D.ZONES[r.zone] || {};
+      var r = d.roomMap[S.selected], w = wifiFor(r.code), z = D.ZONES[r.mode] || D.ZONES[r.zone] || {};
       var iss = d.reports.filter(function (x) { return x.room === r.code && x.floor === r.floor && x.status !== "Resolved"; });
       var url = TO.reportUrl(r.floor, r.code);
+      var teamsList = r.teams && r.teams.length ? r.teams.join(", ") : "";
 
-      side.innerHTML = '<h3>Room ' + esc(r.code) + '</h3><div class="sub"><span class="badge" style="background:' + (z.color || "#64748b") + '33;border-color:' + (z.color || "#64748b") + ';color:var(--ink-bright)">' + esc(r.zone) + "</span> " + esc(r.floorName) + "</div>" +
-        '<dl class="kv"><dt>Space</dt><dd>' + esc(r.type) + "</dd><dt>Capacity</dt><dd>" + esc(r.capacity) + "</dd><dt>Assigned to</dt><dd>" + esc(r.assigned || "—") + "</dd>" +
+      side.innerHTML = '<h3>Room ' + esc(r.code) + '</h3><div class="sub"><span class="badge" style="background:' + (z.color || "#64748b") + '33;border-color:' + (z.color || "#64748b") + ';color:var(--ink-bright)">' + esc(r.mode || "Unassigned") + "</span> " + esc(r.floorName) + "</div>" +
+        '<dl class="kv">' +
+        '<dt>Space</dt><dd>' + esc(r.type) + "</dd>" +
+        '<dt>Access</dt><dd>' + (r.access === "no" ? '<span style="color:var(--bad);font-weight:700">Restricted</span>' : '<span style="color:var(--ok);font-weight:600">Accessible</span>') + "</dd>" +
+        '<dt>Lead Manager</dt><dd>' + esc(r.resp || "—") + "</dd>" +
+        '<dt>Capacity</dt><dd>' + (r.capacity ? esc(r.capacity) : "—") + "</dd>" +
+        (r.mode === "Participants" && r.chal ? "<dt>Challenge</dt><dd>" + esc(r.chal) + "</dd>" : "") +
+        (r.mode === "Participants" && teamsList ? "<dt>Teams</dt><dd>" + esc(teamsList) + "</dd>" : "") +
+        (r.mode === "Volunteers" && r.vteam ? "<dt>Squad</dt><dd>" + esc(r.vteam) + (r.vcap ? " (" + esc(r.vcap) + ")" : "") + "</dd>" : "") +
         "<dt>Wi-Fi</dt><dd>" + (w ? '<b style="color:' + TO.speedColor(w.mbps) + '">' + w.mbps + " Mbps</b> · " + w.latency + " ms · " + TO.speedLabel(w.mbps) : "No reading") + "</dd></dl>" +
         
-        '<div class="row" style="margin:12px 0 14px;gap:8px">' +
+        '<div class="row" style="margin:12px 0 14px;gap:8px;flex-wrap:wrap">' +
         '<button class="btn primary small" id="side-route-here">Fastest Route Here</button>' +
         '<button class="btn small" id="side-route-from">Route From Here</button>' +
         '</div>' +
@@ -1319,10 +1327,7 @@
       if ($("status-text")) $("status-text").textContent = Store.isLive() ? "Sign in required" : "Local preview";
 
       var ln = $("login-note");
-      if (ln && !Store.isLive()) {
-        ln.hidden = false;
-        ln.innerHTML = 'Preview mode volunteer codes: <b>TO-001</b> (Mohamed Khairy), <b>TO-002</b> (Omar), <b>TO-003</b> (Lojine).';
-      }
+      if (ln) ln.hidden = true;
       var inp = $("login-code");
       if (inp) { inp.value = ""; setTimeout(function () { inp.focus(); }, 120); }
       return;
