@@ -406,11 +406,12 @@
     var name = String(v.Name || v.name || "").trim();
     var team = String(v.Team || v.team || "Volunteers").trim();
     var role = String(v.Role || v.role || team).trim();
-    var status = String(v.status || "Offline").trim();
+    var status = String(v.status || "Off duty").trim();
     var fl = v.floor || floorId(v.floorName) || "";
     var flName = FLOOR_NAMES[fl] || v.floorName || "";
     var room = String(v.room || "").trim();
     var updated = v.updated || "";
+    var lastSeen = Number(v.lastSeen) || (v.lastSeen ? Date.parse(v.lastSeen) : 0) || 0;
     return {
       code: code,
       name: name,
@@ -420,7 +421,8 @@
       floor: fl,
       floorName: flName,
       room: room,
-      updated: updated
+      updated: updated,
+      lastSeen: lastSeen
     };
   }
   function normalise(col, docs) {
@@ -631,6 +633,102 @@
     if (who.team === "TechOps") return { module: "techops", label: "Tech Ops", path: "techops/index.html" };
     return null;
   }
+  function setVolunteerOffline(code) {
+    if (!code) return;
+    var nowStr = stamp();
+    var patch = { status: "Off duty", lastSeen: 0, updated: nowStr };
+    if (user && user.code === code) {
+      user.status = "Off duty";
+      user.lastSeen = 0;
+      saveSessionUser(code, user);
+    }
+    if (cache.volunteers) {
+      for (var i = 0; i < cache.volunteers.length; i++) {
+        var v = cache.volunteers[i];
+        if (v.code === code || v._id === code || v["Volunteer Code"] === code) {
+          v.status = "Off duty";
+          v.lastSeen = 0;
+          v.updated = nowStr;
+          break;
+        }
+      }
+      emit();
+    }
+    try {
+      if (LIVE && fb.set) {
+        fb.set("volunteers", code, patch).catch(function () {});
+      }
+    } catch (e) {}
+    try {
+      var proj = (window.NASA_FIREBASE_CONFIG && window.NASA_FIREBASE_CONFIG.projectId) || "space-apps-cairo-volunteer";
+      var url = "https://firestore.googleapis.com/v1/projects/" + proj + "/databases/(default)/documents/volunteers/" + encodeURIComponent(code) + "?updateMask.fieldPaths=status&updateMask.fieldPaths=lastSeen&updateMask.fieldPaths=updated";
+      var body = JSON.stringify({
+        fields: {
+          status: { stringValue: "Off duty" },
+          lastSeen: { integerValue: "0" },
+          updated: { stringValue: nowStr }
+        }
+      });
+      if (window.fetch) {
+        window.fetch(url, {
+          method: "PATCH",
+          keepalive: true,
+          headers: { "Content-Type": "application/json" },
+          body: body
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+
+  function setVolunteerOnline(code, floor, room) {
+    if (!code) return;
+    var nowMs = Date.now();
+    var nowStr = stamp();
+    var patch = {
+      status: "Available",
+      lastSeen: nowMs,
+      updated: nowStr
+    };
+    if (floor) { patch.floor = floor; patch.floorName = FLOOR_NAMES[floor] || ""; }
+    if (room) patch.room = room;
+    if (user && user.code === code) {
+      user.status = "Available";
+      user.lastSeen = nowMs;
+      if (floor) { user.floor = floor; user.floorName = FLOOR_NAMES[floor] || ""; }
+      if (room) user.room = room;
+      saveSessionUser(code, user);
+    }
+    if (cache.volunteers) {
+      for (var i = 0; i < cache.volunteers.length; i++) {
+        var v = cache.volunteers[i];
+        if (v.code === code || v._id === code || v["Volunteer Code"] === code) {
+          Object.assign(v, patch);
+          break;
+        }
+      }
+      emit();
+    }
+    try {
+      if (LIVE && fb.set) {
+        fb.set("volunteers", code, patch).catch(function () {});
+      }
+    } catch (e) {}
+  }
+
+  function sendPresenceHeartbeat() {
+    if (!user || !user.code || !LIVE || document.hidden) return;
+    var s = (user.status || "").toLowerCase().trim();
+    if (s !== "available" && s !== "online") return;
+    var nowMs = Date.now();
+    var nowStr = stamp();
+    var patch = { lastSeen: nowMs, updated: nowStr };
+    try {
+      if (LIVE && fb.set) {
+        fb.set("volunteers", user.code, patch).catch(function () {});
+      }
+    } catch (e) {}
+  }
+
   function login(code) {
     code = normalizeCode(code);
     if (!/^[A-Z0-9_-]{2,40}$/.test(code)) return Promise.reject(fail("invalid", "That volunteer code is not valid."));
@@ -645,7 +743,10 @@
         ready.reports = false;
         fb.start().catch(function () {});
       }
-      return fb.bindSession(code).then(function () { return u; });
+      return fb.bindSession(code).then(function () {
+        setVolunteerOnline(code, u.floor, u.room);
+        return u;
+      });
     });
   }
   function restore() {
@@ -667,13 +768,19 @@
         ready.reports = false;
         fb.start().catch(function () {});
       }
-      fb.bindSession(code).catch(function () {});
-      return user;
+      return fb.bindSession(code).then(function () {
+        setVolunteerOnline(code, user.floor, user.room);
+        return user;
+      });
     }, function () {
       return cached || null;
     });
   }
   function logout() {
+    var exitingCode = user ? user.code : sget(SESSION_KEY);
+    if (exitingCode && LIVE) {
+      setVolunteerOffline(exitingCode);
+    }
     user = null; clearSessionStorage(); TEAM = "TechOps";
     started = false; ready = {};
     if (LIVE) {
@@ -761,12 +868,14 @@
     var flName = FLOOR_NAMES[fl] || (d && d.floorName) || "";
     var rm = (d && d.room) || "";
     var st = (d && d.status) || "Available";
+    var nowMs = Date.now();
     var nowStr = stamp();
     var patch = {
       floor: fl,
       floorName: flName,
       room: rm,
       status: st,
+      lastSeen: (st === "Off duty" || st === "Offline") ? 0 : nowMs,
       updated: nowStr
     };
     if (user && user.code === targetCode) {
@@ -774,6 +883,7 @@
       user.floorName = flName;
       user.room = rm;
       user.status = st;
+      user.lastSeen = patch.lastSeen;
       saveSessionUser(user.code, user);
     }
     if (cache.volunteers) {
@@ -886,11 +996,34 @@
     if (sget(SESSION_KEY) && !sessionFresh()) { logout().then(function () { try { location.reload(); } catch (e) {} }); return true; }
     return false;
   }
+  function handleExit() {
+    markSeen();
+    var code = user ? user.code : sget(SESSION_KEY);
+    if (code) {
+      setVolunteerOffline(code);
+    }
+  }
   try {
-    setInterval(function () { if (!document.hidden) markSeen(); }, 15000);
-    document.addEventListener("visibilitychange", function () { if (!document.hidden && !expireIfStale()) markSeen(); });
-    window.addEventListener("pageshow", function () { if (!expireIfStale()) markSeen(); });
-    window.addEventListener("pagehide", markSeen);
+    setInterval(function () {
+      if (!document.hidden) {
+        markSeen();
+        sendPresenceHeartbeat();
+      }
+    }, 45000);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden && !expireIfStale()) {
+        markSeen();
+        sendPresenceHeartbeat();
+      }
+    });
+    window.addEventListener("pageshow", function () {
+      if (!expireIfStale()) {
+        markSeen();
+        sendPresenceHeartbeat();
+      }
+    });
+    window.addEventListener("pagehide", handleExit);
+    window.addEventListener("beforeunload", handleExit);
   } catch (e) {}
   /* Dispatch only: pass a request you claimed to a Tech Ops / Logistics member. */
   function handOutReport(id, member) {
@@ -946,6 +1079,7 @@
     canAccess: canAccess, teamDisplayName: teamDisplayName, workspaceFor: workspaceFor,
     start: start, loadAll: loadAll, onChange: onChange,
     recordWifiReading: recordWifiReading, addReport: addReport, addMeetup: addMeetup, update: update, updateVolunteerLocation: updateVolunteerLocation,
+    setVolunteerOffline: setVolunteerOffline, setVolunteerOnline: setVolunteerOnline,
     claimReport: claimReport, resolveReport: resolveReport, handOutReport: handOutReport, resetDemo: resetDemo,
     isTutorialCompleted: isTutorialCompleted, setTutorialCompleted: setTutorialCompleted,
     isTutorialMode: isTutorialMode, enterTutorialMode: enterTutorialMode, exitTutorialMode: exitTutorialMode

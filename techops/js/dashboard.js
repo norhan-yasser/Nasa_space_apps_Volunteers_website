@@ -709,7 +709,19 @@
 
   function isOnlineVolunteer(t) {
     var s = (t.status || "").toLowerCase().trim();
-    return s === "available" || s === "online";
+    if (s !== "available" && s !== "online") return false;
+    var isMe = (S.user && t.code === S.user.code) || (S.me && t.name === S.me);
+    if (isMe) return true;
+    if (t.lastSeen) {
+      var seen = Number(t.lastSeen) || (Date.parse(t.lastSeen) || 0);
+      if (seen > 0 && (Date.now() - seen) > 120000) return false;
+    } else if (t.updated) {
+      var updTime = Date.parse(t.updated.replace(" ", "T"));
+      if (updTime && (Date.now() - updTime) > 180000) return false;
+    } else {
+      return false;
+    }
+    return true;
   }
 
   function renderMemberCard(t) {
@@ -1554,6 +1566,11 @@
 
   map.setFloor("G");
   bind();
+
+  /* Automatically refresh online team presence every 30s so expired heartbeats cleanly drop */
+  setInterval(function () {
+    if (S.tab === "team") renderTeam();
+  }, 30000);
 
   var fast = Store.peekUser ? Store.peekUser() : null;
   if (fast) applyUser(fast);
