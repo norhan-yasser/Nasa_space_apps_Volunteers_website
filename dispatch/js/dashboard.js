@@ -237,7 +237,7 @@
       if (mobOut) mobOut.hidden = true;
       return;
     }
-    var roleText = Store.teamDisplayName(user) + " · " + user.code;
+    var roleText = Store.teamDisplayName(user);
     if (chip) {
       chip.hidden = false;
       $("user-name").textContent = user.name;
@@ -284,7 +284,7 @@
       $("access-denied").hidden = false;
       $("status-pill").className = "pill-status demo";
       $("status-text").textContent = "Restricted";
-      $("denied-msg").innerHTML = "Signed in as <b>" + esc(user.name) + "</b> (" + esc(Store.teamDisplayName(user)) + " · " + esc(user.code) + "). Your assigned role does not have permission to access the <b>Competition Team</b> module.";
+      $("denied-msg").innerHTML = "Signed in as <b>" + esc(user.name) + "</b> (" + esc(Store.teamDisplayName(user)) + "). Your assigned role does not have permission to access the <b>Competition Team</b> module.";
       return;
     }
 
@@ -337,7 +337,7 @@
         var teamLabel = Store.teamDisplayName(u);
         return Store.logout().then(function () {
           applyUser(null);
-          showLoginError("Access denied: code " + u.code + " belongs to " + teamLabel + " and is not authorized to open the Competition Team panel.");
+          showLoginError("Access denied: your account belongs to " + teamLabel + " and is not authorized to open the Competition Team panel.");
         });
       }
       applyUser(u);

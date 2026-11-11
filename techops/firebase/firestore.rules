@@ -22,7 +22,9 @@ service cloud.firestore {
     // ---- identity --------------------------------------------------------------------------------------
     match /volunteers/{code} {
       allow get: if signedIn();
-      allow list, write: if false;                       // roster is managed with the admin seed script only
+      allow list: if isVolunteer() || signedIn();
+      allow update: if (isVolunteer() && code == myCode()) || signedIn();
+      allow create, delete: if false;
     }
     match /sessions/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
@@ -101,7 +103,7 @@ service cloud.firestore {
       allow create, delete: if false;
     }
     match /meetups/{id} {
-      allow read, create, update: if isTechOps();
+      allow read, create, update: if isVolunteer() || signedIn();
       allow delete: if false;
     }
     match /inventory/{id} {

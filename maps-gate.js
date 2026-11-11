@@ -26,7 +26,7 @@
       if (mWsBtn) mWsBtn.hidden = true;
       return;
     }
-    var teamSub = Store.teamDisplayName(user) + " · " + user.code;
+    var teamSub = Store.teamDisplayName(user);
     var ini = initials(user.name);
     if (chip) {
       chip.hidden = false;

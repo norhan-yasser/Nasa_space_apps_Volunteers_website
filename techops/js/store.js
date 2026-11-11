@@ -4,7 +4,7 @@
  *  AUTH  : Volunteers sign in with their Volunteer Code. The code is looked up directly in the Firestore
  *          `volunteers` collection ({ "Name", "Volunteer Code", "Team" }); the app reads `Team` from there
  *          to pick the workspace and enforce access control.
- *  DATA  : All collections (`rooms`, `wifi`, `team`, `inventory`, `reports`, `meetups`) are streamed and mutated
+ *  DATA  : All collections (`rooms`, `wifi`, `volunteers`, `inventory`, `reports`, `meetups`) are streamed and mutated
  *          live from Firebase Firestore with `onSnapshot` — no local or static seed files are used.
  */
 (function () {
@@ -12,8 +12,8 @@
   var LIVE = !!(FB.apiKey && FB.projectId);
   var SDK_PRIMARY = "https://www.gstatic.com/firebasejs/10.12.2/";
   var SDK_FALLBACK = "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/";
-  var COLS = ["rooms", "wifi", "team", "inventory", "reports", "meetups"];
-  var KEYFIELD = { rooms: "code", wifi: "id", team: "name", inventory: "id", reports: "id", meetups: "id" };
+  var COLS = ["rooms", "wifi", "volunteers", "inventory", "reports", "meetups"];
+  var KEYFIELD = { rooms: "code", wifi: "id", volunteers: "code", team: "name", inventory: "id", reports: "id", meetups: "id" };
   var NUMERIC = { capacity: 1, x: 1, y: 1, mbps: 1, latency: 1, qty: 1 };
   var FLOOR_NAMES = { B: "Basement", G: "Ground Floor", F: "First Floor", S: "Second Floor" };
   var FLOOR_SHORT = { B: "Basement", G: "Ground", F: "First", S: "Second" };
@@ -126,13 +126,13 @@
   }
 
   /* ---------------------------------------------------------------- live state (backed strictly by Firestore) */
-  var cache = { rooms: [], wifi: [], team: [], inventory: [], reports: [], meetups: [] };
+  var cache = { rooms: [], wifi: [], volunteers: [], inventory: [], reports: [], meetups: [] };
   var ready = {}, listeners = [], user = null, started = false, lastError = null;
   var emitT = 0, readyResolve, readyP = new Promise(function (r) { readyResolve = r; });
 
   function emit() { clearTimeout(emitT); emitT = setTimeout(function () { listeners.forEach(function (f) { f({ kind: "data" }); }); }, 25); }
   function checkReady() {
-    var critical = (TEAM === "TechOps") ? COLS : ["reports", "rooms"];
+    var critical = (TEAM === "TechOps" || TEAM === "Logistics") ? COLS : ["reports", "rooms"];
     if (critical.every(function (c) { return ready[c]; })) {
       if (readyResolve) readyResolve();
     }
@@ -401,11 +401,34 @@
       vcap: vcapVal
     };
   }
+  function normaliseVolunteer(v) {
+    var code = String(v["Volunteer Code"] || v.code || v._id || "").trim();
+    var name = String(v.Name || v.name || "").trim();
+    var team = String(v.Team || v.team || "Volunteers").trim();
+    var role = String(v.Role || v.role || team).trim();
+    var status = String(v.status || "Offline").trim();
+    var fl = v.floor || floorId(v.floorName) || "";
+    var flName = FLOOR_NAMES[fl] || v.floorName || "";
+    var room = String(v.room || "").trim();
+    var updated = v.updated || "";
+    return {
+      code: code,
+      name: name,
+      team: team,
+      role: role,
+      status: status,
+      floor: fl,
+      floorName: flName,
+      room: room,
+      updated: updated
+    };
+  }
   function normalise(col, docs) {
     var key = KEYFIELD[col];
     return docs.map(function (raw) {
       var o;
       if (col === "rooms") o = normaliseRoom(raw);
+      else if (col === "volunteers") o = normaliseVolunteer(raw);
       else {
         o = {};
         Object.keys(raw).forEach(function (k) { if (k !== "_id") o[k] = raw[k]; });
@@ -499,7 +522,7 @@
   }
   function loadAll() {
     if (!started) start();
-    var critical = (TEAM === "TechOps") ? COLS : ["reports", "rooms"];
+    var critical = (TEAM === "TechOps" || TEAM === "Logistics") ? COLS : ["reports", "rooms"];
     var isSynced = critical.every(function (c) { return ready[c]; });
     var p = (_tutorialMode || isSynced) ? Promise.resolve() : readyP;
     return p.then(function () {
@@ -508,6 +531,7 @@
       var nowSynced = critical.every(function (c) { return ready[c]; });
       var out = { meta: { live: LIVE, online: !lastError, synced: nowSynced, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
       COLS.forEach(function (c) { out[c] = normalise(c, cache[c] || []); });
+      out.team = out.volunteers || [];
       if (_tutorialMode && _tutorialReports) {
         var tr = String(_tutorialRole || TEAM || (user && (user.role || user.team)) || "").toLowerCase();
         out.reports = _tutorialReports.filter(function (r) {
@@ -653,7 +677,7 @@
     user = null; clearSessionStorage(); TEAM = "TechOps";
     started = false; ready = {};
     if (LIVE) {
-      cache = { rooms: [], wifi: [], team: [], inventory: [], reports: [], meetups: [] };
+      cache = { rooms: [], wifi: [], volunteers: [], inventory: [], reports: [], meetups: [] };
       readyP = new Promise(function (r) { readyResolve = r; });
       fb.stop();
       return fb.signOut().catch(function () {});
@@ -725,9 +749,46 @@
   function addMeetup(d) {
     var obj = withFloorNames({
       id: newId("MTG"), ts: stamp(), by: d.by, target: d.target, byFloor: d.byFloor, byRoom: d.byRoom,
-      targetFloor: d.targetFloor || "", targetRoom: d.targetRoom || "", meetAt: d.meetAt || "", note: clip(d.note, 300), status: d.status || "Pending"
+      targetFloor: d.targetFloor || "", targetRoom: d.targetRoom || "", meetAt: d.meetAt || "", note: clip(d.note, 300), status: d.status || "Pending",
+      byCode: d.byCode || (user ? user.code : ""), targetCode: d.targetCode || ""
     });
     return guard(backend().set("meetups", obj.id, obj)).then(function () { return { id: obj.id, demo: false }; });
+  }
+  function updateVolunteerLocation(d) {
+    if (!user || !user.code) return Promise.reject(fail("auth", "Sign in first."));
+    var targetCode = (d && d.code) ? d.code : user.code;
+    var fl = (d && d.floor) || "";
+    var flName = FLOOR_NAMES[fl] || (d && d.floorName) || "";
+    var rm = (d && d.room) || "";
+    var st = (d && d.status) || "Available";
+    var nowStr = stamp();
+    var patch = {
+      floor: fl,
+      floorName: flName,
+      room: rm,
+      status: st,
+      updated: nowStr
+    };
+    if (user && user.code === targetCode) {
+      user.floor = fl;
+      user.floorName = flName;
+      user.room = rm;
+      user.status = st;
+      saveSessionUser(user.code, user);
+    }
+    if (cache.volunteers) {
+      for (var i = 0; i < cache.volunteers.length; i++) {
+        var v = cache.volunteers[i];
+        if (v.code === targetCode || v._id === targetCode || v["Volunteer Code"] === targetCode) {
+          Object.assign(v, patch);
+          break;
+        }
+      }
+      emit();
+    }
+    return guard(backend().set("volunteers", targetCode, patch)).then(function () {
+      return patch;
+    });
   }
   /* One-click claim: assigns the task to the signed-in volunteer and moves it to "In Progress". */
   function claimReport(id) {
@@ -871,7 +932,7 @@
   }
   function resetDemo() {
     if (!LIVE) {
-      cache = { rooms: [], wifi: [], team: [], inventory: [], reports: [], meetups: [] };
+      cache = { rooms: [], wifi: [], volunteers: [], inventory: [], reports: [], meetups: [] };
       ready = {};
       started = false;
       readyP = new Promise(function (r) { readyResolve = r; });
@@ -884,7 +945,8 @@
     login: login, restore: restore, peekUser: peekUser, logout: logout, currentUser: function () { return user; }, sessionGraceMs: GRACE,
     canAccess: canAccess, teamDisplayName: teamDisplayName, workspaceFor: workspaceFor,
     start: start, loadAll: loadAll, onChange: onChange,
-    recordWifiReading: recordWifiReading, addReport: addReport, addMeetup: addMeetup, update: update, claimReport: claimReport, resolveReport: resolveReport, handOutReport: handOutReport, resetDemo: resetDemo,
+    recordWifiReading: recordWifiReading, addReport: addReport, addMeetup: addMeetup, update: update, updateVolunteerLocation: updateVolunteerLocation,
+    claimReport: claimReport, resolveReport: resolveReport, handOutReport: handOutReport, resetDemo: resetDemo,
     isTutorialCompleted: isTutorialCompleted, setTutorialCompleted: setTutorialCompleted,
     isTutorialMode: isTutorialMode, enterTutorialMode: enterTutorialMode, exitTutorialMode: exitTutorialMode
   };

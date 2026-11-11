@@ -112,8 +112,16 @@
     </section>
 
     <main id="main" hidden>
+      <div id="banners"></div>
       <div class="note" id="demo-note" hidden style="margin-top:0;margin-bottom:16px"></div>
 
+      <!-- Desktop Tabs -->
+      <nav class="tabs" role="tablist" aria-label="Logistics sections">
+        <button class="tab on" role="tab" data-tab="issues">Requests <span class="n" id="n-issues">0</span></button>
+        <button class="tab" role="tab" data-tab="team">Team &amp; pings <span class="n" id="n-meet" hidden>0</span></button>
+      </nav>
+
+      <!-- ISSUES / REQUESTS -->
       <section id="tab-issues">
         <div class="page-title">
           <h2>Logistics Requests</h2>
@@ -126,7 +134,34 @@
         </div>
         <div class="req-grid" id="issue-rows"></div>
       </section>
+
+      <!-- TEAM & PINGS -->
+      <section id="tab-team" hidden>
+        <div class="page-title">
+          <h2>Team &amp; Pings</h2>
+        </div>
+        <div class="my-status-box" id="my-status" style="margin-bottom:16px" hidden></div>
+        <div class="team-grid" id="team-grid"></div>
+        <div class="meet-list">
+          <div class="page-title"><h3 style="font-size:16px">Meetup History</h3></div>
+          <div class="card" id="meet-rows"></div>
+        </div>
+      </section>
     </main>
+
+    <!-- Mobile Bottom App Bar -->
+    <nav class="mobile-nav" aria-label="Mobile navigation">
+      <button class="mobile-nav-btn on" data-tab="issues">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Requests</span>
+        <span class="m-badge" id="m-badge-issues" hidden>0</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="team">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Team &amp; Pings</span>
+        <span class="m-badge" id="m-badge-team" hidden>0</span>
+      </button>
+    </nav>
   </div>
 
   <script src="../scripts/services/config.js"></script>

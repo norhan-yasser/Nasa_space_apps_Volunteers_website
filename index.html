@@ -157,7 +157,7 @@
         if (chip) {
           chip.hidden = false;
           $("user-name").textContent = user.name;
-          $("user-team").textContent = roleName + " · " + user.code;
+          $("user-team").textContent = roleName;
           $("user-avatar").textContent = TO ? TO.initials(user.name) : user.name.slice(0, 2).toUpperCase();
         }
         if (loginBar) loginBar.hidden = true;

@@ -122,7 +122,10 @@
     $("n-issues").className = "n" + (unassigned ? " hot" : "");
     $("greeting").textContent = unassigned + " unassigned · " + mine + " in your queue";
 
-    var pendingCount = S.me ? d.meetups.filter(function (m) { return m.target === S.me && (m.status === "Pinged" || m.status === "Pending"); }).length : 0;
+    var pendingCount = (S.user || S.me) ? d.meetups.filter(function (m) {
+      var isTarget = (S.user && m.targetCode === S.user.code) || (S.me && m.target === S.me);
+      return isTarget && (m.status === "Pinged" || m.status === "Pending");
+    }).length : 0;
     $("n-meet").hidden = !pendingCount; $("n-meet").textContent = pendingCount; $("n-meet").className = "n hot";
 
     /* Mobile bottom bar badges */
@@ -136,9 +139,12 @@
 
   function renderBanners() {
     var d = S.data, h = "";
-    if (S.me) {
+    if (S.user || S.me) {
       /* Pings awaiting my location confirmation */
-      d.meetups.filter(function (m) { return m.target === S.me && (m.status === "Pinged" || m.status === "Pending"); }).forEach(function (m) {
+      d.meetups.filter(function (m) {
+        var isTarget = (S.user && m.targetCode === S.user.code) || (S.me && m.target === S.me);
+        return isTarget && (m.status === "Pinged" || m.status === "Pending");
+      }).forEach(function (m) {
         h += '<div class="banner" style="border-color:var(--bad);background:rgba(239,68,68,0.14)">' +
           '<div style="flex:1;min-width:220px">' +
           '<b style="color:#ff8a8a">Location Ping from ' + esc(m.by) + '</b>' +
@@ -150,9 +156,13 @@
       });
 
       /* Confirmed meetups ready for navigation */
-      d.meetups.filter(function (m) { return (m.by === S.me || m.target === S.me) && (m.status === "Confirmed" || m.status === "On the way"); }).forEach(function (m) {
-        var other = m.by === S.me ? m.target : m.by;
-        var myRole = m.by === S.me ? "Requester" : "Recipient";
+      d.meetups.filter(function (m) {
+        var isTarget = (S.user && m.targetCode === S.user.code) || (S.me && m.target === S.me);
+        var isBy = (S.user && m.byCode === S.user.code) || (S.me && m.by === S.me);
+        return (isBy || isTarget) && (m.status === "Confirmed" || m.status === "On the way");
+      }).forEach(function (m) {
+        var isSender = (S.user && m.byCode === S.user.code) || (S.me && m.by === S.me);
+        var other = isSender ? m.target : m.by;
         h += '<div class="banner" style="border-color:var(--ok);background:rgba(16,185,129,0.12)">' +
           '<div style="flex:1;min-width:220px">' +
           '<b style="color:#34d399">Meetup Confirmed with ' + esc(other) + '</b>' +
@@ -334,8 +344,10 @@
   }
 
   function myCurrentRoom() {
-    var meMember = S.me && S.data.team.filter(function (t) { return t.name === S.me; })[0];
-    return meMember ? meMember.room : "C133";
+    var vList = (S.data && (S.data.volunteers || S.data.team)) || [];
+    var meMember = (S.user && vList.filter(function (t) { return t.code === S.user.code; })[0]) ||
+                   (S.me && vList.filter(function (t) { return t.name === S.me; })[0]);
+    return (meMember && meMember.room) ? meMember.room : "C133";
   }
 
   /* Plan and display fastest walking route between any two rooms */
@@ -695,27 +707,87 @@
     return s.indexOf("avail") >= 0 ? "st-available" : s.indexOf("busy") >= 0 ? "st-busy" : s.indexOf("task") >= 0 ? "st-task" : "st-off";
   }
 
+  function isOnlineVolunteer(t) {
+    var s = (t.status || "").toLowerCase().trim();
+    return s === "available" || s === "online";
+  }
+
+  function renderMemberCard(t) {
+    var isMe = (S.user && t.code === S.user.code) || (S.me && t.name === S.me);
+    var teamPillClass = t.team === "TechOps" ? "t-TechOps" : t.team === "Logistics" ? "t-Logistics" : "t-Competition";
+    var teamLabel = t.team === "TechOps" ? "Tech Ops" : t.team;
+    var locText = (t.room ? "Room " + esc(t.room) : "No room set") + (t.floorName ? " · " + esc(t.floorName) : (t.floor ? " · " + esc(Store.FLOOR_NAMES[t.floor] || t.floor) : ""));
+    return '<button class="card member" data-code="' + esc(t.code) + '" aria-label="Ping ' + esc(t.name) + '">' +
+      '<div class="row" style="flex-wrap:nowrap;gap:12px;width:100%">' +
+        '<div class="avatar">' + esc(TO.initials(t.name)) + '</div>' +
+        '<div style="flex:1;min-width:0;text-align:left">' +
+          '<div class="name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(t.name) + (isMe ? ' <span class="badge b-prog">You</span>' : '') + '</div>' +
+          '<div class="role muted" style="font-size:12px">' + esc(t.role || teamLabel) + '</div>' +
+        '</div>' +
+        '<span class="team-pill ' + teamPillClass + '" style="font-size:10.5px;padding:2px 7px;align-self:flex-start">' + esc(teamLabel) + '</span>' +
+      '</div>' +
+      '<div class="status st-available" style="margin-top:6px"><i></i>' + esc(t.status || "Available") + '</div>' +
+      '<div class="loc" style="font-size:12.5px;margin-top:2px">' + locText + '</div>' +
+      '<span class="btn small primary" style="align-self:flex-start;margin-top:8px">' + (isMe ? 'Update My Location' : 'Ping for Meetup') + '</span>' +
+    '</button>';
+  }
+
   function renderTeam() {
     var d = S.data;
-    $("team-grid").innerHTML = d.team.map(function (t, i) {
-      var isMe = S.me && t.name === S.me;
-      return '<button class="card member" data-member="' + i + '" aria-label="Ping ' + esc(t.name) + '">' +
-        '<div class="row" style="flex-wrap:nowrap;gap:12px">' +
-        '<div class="avatar">' + esc(TO.initials(t.name)) + '</div>' +
-        '<div><div class="name">' + esc(t.name) + (isMe ? ' <span class="badge b-prog">You</span>' : '') + '</div><div class="role">' + esc(t.role) + '</div></div>' +
+    var vList = d.volunteers || d.team || [];
+    var online = vList.filter(isOnlineVolunteer);
+    var techOps = online.filter(function (t) { return t.team === "TechOps"; });
+    var logistics = online.filter(function (t) { return t.team === "Logistics"; });
+    var others = online.filter(function (t) { return t.team !== "TechOps" && t.team !== "Logistics"; });
+
+    var gridHtml = "";
+
+    gridHtml += '<div class="team-group-section" style="margin-bottom:24px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--line)">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span class="team-pill t-TechOps">⚡ Online TechOps</span>' +
+          '<span class="muted" style="font-size:13px;font-weight:600">' + techOps.length + ' online</span>' +
         '</div>' +
-        '<div class="status ' + stClass(t.status) + '"><i></i>' + esc(t.status) + '</div>' +
-        '<div class="loc">Room ' + esc(t.floorName) + " · Room " + esc(t.room) + '</div>' +
-        '<div class="muted" style="font-size:12px">' + esc(t.focus) + '</div>' +
-        '<span class="btn small primary" style="align-self:flex-start">' + (isMe ? 'Update My Location' : 'Ping for Meetup') + '</span>' +
-        '</button>';
-    }).join("");
+      '</div>' +
+      (techOps.length
+        ? '<div class="team-grid">' + techOps.map(renderMemberCard).join("") + '</div>'
+        : '<div class="empty" style="padding:16px;font-size:13px">No TechOps volunteers currently online.</div>') +
+    '</div>';
+
+    gridHtml += '<div class="team-group-section" style="margin-bottom:24px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--line)">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span class="team-pill t-Logistics">📦 Online Logistics</span>' +
+          '<span class="muted" style="font-size:13px;font-weight:600">' + logistics.length + ' online</span>' +
+        '</div>' +
+      '</div>' +
+      (logistics.length
+        ? '<div class="team-grid">' + logistics.map(renderMemberCard).join("") + '</div>'
+        : '<div class="empty" style="padding:16px;font-size:13px">No Logistics volunteers currently online.</div>') +
+    '</div>';
+
+    if (others.length) {
+      gridHtml += '<div class="team-group-section" style="margin-bottom:24px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--line)">' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span class="team-pill t-Competition">Online Volunteers</span>' +
+            '<span class="muted" style="font-size:13px;font-weight:600">' + others.length + ' online</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="team-grid">' + others.map(renderMemberCard).join("") + '</div>' +
+      '</div>';
+    }
+
+    $("team-grid").innerHTML = gridHtml;
 
     /* My Location update card */
-    var my = $("my-status"), meMember = S.me && d.team.filter(function (t) { return t.name === S.me; })[0];
+    var my = $("my-status");
+    var meMember = (S.user && vList.filter(function (t) { return t.code === S.user.code; })[0]) ||
+                   (S.me && vList.filter(function (t) { return t.name === S.me; })[0]);
     if (meMember) {
       my.hidden = false;
-      var statusColor = meMember.status === "Available" ? "var(--ok)" : meMember.status === "Busy" ? "var(--bad)" : meMember.status === "On a task" ? "var(--warn)" : "var(--mut)";
+      var curSt = meMember.status || "Available";
+      var statusColor = curSt === "Available" ? "var(--ok)" : curSt === "Busy" ? "var(--bad)" : curSt === "On a task" ? "var(--warn)" : "var(--mut)";
       
       my.innerHTML =
         '<div class="my-status-compact">' +
@@ -726,7 +798,7 @@
             '</div>' +
             '<div class="my-status-details">' +
               '<div class="my-status-name">' + esc(meMember.name) + ' <span class="my-status-tag">You</span></div>' +
-              '<div class="my-status-loc"><b>' + esc(meMember.room || "No room") + '</b> · ' + esc(meMember.floorName || Store.FLOOR_NAMES[meMember.floor] || "Floor") + ' · <span style="color:' + statusColor + ';font-weight:600">' + esc(meMember.status) + '</span></div>' +
+              '<div class="my-status-loc"><b>' + esc(meMember.room || "No room") + '</b> · ' + esc(meMember.floorName || Store.FLOOR_NAMES[meMember.floor] || "Floor") + ' · <span style="color:' + statusColor + ';font-weight:600">' + esc(curSt) + '</span></div>' +
             '</div>' +
           '</div>' +
           '<button class="my-status-edit-btn" id="ms-toggle-edit" aria-expanded="false">' +
@@ -738,15 +810,15 @@
           '<div class="ms-grid">' +
             '<div>' +
               '<label for="ms-floor">Floor</label>' +
-              '<select id="ms-floor">' + floorOpts(meMember.floor) + '</select>' +
+              '<select id="ms-floor">' + floorOpts(meMember.floor || "F") + '</select>' +
             '</div>' +
             '<div>' +
               '<label for="ms-room">Room</label>' +
-              '<select id="ms-room">' + roomOpts(meMember.floor, meMember.room) + '</select>' +
+              '<select id="ms-room">' + roomOpts(meMember.floor || "F", meMember.room) + '</select>' +
             '</div>' +
             '<div>' +
               '<label for="ms-status">Live Status</label>' +
-              '<select id="ms-status">' + ["Available", "Busy", "On a task", "Off duty"].map(function (s) { return "<option" + (s === meMember.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select>' +
+              '<select id="ms-status">' + ["Available", "Busy", "On a task", "Off duty"].map(function (s) { return "<option" + (s === curSt ? " selected" : "") + ">" + s + "</option>"; }).join("") + '</select>' +
             '</div>' +
           '</div>' +
           '<div class="ms-actions">' +
@@ -775,9 +847,17 @@
 
       $("ms-floor").onchange = function () { $("ms-room").innerHTML = roomOpts($("ms-floor").value, ""); };
       $("ms-save").onclick = function () {
-        Store.update("team", meMember.name, { floor: $("ms-floor").value, floorName: Store.FLOOR_NAMES[$("ms-floor").value], room: $("ms-room").value, status: $("ms-status").value });
-        TO.toast("Location Saved", "Teammates can now navigate directly to your room.", "ok");
-        load();
+        var fl = $("ms-floor").value, rm = $("ms-room").value, st = $("ms-status").value;
+        Store.updateVolunteerLocation({
+          code: meMember.code,
+          floor: fl,
+          floorName: Store.FLOOR_NAMES[fl] || "",
+          room: rm,
+          status: st
+        }).then(function () {
+          TO.toast("Location Saved", "Teammates can now navigate directly to your room.", "ok");
+          load();
+        });
       };
     } else my.hidden = true;
 
@@ -785,7 +865,8 @@
     var list = d.meetups.slice().sort(function (a, b) { return (Store.parseStamp(b.ts) || 0) - (Store.parseStamp(a.ts) || 0); });
     $("meet-rows").innerHTML = list.length ? list.map(function (m) {
       var cls = m.status === "Done" ? "b-done" : (m.status === "Confirmed" || m.status === "On the way") ? "b-prog" : "b-ack";
-      var isTarget = S.me && m.target === S.me;
+      var isTarget = (S.user && m.targetCode === S.user.code) || (S.me && m.target === S.me);
+      var isBy = (S.user && m.byCode === S.user.code) || (S.me && m.by === S.me);
       var canConfirm = isTarget && (m.status === "Pinged" || m.status === "Pending");
       return '<div class="meet-item">' +
         '<span class="badge ' + cls + '">' + esc(m.status) + '</span>' +
@@ -801,7 +882,7 @@
         '<span class="muted" style="font-size:12px">' + esc(TO.ago(Store.parseStamp(m.ts))) + '</span>' +
         (canConfirm ? '<button class="btn small accent" data-confirm-ping="' + esc(m.id) + '">Confirm My Room</button>' : '') +
         (m.meetAt ? '<button class="btn small primary" data-route-to="' + esc(m.meetAt) + '">Route Here</button>' : '') +
-        ((m.by === S.me || isTarget) && m.status !== "Done" ? '<button class="btn small" data-meet="' + esc(m.id) + '" data-st="Done">Done</button>' : '') +
+        ((isBy || isTarget) && m.status !== "Done" ? '<button class="btn small" data-meet="' + esc(m.id) + '" data-st="Done">Done</button>' : '') +
         '</div>';
     }).join("") : '<div class="empty">No meetup requests or pings yet.</div>';
   }
@@ -815,7 +896,10 @@
 
   /* 1. SENDER: Ping a team member modal */
   function openPingModal(member) {
-    var d = S.data, meM = S.me && d.team.filter(function (t) { return t.name === S.me; })[0];
+    var d = S.data;
+    var vList = d.volunteers || d.team || [];
+    var meM = (S.user && vList.filter(function (t) { return t.code === S.user.code; })[0]) ||
+              (S.me && vList.filter(function (t) { return t.name === S.me; })[0]);
     var ov = document.createElement("div"); ov.className = "backdrop";
     ov.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-label="Ping Member">' +
       '<div class="mh"><div class="avatar" style="width:40px;height:40px;font-size:15px">' + esc(TO.initials(member.name)) + '</div>' +
@@ -831,7 +915,7 @@
     var body = ov.querySelector("#ping-body");
     var senderHtml = S.me
       ? '<div style="margin-bottom:12px;font-size:13px">Pinging as: <b style="color:var(--ink-bright)">' + esc(S.me) + '</b></div><input type="hidden" id="pt-by" value="' + esc(S.me) + '">'
-      : '<label class="lbl" for="pt-by">Who is pinging?</label><select id="pt-by" style="width:100%"><option value="">Select your name…</option>' + d.team.filter(function (t) { return t.name !== member.name; }).map(function (t) { return "<option" + (t.name === S.me ? " selected" : "") + ">" + esc(t.name) + "</option>"; }).join("") + '</select>';
+      : '<label class="lbl" for="pt-by">Who is pinging?</label><select id="pt-by" style="width:100%"><option value="">Select your name…</option>' + vList.filter(function (t) { return t.name !== member.name; }).map(function (t) { return "<option" + (t.name === S.me ? " selected" : "") + ">" + esc(t.name) + "</option>"; }).join("") + '</select>';
 
     body.innerHTML =
       '<p class="muted" style="margin-bottom:12px">A ping notification will ask <b>' + esc(member.name) + '</b> to confirm their current room in case they moved. Once confirmed, you both get walking directions.</p>' +
@@ -843,8 +927,8 @@
       '<label class="lbl" for="pt-br">Room</label><select id="pt-br" style="width:100%">' + roomOpts(meM ? meM.floor : "F", meM ? meM.room : "") + '</select>' +
       '</div>' +
       '<div class="col"><h4>' + esc(member.name.split(" ")[0]) + '\'s Last Known Room</h4>' +
-      '<div style="font-size:13px;padding-top:10px">Room: <b>' + esc(member.room) + '</b></div>' +
-      '<div class="muted" style="font-size:12px">' + esc(member.floorName) + '</div>' +
+      '<div style="font-size:13px;padding-top:10px">Room: <b>' + esc(member.room || "Pending") + '</b></div>' +
+      '<div class="muted" style="font-size:12px">' + esc(member.floorName || "Venue") + '</div>' +
       '<div class="muted" style="font-size:11.5px;margin-top:6px">They will confirm their actual room when responding.</div>' +
       '</div></div>' +
 
@@ -870,11 +954,13 @@
 
       var rec = {
         by: by,
+        byCode: S.user ? S.user.code : (meM ? meM.code : ""),
         target: member.name,
+        targetCode: member.code,
         byFloor: f("pt-bf").value,
         byRoom: br,
-        targetFloor: member.floor,
-        targetRoom: member.room,
+        targetFloor: member.floor || "",
+        targetRoom: member.room || "",
         meetAt: br, // default preference
         note: f("pt-note").value.trim(),
         status: "Pinged"
@@ -894,7 +980,9 @@
   /* 2. RECIPIENT: Confirm location and choose meeting point */
   function openConfirmLocationModal(meetup) {
     var d = S.data;
-    var meMember = d.team.filter(function (t) { return t.name === meetup.target; })[0] || {};
+    var vList = d.volunteers || d.team || [];
+    var meMember = (S.user && vList.filter(function (t) { return t.code === S.user.code; })[0]) ||
+                   vList.filter(function (t) { return t.name === meetup.target; })[0] || {};
     var ov = document.createElement("div"); ov.className = "backdrop";
     ov.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-label="Confirm Location">' +
       '<div class="mh"><h3>Confirm Your Room for Meetup</h3><button class="x" aria-label="Close">&times;</button></div>' +
@@ -946,10 +1034,11 @@
       var atMine = body.querySelector("input[name=cf-at]:checked").value === "mine";
       var meetAt = atMine ? rm : meetup.byRoom;
 
-      /* Update my live location in Team roster */
-      Store.update("team", meetup.target, {
+      /* Update my live location in volunteers collection */
+      Store.updateVolunteerLocation({
+        code: meMember.code || (S.user ? S.user.code : ""),
         floor: fl,
-        floorName: Store.FLOOR_NAMES[fl],
+        floorName: Store.FLOOR_NAMES[fl] || "",
         room: rm,
         status: "Available"
       });
@@ -957,7 +1046,7 @@
       /* Update meetup record */
       Store.update("meetups", meetup.id, {
         targetFloor: fl,
-        targetFloorName: Store.FLOOR_NAMES[fl],
+        targetFloorName: Store.FLOOR_NAMES[fl] || "",
         targetRoom: rm,
         meetAt: meetAt,
         status: "Confirmed"
@@ -1004,7 +1093,7 @@
         (!q || (r.item + " " + r.team + " " + r.room + " " + r.holder + " " + r.id).toLowerCase().indexOf(q) >= 0);
     });
 
-    var names = d.team.map(function (t) { return t.name; });
+    var names = (d.volunteers || d.team || []).map(function (t) { return t.name; });
     $("inv-rows").innerHTML = rows.length ? rows.map(function (r) {
       var lent = r.status === "Lent out";
       return "<tr>" +
@@ -1101,7 +1190,7 @@
             var teamLabel = Store.teamDisplayName(user);
             return Store.logout().then(function () {
               applyUser(null);
-              showLoginError("Access denied: code " + user.code + " belongs to " + teamLabel + " and is not authorized to open the Tech Ops panel.");
+              showLoginError("Access denied: your account belongs to " + teamLabel + " and is not authorized to open the Tech Ops panel.");
             });
           }
           applyUser(user);
@@ -1210,10 +1299,13 @@
       else if ((t = e.target.closest("[data-floor]"))) { S.floor = t.dataset.floor; S.selected = null; closeMapBottomSheet(); map.setFloor(S.floor); renderMapChrome(); renderSide(); }
       else if ((t = e.target.closest("[data-layer]"))) { S.layer = t.dataset.layer; map.setLayer(S.layer); renderMapChrome(); }
       else if ((t = e.target.closest("[data-zone]"))) { S.zone = S.zone === t.dataset.zone ? null : t.dataset.zone; map.setZoneFilter(S.zone); renderMapChrome(); }
-      else if ((t = e.target.closest("[data-member]"))) {
-        var idx = +t.dataset.member;
-        var member = S.data.team[idx];
-        if (member.name === S.me) {
+      else if ((t = e.target.closest("[data-code]")) || (t = e.target.closest("[data-member]"))) {
+        var vList = S.data.volunteers || S.data.team || [];
+        var code = t.dataset.code;
+        var member = code ? vList.filter(function (x) { return x.code === code; })[0] : (S.data.team ? S.data.team[+t.dataset.member] : null);
+        if (!member) return;
+        var isMe = (S.user && member.code === S.user.code) || (S.me && member.name === S.me);
+        if (isMe) {
           /* Self click: focus live location update */
           var ms = $("my-status");
           if (ms) {
@@ -1363,7 +1455,7 @@
       return;
     }
 
-    var roleText = Store.teamDisplayName(user) + " · " + user.code;
+    var roleText = Store.teamDisplayName(user);
     if (chip) {
       chip.hidden = false;
       if ($("user-name")) $("user-name").textContent = user.name;
@@ -1390,7 +1482,7 @@
       if ($("status-pill")) $("status-pill").className = "pill-status demo";
       if ($("status-text")) $("status-text").textContent = "Restricted";
       if ($("denied-msg")) {
-        $("denied-msg").innerHTML = "Signed in as <b>" + esc(user.name) + "</b> (" + esc(Store.teamDisplayName(user)) + " · " + esc(user.code) + "). Your assigned role does not have permission to access the <b>Tech Ops</b> module.";
+        $("denied-msg").innerHTML = "Signed in as <b>" + esc(user.name) + "</b> (" + esc(Store.teamDisplayName(user)) + "). Your assigned role does not have permission to access the <b>Tech Ops</b> module.";
       }
       return;
     }
