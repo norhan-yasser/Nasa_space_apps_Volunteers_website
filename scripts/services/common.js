@@ -133,6 +133,61 @@
     } catch (e) {}
   }
 
+  /* Fine and quick celebratory completion chime (~220ms): crisp, light, positive ascending chime */
+  function chimeDone() {
+    try {
+      ensureAudioUnlocked();
+      if (!audioCtx) return;
+      var now = audioCtx.currentTime;
+
+      var master = audioCtx.createGain();
+      master.gain.setValueAtTime(0.55, now);
+      master.connect(audioCtx.destination);
+
+      /* Two crisp, harmonic crystal notes: Note 1 (E6: 1318.5Hz), Note 2 (A6: 1760Hz) */
+      var notes = [
+        { freq: 1318.5, start: 0.00, dur: 0.09, vol: 0.40 },
+        { freq: 1760.0, start: 0.07, dur: 0.15, vol: 0.55 }
+      ];
+
+      notes.forEach(function (n) {
+        var t0 = now + n.start;
+        var t1 = t0 + n.dur;
+
+        var osc = audioCtx.createOscillator();
+        var osc2 = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(n.freq, t0);
+
+        osc2.type = "triangle";
+        osc2.frequency.setValueAtTime(n.freq * 2, t0);
+
+        var osc2Gain = audioCtx.createGain();
+        osc2Gain.gain.setValueAtTime(0.12, t0);
+        osc2.connect(osc2Gain);
+        osc2Gain.connect(gain);
+
+        gain.gain.setValueAtTime(0.001, t0);
+        gain.gain.linearRampToValueAtTime(n.vol, t0 + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t1);
+
+        osc.connect(gain);
+        gain.connect(master);
+
+        osc.start(t0);
+        osc2.start(t0);
+        osc.stop(t1 + 0.02);
+        osc2.stop(t1 + 0.02);
+      });
+
+      if (navigator.vibrate) {
+        try { navigator.vibrate(35); } catch (e) {}
+      }
+    } catch (e) {}
+  }
+
   function ago(d) {
     if (!d) return "";
     var s = Math.max(0, (Date.now() - d.getTime()) / 1000);
@@ -262,7 +317,7 @@
   }
 
   window.TO = {
-    esc: esc, initTheme: initTheme, toast: toast, beep: beep, ago: ago, statusClass: statusClass, issueClass: issueClass,
+    esc: esc, initTheme: initTheme, toast: toast, beep: beep, chimeDone: chimeDone, doneSound: chimeDone, ago: ago, statusClass: statusClass, issueClass: issueClass,
     initials: initials, speedColor: speedColor, speedLabel: speedLabel, qrSvg: qrSvg, baseUrl: baseUrl, reportUrl: reportUrl,
     routeTarget: routeTarget, routeHref: routeHref, bindMobileDrawer: bindMobileDrawer
   };

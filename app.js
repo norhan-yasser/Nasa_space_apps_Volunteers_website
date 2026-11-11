@@ -1577,7 +1577,8 @@ function applyUrlRoute() {
           }
           if (window.TO && window.TO.toast) {
             window.TO.toast("Task Done", taskId + " marked as done. Returning...", "ok");
-            if (window.TO.beep) window.TO.beep();
+            if (window.TO.chimeDone) window.TO.chimeDone();
+            else if (window.TO.beep) window.TO.beep();
           }
           let dest = "index.html";
           if (team === "logistics") dest = "logistics/index.html";

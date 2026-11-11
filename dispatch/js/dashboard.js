@@ -8,7 +8,7 @@
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
   function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-  var S = { user: null, me: "", data: null, filter: "unassigned", text: "", seen: jget(SEEN_KEY, []), first: true, alertsOn: false, busy: {}, sig: "" };
+  var S = { user: null, me: "", data: null, filter: "unassigned", text: "", seen: jget(SEEN_KEY, []), first: true, alertsOn: (function () { try { return localStorage.getItem("nasa_alerts_enabled") === "1"; } catch (e) { return false; } })(), busy: {}, sig: "" };
 
   var FILTERS = [["unassigned", "Unclaimed"], ["mine", "Mine"], ["handed", "Handed out"], ["Resolved", "Done"], ["all", "All"]];
   var EMPTY = { unassigned: "No unclaimed Competition Team requests. All quiet.", mine: "You have nothing to hand out.", handed: "Nothing handed out right now.", Resolved: "Nothing completed yet.", all: "No Competition Team requests yet." };
@@ -61,8 +61,10 @@
         TO.toast("NEW Competition Team request!", msg, "bad", function () { S.filter = "unassigned"; S.sig = ""; render(); });
         notifyDesktop("NEW Competition Team request", msg);
       });
-      TO.beep();
-      try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+      if (S.alertsOn) {
+        TO.beep();
+        try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+      }
     }
     d.reports.forEach(function (r) { if (S.seen.indexOf(r.id) < 0) S.seen.push(r.id); });
     jset(SEEN_KEY, S.seen.slice(-500));
@@ -80,12 +82,32 @@
   function notifyDesktop(title, body) {
     try { if (S.alertsOn && "Notification" in window && Notification.permission === "granted") new Notification(title, { body: body, icon: "../assets/favicon.png" }); } catch (e) {}
   }
-  function enableAlerts() {
-    S.alertsOn = true; TO.beep();
-    try { if ("Notification" in window && Notification.permission === "default") Notification.requestPermission(); } catch (e) {}
-    if ($("alerts-btn")) { $("alerts-btn").textContent = "Alerts on"; $("alerts-btn").disabled = true; }
-    if ($("mobile-alerts-btn")) { $("mobile-alerts-btn").textContent = "Alerts on"; $("mobile-alerts-btn").disabled = true; }
-    TO.toast("Alerts on", "You will hear a sound when a new request arrives. Keep this page open.", "ok");
+  function syncAlertsUI() {
+    var btn = $("alerts-btn"), mBtn = $("mobile-alerts-btn");
+    if (btn) {
+      btn.textContent = S.alertsOn ? "Alerts on" : "Enable alerts";
+      btn.classList.toggle("is-active", !!S.alertsOn);
+      btn.disabled = false;
+      btn.title = S.alertsOn ? "Alerts are enabled. Click to mute sound and notifications." : "Sound and desktop notifications for new requests";
+    }
+    if (mBtn) {
+      var sp = mBtn.querySelector("span") || mBtn;
+      sp.textContent = S.alertsOn ? "Alerts on" : "Enable alerts";
+      mBtn.classList.toggle("is-active", !!S.alertsOn);
+      mBtn.disabled = false;
+    }
+  }
+  function toggleAlerts() {
+    S.alertsOn = !S.alertsOn;
+    try { localStorage.setItem("nasa_alerts_enabled", S.alertsOn ? "1" : "0"); } catch (e) {}
+    syncAlertsUI();
+    if (S.alertsOn) {
+      try { if ("Notification" in window && Notification.permission === "default") Notification.requestPermission(); } catch (e) {}
+      if (TO.chimeDone) TO.chimeDone();
+      TO.toast("Alerts on", "You will hear a sound when a new request arrives. Keep this page open.", "ok");
+    } else {
+      TO.toast("Alerts muted", "Sound and notifications turned off.", "");
+    }
   }
 
   /* ---------------------------------------------------------------- render */
@@ -199,6 +221,7 @@
     S.busy[id] = true; btn.disabled = true; btn.textContent = "Saving…";
     p.then(function () {
       TO.toast(kind === "claim" ? "Request claimed" : kind === "handout" ? "Handed out" : "Request done", id + (kind === "claim" ? " is yours. Hand it out to a member." : kind === "handout" ? " was handed out." : " marked as done."), "ok");
+      if (kind !== "claim" && kind !== "handout" && TO.chimeDone) TO.chimeDone();
     }).catch(function () { btn.disabled = false; btn.textContent = label; })
       .then(function () { delete S.busy[id]; S.sig = ""; });
   }
@@ -326,8 +349,9 @@
   $("logout-btn").onclick = doLogout;
   if ($("mobile-logout-btn")) $("mobile-logout-btn").onclick = doLogout;
   if ($("denied-logout-btn")) $("denied-logout-btn").onclick = doLogout;
-  $("alerts-btn").onclick = enableAlerts;
-  if ($("mobile-alerts-btn")) $("mobile-alerts-btn").onclick = enableAlerts;
+  syncAlertsUI();
+  $("alerts-btn").onclick = toggleAlerts;
+  if ($("mobile-alerts-btn")) $("mobile-alerts-btn").onclick = toggleAlerts;
   if ($("tutorial-btn")) $("tutorial-btn").onclick = function () { startCompetitionTutorial(true); };
   if ($("mobile-tutorial-btn")) $("mobile-tutorial-btn").onclick = function () { startCompetitionTutorial(true); };
   $("bell").onclick = function () { S.filter = "unassigned"; S.sig = ""; render(); };

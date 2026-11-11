@@ -11,7 +11,7 @@
     data: null, tab: "issues", floor: "G", layer: "zones", selected: null, pins: true, zone: null,
     issueFilter: "unassigned", issueText: "", first: true,
     activeRoute: null, activeTaskId: null, user: null, busy: {},
-    seen: jget(SEEN_KEY, []), seenMeet: jget(SEEN_MEET, []), me: "", alertsOn: false
+    seen: jget(SEEN_KEY, []), seenMeet: jget(SEEN_MEET, []), me: "", alertsOn: lget("nasa_alerts_enabled") === "1"
   };
   function jget(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } }
   function lget(k) { try { return localStorage.getItem(k); } catch (e) { return ""; } }
@@ -66,7 +66,7 @@
         TO.toast("New TechOps Issue!", msg, "bad", function () { gotoIssueOnMap(r); });
         notifyDesktop("New TechOps issue", msg);
       });
-      if (fresh.length) TO.beep();
+      if (S.alertsOn && fresh.length) TO.beep();
     }
     d.reports.forEach(function (r) { if (S.seen.indexOf(r.id) < 0) S.seen.push(r.id); });
     lset(SEEN_KEY, JSON.stringify(S.seen.slice(-500)));
@@ -81,7 +81,7 @@
           openConfirmLocationModal(m);
         });
         notifyDesktop("TechOps Location Ping", m.by + " wants to meet you! Please confirm your room.");
-        TO.beep();
+        if (S.alertsOn) TO.beep();
       }
     });
     lset(SEEN_MEET, JSON.stringify(S.seenMeet.slice(-300)));
@@ -267,6 +267,7 @@
     var p = kind === "claim" ? Store.claimReport(id) : Store.resolveReport(id);
     p.then(function () {
       TO.toast(kind === "claim" ? "Task claimed" : "Task resolved", kind === "claim" ? id + " is now In Progress and assigned to you." : id + " marked as resolved.", "ok");
+      if (kind === "resolve" && TO.chimeDone) TO.chimeDone();
     }).catch(function () {
       btn.disabled = false; btn.textContent = label;
     }).then(function () { delete S.busy[id]; return load(); });
@@ -1054,7 +1055,7 @@
     }
     Store.resolveReport(taskId).then(function () {
       TO.toast("Task Resolved", taskId + " marked as done.", "ok");
-      if (TO.beep) TO.beep();
+      if (TO.chimeDone) TO.chimeDone();
       clearActiveRoute();
       if (window.closeMapBottomSheet) closeMapBottomSheet();
       /* Return directly to the Issues tab as requested */
@@ -1137,7 +1138,7 @@
           mToggle.classList.remove("is-open");
         }
       });
-      mDrawer.querySelectorAll("a, button:not(#mobile-alerts-btn)").forEach(function (el) {
+      mDrawer.querySelectorAll("a, button:not(#mobile-alerts-btn):not(#mobile-theme-toggle)").forEach(function (el) {
         el.addEventListener("click", function () {
           mDrawer.hidden = true;
           mToggle.setAttribute("aria-expanded", "false");
@@ -1146,15 +1147,41 @@
       });
     }
 
-    function enableAlerts() {
-      S.alertsOn = true; TO.beep();
-      if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
-      if ($("alerts-btn")) { $("alerts-btn").textContent = "Alerts on"; $("alerts-btn").disabled = true; }
-      if ($("mobile-alerts-btn")) { $("mobile-alerts-btn").textContent = "Alerts On"; $("mobile-alerts-btn").disabled = true; }
-      TO.toast("Alerts enabled", "Sound and notifications enabled for incoming issues.", "ok");
+    function syncAlertsUI() {
+      var btn = $("alerts-btn");
+      var mBtn = $("mobile-alerts-btn");
+      if (btn) {
+        btn.textContent = S.alertsOn ? "Alerts on" : "Enable alerts";
+        btn.classList.toggle("is-active", !!S.alertsOn);
+        btn.disabled = false;
+        btn.title = S.alertsOn ? "Alerts are enabled. Click to mute sound and notifications." : "Enable sound and desktop notifications for new tasks";
+      }
+      if (mBtn) {
+        var sp = mBtn.querySelector("span") || mBtn;
+        sp.textContent = S.alertsOn ? "Alerts on" : "Enable alerts";
+        mBtn.classList.toggle("is-active", !!S.alertsOn);
+        mBtn.disabled = false;
+      }
     }
-    if ($("alerts-btn")) $("alerts-btn").onclick = enableAlerts;
-    if ($("mobile-alerts-btn")) $("mobile-alerts-btn").onclick = enableAlerts;
+
+    function toggleAlerts() {
+      S.alertsOn = !S.alertsOn;
+      lset("nasa_alerts_enabled", S.alertsOn ? "1" : "0");
+      syncAlertsUI();
+      if (S.alertsOn) {
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+        if (TO.chimeDone) TO.chimeDone();
+        TO.toast("Alerts enabled", "Sound and notifications enabled for incoming issues.", "ok");
+      } else {
+        TO.toast("Alerts muted", "Sound and notifications turned off.", "");
+      }
+    }
+
+    syncAlertsUI();
+    if ($("alerts-btn")) $("alerts-btn").onclick = toggleAlerts;
+    if ($("mobile-alerts-btn")) $("mobile-alerts-btn").onclick = toggleAlerts;
 
     /* Routing UI */
     $("rt-calc").onclick = function () { planAndShowRoute($("rt-from").value, $("rt-to").value); };
