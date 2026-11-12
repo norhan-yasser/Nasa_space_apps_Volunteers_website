@@ -28,7 +28,7 @@
       /* shared places (prayer rooms, cafeteria, break areas) have no sheet row: add a plain one so they can be selected, routed to and used in meetups */
       D.FLOORS.forEach(function (f) {
         f.rooms.forEach(function (g) {
-          if (!g.kind || d.rooms.some(function (r) { return r.code === g.code; })) return;
+          if (!g.kind || g.kind === "games" || d.rooms.some(function (r) { return r.code === g.code; })) return;
           d.rooms.push({ code: g.code, floor: f.id, floorName: f.name, wing: "", roomNo: "", type: D.PLACE_STYLE[g.kind].label, capacity: 0, physicalCapacity: 0, zone: "", assigned: "", contact: "" });
         });
       });
@@ -508,6 +508,31 @@
 
   function renderSide() {
     var d = S.data, side = $("side");
+    var geoOnly = S.selected && !d.roomMap[S.selected] ? D.ALL.filter(function (g) { return g.code === S.selected; })[0] : null;
+    if (geoOnly) {
+      var pStyle = (geoOnly.kind && D.PLACE_STYLE[geoOnly.kind]) || { color: "#6366f1", label: "Games Room" };
+      side.innerHTML = '<h3>Room ' + esc(geoOnly.code) + '</h3><div class="sub"><span class="badge" style="background:' + pStyle.color + '33;border-color:' + pStyle.color + ';color:var(--ink-bright)">' + esc(pStyle.label) + '</span> ' + esc(Store.FLOOR_NAMES[geoOnly.floor]) + '</div>' +
+        '<p class="muted" style="font-size:13px;margin:10px 0">Games Room — available for wayfinding and routing only.</p>' +
+        '<div class="row" style="margin:12px 0 14px;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn primary small" id="side-route-here">Fastest Route Here</button>' +
+        '<button class="btn small" id="side-route-from">Route From Here</button>' +
+        '<button class="btn small ghost" id="side-clear">Clear</button>' +
+        '</div>';
+      var cG = $("side-clear"); if (cG) cG.onclick = function () { S.selected = null; map.select(null); renderSide(); };
+      var btnHereG = $("side-route-here");
+      if (btnHereG) btnHereG.onclick = function () {
+        $("rt-to").value = geoOnly.code;
+        var myRoom = myCurrentRoom();
+        $("rt-from").value = myRoom;
+        planAndShowRoute(myRoom, geoOnly.code);
+      };
+      var btnFromG = $("side-route-from");
+      if (btnFromG) btnFromG.onclick = function () {
+        $("rt-from").value = geoOnly.code;
+        TO.toast("Origin set", "Now click destination or enter room in To field.", "ok");
+      };
+      return;
+    }
     if (S.selected && d.roomMap[S.selected]) {
       var r = d.roomMap[S.selected], w = wifiFor(r.code), z = D.ZONES[r.mode] || D.ZONES[r.zone] || {};
       var iss = d.reports.filter(function (x) { return x.room === r.code && x.floor === r.floor && x.status !== "Resolved"; });
@@ -614,7 +639,37 @@
       btnFrom.style.display = "none";
     } else {
       var r = d.roomMap[code];
-      if (!r) return;
+      if (!r) {
+        var geoRoom = D.ALL.filter(function (g) { return g.code === code; })[0];
+        if (!geoRoom) return;
+        var pSt = (geoRoom.kind && D.PLACE_STYLE[geoRoom.kind]) || { color: "#6366f1", label: "Games Room" };
+        zEl.textContent = pSt.label;
+        zEl.style.color = pSt.color;
+        tEl.textContent = "Room " + geoRoom.code;
+        mEl.textContent = (Store.FLOOR_NAMES[geoRoom.floor] || "Ground Floor") + " · " + pSt.label;
+        bEl.innerHTML = '<p class="muted" style="font-size:13.5px;margin:0">Games Room — available for wayfinding and routing only.</p>';
+        btnHere.style.display = "inline-flex";
+        btnFrom.style.display = "inline-flex";
+        btnHere.onclick = function () {
+          closeMapBottomSheet();
+          $("rt-to").value = geoRoom.code;
+          var myRoom = myCurrentRoom();
+          $("rt-from").value = myRoom;
+          planAndShowRoute(myRoom, geoRoom.code);
+        };
+        btnFrom.onclick = function () {
+          closeMapBottomSheet();
+          $("rt-from").value = geoRoom.code;
+          TO.toast("Origin set", "Now click destination or enter room in To field.", "ok");
+        };
+        backdrop.hidden = false;
+        sheet.hidden = false;
+        requestAnimationFrame(function () {
+          backdrop.classList.add("is-open");
+          sheet.classList.add("is-open");
+        });
+        return;
+      }
       var z = D.ZONES[r.zone] || {};
       var w = wifiFor(r.code);
       var iss = d.reports.filter(function (x) { return x.room === r.code && x.floor === r.floor && x.status !== "Resolved"; });

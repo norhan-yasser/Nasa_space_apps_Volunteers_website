@@ -13,10 +13,13 @@
     B: [["PR-F", [970, 382, 1048, 505]], ["PR-M", [1087, 382, 1188, 575]]],
     G: [
       ["C034", [86, 201, 185, 287]], ["C035", [87, 312, 185, 394]], ["C027", [511, 240, 558, 320]],
-      ["C026", [559, 240, 607, 320]], ["B017", [1157, 240, 1202, 320]],
+      ["C026", [559, 240, 607, 320]], ["B020", [1025, 240, 1070, 320]], ["B019", [1070, 240, 1115, 320]],
+      ["B018", [1115, 240, 1158, 320]], ["B017", [1157, 240, 1202, 320]],
       ["B016", [1259, 273, 1220, 208, 1295, 165, 1333, 229]],
       ["B015", [1309, 360, 1270, 295, 1341, 252, 1381, 316]],
+      ["CLINIC", [1273, 646, 1337, 609, 1358, 638, 1304, 671, 1273, 671]],
       ["CAFETERIA", [1070, 429, 1225, 468]],
+      ["CAFETERIA-W", [264, 549, 435, 588]],
       ["STAGE", [1462, 182, 1660, 213, 1617, 499, 1414, 470]]
     ],
     F: [
@@ -49,19 +52,21 @@
   };
 
   /* Shared places (not assignable to a group): shown on the map and usable in routes, reports and meetups */
-  var PLACE_KIND = { "PR-F": "prayer", "PR-M": "prayer", "CAFETERIA": "cafeteria", "BREAK-1": "break", "BREAK-2": "break", "STAGE": "stage" };
+  var PLACE_KIND = { "PR-F": "prayer", "PR-M": "prayer", "CAFETERIA": "cafeteria", "CAFETERIA-W": "cafeteria", "BREAK-1": "break", "BREAK-2": "break", "STAGE": "stage", "B018": "games", "B019": "games", "B020": "games", "CLINIC": "clinic" };
   var PLACE_STYLE = {
     prayer: { color: "#8b5cf6", label: "Prayer Room" },
     cafeteria: { color: "#d97706", label: "Cafeteria" },
     "break": { color: "#0ea5e9", label: "Break Area" },
-    stage: { color: "#14b8a6", label: "Outer Stage" }
+    stage: { color: "#14b8a6", label: "Outer Stage" },
+    games: { color: "#6366f1", label: "Games Room" },
+    clinic: { color: "#38bdf8", label: "Clinic" }
   };
 
   var META = {
     B: { name: "Basement", short: "Basement", level: "Level -1", img: IMG_DIR + "0.png?v=20261111" },
-    G: { name: "Ground Floor", short: "Ground", level: "Level 0", img: IMG_DIR + "1.png?v=20261111" },
-    F: { name: "First Floor", short: "First", level: "Level 1", img: IMG_DIR + "2.png?v=20261111" },
-    S: { name: "Second Floor", short: "Second", level: "Level 2", img: IMG_DIR + "3.png?v=20261111-d252" }
+    G: { name: "Ground Floor", short: "Ground", level: "Level 0", img: IMG_DIR + "1.png?v=20261112-clinic-wings" },
+    F: { name: "First Floor", short: "First", level: "Level 1", img: IMG_DIR + "2.png?v=20261112-clinic-wings" },
+    S: { name: "Second Floor", short: "Second", level: "Level 2", img: IMG_DIR + "3.png?v=20261112-clinic-wings" }
   };
 
   var FLOORS = ["B", "G", "F", "S"].map(function (id) {

@@ -212,12 +212,29 @@
       h += "<defs>" + defs + "</defs>" + '<g style="mix-blend-mode:normal">' + glows + "</g>";
     }
 
+    /* restricted outer bridge corridors on First and Second Floor */
+    var RESTRICTED_CORRIDORS = {
+      F: [
+        { pts: "230,344 258,344 258,558 230,558", cx: 244, cy: 451, label: "Wing C-D Bridge (Closed)" },
+        { pts: "1321,346 1345,333 1459,559 1433,574", cx: 1390, cy: 453, label: "Wing A-B Bridge (Closed)" }
+      ],
+      S: [
+        { pts: "230,320 254,320 254,492 230,492", cx: 242, cy: 406, label: "Wing C-D Bridge (Closed)" },
+        { pts: "1285,324 1310,309 1423,491 1398,506", cx: 1354, cy: 407, label: "Wing A-B Bridge (Closed)" }
+      ]
+    };
+    if (RESTRICTED_CORRIDORS[f.id]) {
+      RESTRICTED_CORRIDORS[f.id].forEach(function (rc) {
+        h += '<g pointer-events="none"><polygon points="' + rc.pts + '" fill="#ef4444" fill-opacity=".42" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="6 3"/><rect x="' + (rc.cx - 32) + '" y="' + (rc.cy - 10) + '" width="64" height="20" rx="5" fill="rgba(9,13,24,.9)" stroke="#ef4444" stroke-width="1.5"/><text x="' + rc.cx + '" y="' + (rc.cy + 4) + '" text-anchor="middle" font-size="10" font-weight="800" fill="#fca5a5">CLOSED</text></g>';
+      });
+    }
+
     /* room outlines (clickable) */
     f.rooms.forEach(function (r) {
       var row = self.rooms[r.code] || {}, z = D.ZONES[row.zone], col = z ? z.color : (r.kind && D.PLACE_STYLE[r.kind] ? D.PLACE_STYLE[r.kind].color : "#64748b");
       var dim = self.zoneFilter && row.zone !== self.zoneFilter;
       var sel = self.selected === r.code;
-      var isTextOnly = r.code === "CAFETERIA";
+      var isTextOnly = r.code === "CAFETERIA" || r.code === "CAFETERIA-W";
       if (heat) {
         h += '<polygon class="rm' + (sel ? " sel" : "") + '" data-code="' + r.code + '" points="' + pts(r) + '" fill="' + (isTextOnly ? "rgba(255,255,255,.001)" : "rgba(255,255,255,.04)") + '" stroke="' + (isTextOnly && !sel ? "none" : "rgba(255,255,255,.55)") + '" stroke-width="2.5"/>';
         if (!isTextOnly) {

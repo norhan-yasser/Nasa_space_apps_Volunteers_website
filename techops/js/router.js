@@ -38,11 +38,11 @@
   };
 
   var SN = {
-    WN: "North-West Inner Stairs (Auditorium)",
-    WS: "Central-West Inner Stairs",
-    SW: "South-West Wing Stairs",
-    EN: "North-East Inner Stairs (Auditorium)",
-    SE: "South-East Wing Stairs"
+    WN: "Wing C Inner Stairs (Auditorium)",
+    WS: "Wing C/D Inner Stairs",
+    SW: "Wing D Stairs",
+    EN: "Wing B Inner Stairs (Auditorium)",
+    SE: "Wing A Stairs"
   };
 
   var ORD = ["B", "G", "F", "S"];
@@ -50,10 +50,11 @@
 
   var EXITS = [
     { id: "ENTRANCE", label: "Main Entrance", main: true, p: ENT.p, bb: [659, 655, 801, 694] },
-    { id: "EXIT-1", label: "North-West Door", p: [199, 386], bb: [186, 377, 213, 396] },
-    { id: "EXIT-2", label: "North-East Door", p: [1208, 378], bb: [1195, 366, 1221, 391] },
-    { id: "EXIT-3", label: "South-West Door", p: [199, 539], bb: [186, 529, 212, 550] },
-    { id: "EXIT-4", label: "South-East Door", p: [1306, 573], bb: [1292, 555, 1320, 592] }
+    { id: "EXIT-1", label: "Wing C Door", p: [199, 386], bb: [186, 377, 213, 396] },
+    { id: "EXIT-2", label: "Wing B Door", p: [1208, 378], bb: [1195, 366, 1221, 391] },
+    { id: "EXIT-3", label: "Wing D Door", p: [199, 539], bb: [186, 529, 212, 550] },
+    { id: "EXIT-4", label: "Wing A Door", p: [1306, 573], bb: [1292, 555, 1320, 592] },
+    { id: "EXIT-5", label: "Wing D Courtyard Door", p: [466, 527], bb: [457, 515, 475, 539] }
   ];
 
   var BATHS = {
@@ -92,10 +93,16 @@
     ],
     G: [
       [[178, 334], [600, 334]],
+      [[199, 334], [199, 386]],
       [[551, 334], [550, 500], [549, 600], [539, 613]],
       [[830, 332], [1213, 334], [1240, 325]],
       [[909, 334], [902, 360], [899, 560], [913, 622]],
       [[288, 624], [327, 624], [482, 630], [539, 613], [600, 608], [817, 610], [864, 622], [945, 623], [1076, 622], [1291, 619]],
+      [[482, 630], [473, 580], [466, 527]],
+      [[300, 595], [476, 595]],
+      [[466, 527], [448, 498], [339, 498], [339, 526]],
+      [[199, 539], [202, 498], [339, 498]],
+      [[199, 386], [202, 498]],
       [[300, 624], [300, 592], [236, 560], [199, 539]],
       [[1291, 619], [1306, 573]],
       [[1306, 573], [1265, 556], [1250, 513], [1273, 482], [1334, 448], [1422, 420]],
@@ -106,27 +113,25 @@
     ],
     F: [
       [[243, 319], [680, 319]],
-      [[243, 266], [244, 549], [243, 631]],
+      [[243, 265], [243, 319]],
       [[622, 319], [622, 592], [616, 622]],
       [[940, 318], [1317, 317], [1335, 328]],
-      [[1335, 328], [1372, 305]],
-      [[1335, 328], [1332, 341], [1461, 588], [1448, 625]],
+      [[1335, 328], [1372, 305], [1392, 284]],
       [[1030, 318], [1008, 330], [1005, 420], [1005, 594], [1030, 626]],
-      [[243, 631], [601, 632], [616, 622], [734, 611], [751, 598], [855, 597], [925, 596], [962, 621], [1030, 626], [1448, 625]]
+      [[243, 631], [601, 632], [616, 622], [734, 611], [751, 598], [855, 597], [925, 596], [962, 621], [1030, 626], [1448, 625], [1468, 585], [1480, 565]]
     ],
     S: [
       [[243, 303], [681, 303]],
-      [[243, 250], [243, 596]],
+      [[243, 250], [243, 303]],
       [[598, 303], [598, 596]],
       [[920, 294], [1290, 294], [1298, 300]],
-      [[1298, 300], [1296, 320], [1411, 499], [1400, 536], [1417, 590]],
       [[1036, 294], [975, 296], [971, 462], [980, 472], [980, 489], [966, 503], [968, 585], [985, 597]],
-      [[134, 598], [973, 592], [1018, 600], [1078, 596], [1383, 597], [1417, 590]]
+      [[134, 598], [973, 592], [1018, 600], [1078, 596], [1383, 597], [1417, 590], [1448, 550], [1452, 526]]
     ]
   };
 
   var DOOR_ROWS = [
-    { f: "G", y: 323, dx: 0, codes: ["C027", "C026", "B017"] },
+    { f: "G", y: 323, dx: 0, codes: ["C027", "C026", "B020", "B019", "B018", "B017"] },
     { f: "F", y: 305, dx: 0, codes: ["C139", "C138", "C137", "C136", "C135", "C134", "C133", "C132"] },
     { f: "F", y: 305, dx: 0, codes: ["B131", "B130", "B129", "B128", "B127", "B126", "B125", "B124"] },
     { f: "F", y: 622, dx: 0, codes: ["D154", "D153", "D152"] },
@@ -138,13 +143,23 @@
 
   var DOOR_PTS = {
     C034: [178, 298], C035: [184, 340], B016: [1257, 273], B015: [1275, 323],
-    C140: [232, 265], C141: [232, 338], B123: [1383, 238], B122: [1392, 284],
-    A114: [1438, 520], A113: [1482, 612],
-    C241: [232, 250], C242: [232, 322], A210: [1408, 468], A209: [1466, 560],
+    C140: [232, 265], C141: [232, 319], B123: [1383, 238], B122: [1392, 284],
+    A114: [1480, 565], A113: [1482, 612],
+    C241: [232, 250], C242: [232, 303], A210: [1452, 526], A209: [1466, 560],
     D252: [586, 452],
     "PR-F": [1050, 403], "PR-M": [1088, 394],          /* basement prayer rooms */
-    CAFETERIA: [1200, 425],                            /* ground: inside the NE door */
-    "BREAK-1": [1005, 500], "BREAK-2": [986, 480]      /* open to the east inner halls */
+    CLINIC: [1284, 638],                               /* ground: Wing A Clinic door */
+    CAFETERIA: [1200, 425],                            /* ground: Wing B Cafeteria door */
+    "CAFETERIA-W": [339, 526],                         /* ground: Wing D Cafeteria outer door */
+    "BREAK-1": [1005, 500], "BREAK-2": [986, 480]      /* open to the inner halls */
+  };
+
+  var MULTI_DOORS = {
+    "CAFETERIA-W": [
+      [339, 526], /* outer north door */
+      [319, 582], /* inner south-west door */
+      [400, 582]  /* inner south-east door */
+    ]
   };
 
   function doorOf(r) {
@@ -200,22 +215,38 @@
     if (fid === "G") targets["ENTRANCE"] = ENT.p;
     if (fid === "G") EXITS.filter(function (e) { return !e.main; }).forEach(function (e) { targets["E:" + e.id] = e.p; });
 
+    var multiTargets = {};
     var floorObj = D.FLOORS.filter(function (f) { return f.id === fid; })[0];
     if (floorObj) {
       floorObj.rooms.forEach(function (r) {
-        targets["R:" + r.code] = doorOf(r);
+        if (MULTI_DOORS[r.code]) {
+          multiTargets["R:" + r.code] = {
+            center: [r.cx || ((r.bb[0] + r.bb[2]) / 2 | 0), r.cy || ((r.bb[1] + r.bb[3]) / 2 | 0)],
+            doors: MULTI_DOORS[r.code]
+          };
+        } else {
+          targets["R:" + r.code] = doorOf(r);
+        }
       });
     }
 
     var att = {}, ins = {};
-    for (var id in targets) {
-      var p = targets[id], best = null;
+    function snapTarget(p) {
+      var best = null;
       segs.forEach(function (s, si) {
         var r = nvNearest(p, s[0], s[1]), d = nvDist(p, r.pt);
         if (!best || d < best.d) best = { d: d, si: si, t: r.t, pt: r.pt };
       });
-      att[id] = { p: p, pt: best.pt, d: best.d };
       (ins[best.si] = ins[best.si] || []).push({ t: best.t, pt: best.pt });
+      return { p: p, pt: best.pt, d: best.d };
+    }
+    for (var id in targets) att[id] = snapTarget(targets[id]);
+    var multiAtt = {};
+    for (var mid in multiTargets) {
+      multiAtt[mid] = {
+        center: multiTargets[mid].center,
+        doors: multiTargets[mid].doors.map(snapTarget)
+      };
     }
 
     /* 3. Build graph */
@@ -235,15 +266,30 @@
       for (var i = 0; i < pts.length - 1; i++) link(nid(pts[i]), nid(pts[i + 1]));
     });
 
-    var at = {};
+    var at = {}, roomNodes = {};
     for (var id in att) {
       var a = att[id], n = nodes.length;
       nodes.push([a.p[0], a.p[1]]);
       adj.push([]);
       link(n, nid(a.pt));
       at[id] = n;
+      if (id.indexOf("R:") === 0) roomNodes[n] = true;
     }
-    return NAV[fid] = { nodes: nodes, adj: adj, at: at };
+    for (var mid in multiAtt) {
+      var m = multiAtt[mid], rNode = nodes.length;
+      nodes.push([m.center[0], m.center[1]]);
+      adj.push([]);
+      m.doors.forEach(function (da) {
+        var dn = nodes.length;
+        nodes.push([da.p[0], da.p[1]]);
+        adj.push([]);
+        link(dn, nid(da.pt));
+        link(rNode, dn);
+      });
+      at[mid] = rNode;
+      roomNodes[rNode] = true;
+    }
+    return NAV[fid] = { nodes: nodes, adj: adj, at: at, roomNodes: roomNodes };
   }
 
   function walk(fid, fromId, toId) {
@@ -258,6 +304,7 @@
       done[u] = true;
       for (var j = 0; j < g.adj[u].length; j++) {
         var v = g.adj[u][j][0], w = g.adj[u][j][1];
+        if (g.roomNodes && g.roomNodes[v] && v !== t) continue;
         if (d[u] + w < d[v]) { d[v] = d[u] + w; prev[v] = u; }
       }
     }
@@ -376,7 +423,7 @@
     for (j = n - 2; j > 0; j--) ks[j - 1] = best[j][ks[j]].prev;
 
     var arrow = up ? "UP ▲" : "DOWN ▼", icon = up ? "up" : "down";
-    function note(x) { return (fl[x] === "B" || fl[x + 1] === "B") ? " Only the North-East and South-East stairs connect to the Basement." : ""; }
+    function note(x) { return (fl[x] === "B" || fl[x + 1] === "B") ? " Only the Wing A and Wing B stairs connect to the Basement." : ""; }
     legs.push({ floor: fl[0], pts: [a.p].concat(best[0][ks[0]].r.pts), m: [[a.p, "s", a.code], [ST[fl[0]][ks[0]], "t", SN[ks[0]]]] });
     steps.push(
       { legIdx: 0, floor: fl[0], icon: "walk", text: "From " + a.code + " (" + fname(a.floor) + "), walk towards the " + SN[ks[0]] + "." },

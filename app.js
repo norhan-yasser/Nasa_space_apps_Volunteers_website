@@ -23,10 +23,12 @@ const TYPES = {
   T: "Outer Stage",
   P: "Prayer Room",
   A: "Cafeteria",
-  K: "Break Area"
+  K: "Break Area",
+  G: "Games Room",
+  M: "Clinic"
 };
 /* codes whose first letter is NOT their type */
-const SPECIAL_TYPE = { STAGE: "T", CAFETERIA: "A", "BREAK-1": "K", "BREAK-2": "K" };
+const SPECIAL_TYPE = { STAGE: "T", CAFETERIA: "A", "CAFETERIA-W": "A", "BREAK-1": "K", "BREAK-2": "K", B018: "G", B019: "G", B020: "G", CLINIC: "M" };
 
 /* Room codes now start with the WING letter (A lower-right, B upper-right, C upper-left, D lower-left), not the space type.
    The space type (colour on the plan) is kept here: B = Bring Your Own Device, C = Classroom, S = Small Lecture Hall, H = Lecture Hall. */
@@ -34,25 +36,29 @@ const ROOM_TYPE = {"C034":"S", "C035":"S", "C027":"C", "C026":"C", "B017":"C", "
 
 const IMG = {
   B: "assets/floors/0.png?v=20261111",
-  G: "assets/floors/1.png?v=20261111",
-  F: "assets/floors/2.png?v=20261111",
-  S: "assets/floors/3.png?v=20261111-d252"
+  G: "assets/floors/1.png?v=20261112-clinic-wings",
+  F: "assets/floors/2.png?v=20261112-clinic-wings",
+  S: "assets/floors/3.png?v=20261112-clinic-wings"
 };
 /* Room geometry (pixels of the original image). Rect = 4 numbers, polygon = flat x,y pairs. Placeholder outlines: refine in the editor. */
 const R=(a,b)=>a.map((c,i)=>[c,...b[i]]);
 
 /* Basement: only the two prayer rooms are marked (plan 0.png). Names shown next to the room code. */
-const ROOM_NAMES = { "PR-F": "Female", "PR-M": "Men" };
+const ROOM_NAMES = { "PR-F": "Female", "PR-M": "Men", "CAFETERIA": "Wing B Cafeteria", "CAFETERIA-W": "Wing D Cafeteria", "CLINIC": "Clinic" };
 const FLOORS=[
 {id:"B",name:"Basement",rooms:[
 ["PR-F",[970,382,1048,505]],["PR-M",[1087,382,1188,575]]]},
 {id:"G",name:"Ground Floor",rooms:[
-["C034",[86,201,185,287]],["C035",[87,312,185,394]],["C027",[511,240,558,320]],["C026",[559,240,607,320]],["B017",[1157,240,1202,320]],
+["C034",[86,201,185,287]],["C035",[87,312,185,394]],["C027",[511,240,558,320]],["C026",[559,240,607,320]],
+["B020",[1025,240,1070,320]],["B019",[1070,240,1115,320]],["B018",[1115,240,1158,320]],["B017",[1157,240,1202,320]],
 ["B016",[1259,273,1220,208,1295,165,1333,229]],["B015",[1309,360,1270,295,1341,252,1381,316]],["X",[87,536,187,690]],["X",[978,347,1199,390]],["X",[978,538,1245,609]],
 ["X",[934,636,1153,716]],
-/* Cafeteria: clickable directly on the "Cafeteria" label on the ground plan (no surrounding box) */
+/* Medical Clinic (Wing A) */
+["CLINIC",[1273,646,1337,609,1358,638,1304,671,1273,671]],
+/* Cafeterias: clickable directly on the "Cafeteria" labels on the ground plan (no surrounding box) */
 ["CAFETERIA",[1070,429,1225,468]],
-/* Outer Stage (outdoor, east of the building) - only data kept: the people responsible for arranging it */
+["CAFETERIA-W",[264,549,435,588]],
+/* Outer Stage (outdoor, Wing A/B) - only data kept: the people responsible for arranging it */
 ["STAGE",[1462,182,1660,213,1617,499,1414,470]]]},
 {id:"F",name:"First Floor",rooms:[
 ["C140",[126,178,229,269]],["C141",[126,295,230,378]],["C139",[283,218,335,304]],["C138",[334,218,384,304]],["C137",[384,218,434,304]],
@@ -62,7 +68,9 @@ const FLOORS=[
 ["A114",[1466,568,1432,510,1527,455,1561,513]],["A113",[1516,658,1477,591,1563,542,1602,608]],["D154",[381,530,430,617]],["D153",[431,530,481,618]],["D152",[480,530,534,618]],
 ["X",[125,529,228,618]],["X",[280,529,381,617]],["X",[124,647,228,696]],["X",[279,647,379,728]],["X",[1088,526,1186,610]],
 ["X",[1185,526,1286,610]],["X",[1286,526,1387,610]],["X",[1088,640,1186,724]],["X",[1185,640,1284,724]],
-/* Break area (labelled BREAK on the plan, east of the auditorium) */
+/* Restricted outer bridge corridors (Wing C-D and Wing A-B) */
+["X",[230,344,258,558]],["X",[1321,346,1345,333,1459,559,1433,574]],
+/* Break area (labelled BREAK on the plan) */
 ["BREAK-1",[942,431,1086,578]]]},
 {id:"S",name:"Second Floor",rooms:[
 ["C241",[119,165,224,257]],["C242",[120,282,225,363]],["C240",[274,203,324,286]],["C236",[465,203,512,286]],["C235",[511,203,559,286]],
@@ -73,6 +81,8 @@ const FLOORS=[
 ["X",[417,203,464,286]],["X",[397,315,489,364]],["X",[907,242,917,282,914,376,665,375,662,246,717,192,862,191]],["X",[894,405,870,552,714,552,685,406]],["X",[1364,220,1324,154,1409,103,1449,168]],
 ["X",[1420,312,1377,243,1462,190,1505,259]],["X",[1053,504,1146,575]],["X",[1146,504,1249,575]],["X",[1249,504,1346,575]],["X",[1008,612,1147,703]],
 ["X",[1247,619,1243,698,1148,699,1146,624,1153,615,1237,612]],["X",[268,618,364,698]],["X",[162,611,223,660]],["X",[413,493,463,584]],["X",[464,493,518,584]],
+/* Restricted outer bridge corridors (Wing C-D and Wing A-B) */
+["X",[230,320,254,492]],["X",[1285,324,1310,309,1423,491,1398,506]],
 ["BREAK-2",[948,404,1052,584]]]}];
 
 /* Normalise room geometry & data structures */
@@ -123,7 +133,9 @@ const SPACE_TYPE_CODE = {
   "stage": "T",
   "prayer room": "P",
   "cafeteria": "A",
-  "break area": "K"
+  "break area": "K",
+  "clinic": "M",
+  "medical clinic": "M"
 };
 
 /* ==========================================================================
@@ -215,7 +227,7 @@ const canView = r => access(r) == "ok";
 let floor = null, sel = null;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
-const color = r => r.type == "T" ? "#14b8a6" : r.type == "P" ? "#8b5cf6" : r.type == "A" ? "#d97706" : r.type == "K" ? "#0ea5e9" : access(r) == "no" ? COL.no : mode(r) == "Unassigned" ? COL.na : COL.ok;
+const color = r => r.type == "T" ? "#14b8a6" : r.type == "P" ? "#8b5cf6" : r.type == "A" ? "#d97706" : r.type == "K" ? "#0ea5e9" : r.type == "G" ? "#6366f1" : r.type == "M" ? "#38bdf8" : access(r) == "no" ? COL.no : mode(r) == "Unassigned" ? COL.na : COL.ok;
 
 /* Theme handling */
 function initTheme() {
@@ -297,7 +309,7 @@ function home() {
   `;
 
   let cardsHtml = FLOORS.map(f => {
-    const a = f.rooms.filter(r => r.type != "T" && r.type != "A" && r.type != "K" && access(r) == "ok").length;   /* accessible rooms only (no total, no restricted, no stage) */
+    const a = f.rooms.filter(r => r.type != "T" && r.type != "A" && r.type != "K" && r.type != "G" && r.type != "M" && access(r) == "ok").length;   /* accessible rooms only (no total, no restricted, no stage) */
     const levelCode = f.id == "B" ? "Level -1" : f.id == "G" ? "Level 0" : f.id == "F" ? "Level 1" : "Level 2";
     return `
       <div class="fc" data-f="${f.id}">
@@ -404,7 +416,7 @@ function draw() {
     const dim = (ft && r.type != ft) || (fa && access(r) != fa) || (fs && mode(r) != fs);
     const isSel = r === sel;
     const no = access(r) == "no";
-    const isTextOnly = r.code === "CAFETERIA";
+    const isTextOnly = r.code === "CAFETERIA" || r.code === "CAFETERIA-W";
     const c = isSel && !no ? COL.sel : color(r);
     const p = r.pts.map(q => q.join(",")).join(" ");
     const fillOp = isTextOnly ? (isSel ? .28 : .001) : (dim ? .03 : isSel ? .55 : no ? .42 : .22);
@@ -495,7 +507,7 @@ function draw() {
   + `<span><i class="leg-wc"></i>Bathrooms</span>`
   + (floor.id == "F" || floor.id == "S" ? `<span><i style="background:#0ea5e9"></i>Break Area</span>` : "")
   + (floor.id == "B" ? `<span><i style="background:#8b5cf6"></i>Prayer Rooms</span>` : "")
-  + (floor.id == "G" ? `<span><i class="leg-exit"></i>Exits (5)</span><span><i class="leg-stage"></i>Outer Stage</span><span><i style="background:#d97706"></i>Cafeteria</span>` : "");
+  + (floor.id == "G" ? `<span><i class="leg-exit"></i>Exits (6)</span><span><i class="leg-stage"></i>Outer Stage</span><span><i style="background:#d97706"></i>Cafeterias</span><span><i style="background:#38bdf8"></i>Clinic</span><span><i style="background:#6366f1"></i>Games Rooms</span>` : "");
 }
 
 function updateFilterBadge() {
@@ -673,7 +685,9 @@ function show(r) {
         <span class="pill">This room is restricted for operations staff and authorized personnel.</span>
       </div>
     `;
-  } else if (r.type == "P" || r.type == "A" || r.type == "K") {
+  } else if (r.type == "G") {
+    h += `<div class="sec"><span class="na">Games Room — available for wayfinding and routing.</span></div>`;
+  } else if (r.type == "P" || r.type == "A" || r.type == "K" || r.type == "M") {
     h += `
       <div class="sec">
         <h4>${esc(typeLabel)}</h4>
@@ -910,11 +924,11 @@ const ST = {
 };
 
 const SN = {
-  WN: "North-West Inner Stairs (Auditorium)",
-  WS: "Central-West Inner Stairs",
-  SW: "South-West Wing Stairs",
-  EN: "North-East Inner Stairs (Auditorium)",
-  SE: "South-East Wing Stairs"
+  WN: "Wing C Inner Stairs (Auditorium)",
+  WS: "Wing C/D Inner Stairs",
+  SW: "Wing D Stairs",
+  EN: "Wing B Inner Stairs (Auditorium)",
+  SE: "Wing A Stairs"
 };
 const STAIR_CONNECTS = {
   WN: "Connects Ground, 1st &amp; 2nd Floors (no Basement access)",
@@ -924,23 +938,24 @@ const STAIR_CONNECTS = {
   SE: "Connects Basement, Ground, 1st &amp; 2nd Floors"
 };
 const UNAVAILABLE_STAIRS = [
-  { id: "NW_OUT", name: "Far NW Outer Stairs (Closed)", p: [77, 245], pf: { B: [462, 355], G: [37, 266], F: [77, 250], S: [75, 238] } },
-  { id: "SW_OUT", name: "Far SW Outer Stairs (Closed)", p: [77, 645], pf: { G: [40, 659], F: [77, 660], S: [66, 634] } },
-  { id: "NE_OUT", name: "Far NE Outer Stairs (Closed)", p: [1490, 150], pf: { G: [1354, 201], F: [1495, 166], S: [1476, 135] } },
-  { id: "SE_OUT", name: "Far SE Outer Stairs (Closed)", p: [1595, 515], pf: { G: [1440, 538], F: [1596, 535], S: [1617, 477] } }
+  { id: "NW_OUT", name: "Wing C Outer Stairs (Closed)", p: [77, 245], pf: { B: [462, 355], G: [37, 266], F: [77, 250], S: [75, 238] } },
+  { id: "SW_OUT", name: "Wing D Outer Stairs (Closed)", p: [77, 645], pf: { G: [40, 659], F: [77, 660], S: [66, 634] } },
+  { id: "NE_OUT", name: "Wing B Outer Stairs (Closed)", p: [1490, 150], pf: { G: [1354, 201], F: [1495, 166], S: [1476, 135] } },
+  { id: "SE_OUT", name: "Wing A Outer Stairs (Closed)", p: [1595, 515], pf: { G: [1440, 538], F: [1596, 535], S: [1617, 477] } }
 ];
 const ORD = ["B", "G", "F", "S"];
 const ENT = { code: "ENTRANCE", floor: "G", p: [726, 689] };
 
 /* ============================================================
-   EXITS (green) - the main entrance + 4 small doors on the ground floor
+   EXITS (green) - the main entrance + 5 wing doors on the ground floor
    ============================================================ */
 const EXITS = [
   { id: "ENTRANCE", label: "Main Entrance", main: true, p: ENT.p, bb: [659, 655, 801, 694] },
-  { id: "EXIT-1", label: "North-West Door", p: [199, 386], bb: [186, 377, 213, 396] },
-  { id: "EXIT-2", label: "North-East Door", p: [1208, 378], bb: [1195, 366, 1221, 391] },
-  { id: "EXIT-3", label: "South-West Door", p: [199, 539], bb: [186, 529, 212, 550] },
-  { id: "EXIT-4", label: "South-East Door", p: [1306, 573], bb: [1292, 555, 1320, 592] }
+  { id: "EXIT-1", label: "Wing C Door", p: [199, 386], bb: [186, 377, 213, 396] },
+  { id: "EXIT-2", label: "Wing B Door", p: [1208, 378], bb: [1195, 366, 1221, 391] },
+  { id: "EXIT-3", label: "Wing D Door", p: [199, 539], bb: [186, 529, 212, 550] },
+  { id: "EXIT-4", label: "Wing A Door", p: [1306, 573], bb: [1292, 555, 1320, 592] },
+  { id: "EXIT-5", label: "Wing D Courtyard Door", p: [466, 527], bb: [457, 515, 475, 539] }
 ];
 
 /* ============================================================
@@ -974,7 +989,7 @@ const BATHS = {
 };
 const BATH_ALL = Object.keys(BATHS).flatMap(f => BATHS[f].map(b => {
   const cy = (b.bb[1] + b.bb[3]) / 2, cx = (b.bb[0] + b.bb[2]) / 2;
-  const side = (cy < 450 ? "North" : "South") + "-" + (cx < 836 ? "West" : "East");
+  const side = cy < 450 ? (cx < 836 ? "Wing C" : "Wing B") : (cx < 836 ? "Wing D" : "Wing A");
   const fl = FLOORS.find(x => x.id == f).name.replace(" Floor", "");
   return { ...b, floor: f, side, label: `${side} Bathroom (${fl})`, door: b.door || [Math.round(cx), b.bb[1] + 4], pts: [[b.bb[0], b.bb[1]], [b.bb[2], b.bb[1]], [b.bb[2], b.bb[3]], [b.bb[0], b.bb[3]]] };
 }));
@@ -995,11 +1010,17 @@ const CORRIDORS = {
   ],
   G: [
     [[178, 334], [600, 334]],                                    // north-west corridor
+    [[199, 334], [199, 386]],                                    // north-west corridor -> EXIT-1
     [[551, 334], [550, 500], [549, 600], [539, 613]],            // west inner hall (stairs WN, WS)
     [[830, 332], [1213, 334], [1240, 325]],                      // north-east corridor
     [[909, 334], [902, 360], [899, 560], [913, 622]],            // east inner hall (stairs EN)
     [[288, 624], [327, 624], [482, 630], [539, 613], [600, 608], [817, 610], [864, 622], [945, 623], [1076, 622], [1291, 619]],   // main east-west spine through the lobby
-    [[300, 624], [300, 592], [236, 560], [199, 539]],            // spine -> hall -> south-west door
+    [[300, 624], [300, 592], [236, 560], [199, 539]],            // spine -> hall -> Wing D door (EXIT-3)
+    [[300, 595], [476, 595]],                                    // Wing D inner hall along south wall of Wing D Cafeteria
+    [[482, 630], [473, 580], [466, 527]],                        // spine -> Wing D courtyard small exit (EXIT-5)
+    [[466, 527], [448, 498], [339, 498], [339, 526]],            // outdoor path: EXIT-5 -> West Cafeteria outer door
+    [[199, 539], [202, 498], [339, 498]],                        // outdoor path: EXIT-3 -> West Cafeteria outer door
+    [[199, 386], [202, 498]],                                    // outdoor path: EXIT-1 -> West Courtyard / West Cafeteria
     [[1291, 619], [1306, 573]],                                  // east wing up to the south-east door
     [[1306, 573], [1265, 556], [1250, 513], [1273, 482], [1334, 448], [1422, 420]],  // outdoor path: south-east door -> around the east wing -> stage
     [[1213, 334], [1208, 378]],                                  // corridor end -> north-east door
@@ -1009,29 +1030,27 @@ const CORRIDORS = {
   ],
   F: [
     [[243, 319], [680, 319]],                                    // north-west corridor
-    [[243, 266], [244, 549], [243, 631]],                        // far-west vertical corridor
+    [[243, 265], [243, 319]],                                    // north-west end stub for C140 / C141 (west bridge closed)
     [[622, 319], [622, 592], [616, 622]],                        // west inner hall
     [[940, 318], [1317, 317], [1335, 328]],                      // north-east corridor
-    [[1335, 328], [1372, 305]],                                  // to B122 / B123
-    [[1335, 328], [1332, 341], [1461, 588], [1448, 625]],        // diagonal wing to A113 / A114
+    [[1335, 328], [1372, 305], [1392, 284]],                     // to B122 / B123 (east bridge closed)
     [[1030, 318], [1008, 330], [1005, 420], [1005, 594], [1030, 626]],   // east inner hall
-    [[243, 631], [601, 632], [616, 622], [734, 611], [751, 598], [855, 597], [925, 596], [962, 621], [1030, 626], [1448, 625]]   // main east-west spine
+    [[243, 631], [601, 632], [616, 622], [734, 611], [751, 598], [855, 597], [925, 596], [962, 621], [1030, 626], [1448, 625], [1468, 585], [1480, 565]]   // main east-west spine to A113 / A114
   ],
   S: [
     [[243, 303], [681, 303]],                                    // north-west corridor
-    [[243, 250], [243, 596]],                                    // far-west vertical corridor
+    [[243, 250], [243, 303]],                                    // north-west end stub for C241 / C242 (west bridge closed)
     [[598, 303], [598, 596]],                                    // west inner hall
     [[920, 294], [1290, 294], [1298, 300]],                      // north-east corridor
-    [[1298, 300], [1296, 320], [1411, 499], [1400, 536], [1417, 590]],   // diagonal wing to A209 / A210
     [[1036, 294], [975, 296], [971, 462], [980, 472], [980, 489], [966, 503], [968, 585], [985, 597]],   // east inner hall
-    [[134, 598], [973, 592], [1018, 600], [1078, 596], [1383, 597], [1417, 590]]  // main east-west spine
+    [[134, 598], [973, 592], [1018, 600], [1078, 596], [1383, 597], [1417, 590], [1448, 550], [1452, 526]]  // main east-west spine to A209 / A210
   ]
 };
 
 /* Door points. A "row" is a line of rooms along one corridor: the door
    x comes from each room's centre, y is the room's corridor-side wall. */
 const DOOR_ROWS = [
-  { f: "G", y: 323, dx: 0,   codes: ["C027", "C026", "B017"] },
+  { f: "G", y: 323, dx: 0,   codes: ["C027", "C026", "B020", "B019", "B018", "B017"] },
   { f: "F", y: 305, dx: 0,   codes: ["C139", "C138", "C137", "C136", "C135", "C134", "C133", "C132"] },
   { f: "F", y: 305, dx: 0,  codes: ["B131", "B130", "B129", "B128", "B127", "B126", "B125", "B124"] },
   { f: "F", y: 622, dx: 0,   codes: ["D154", "D153", "D152"] },
@@ -1042,14 +1061,23 @@ const DOOR_ROWS = [
 ];
 const DOOR_PTS = {
   C034: [178, 298], C035: [184, 340], B016: [1257, 273], B015: [1275, 323],
-  C140: [232, 265], C141: [232, 338], B123: [1383, 238], B122: [1392, 284],
-  A114: [1438, 520], A113: [1482, 612],
-  C241: [232, 250], C242: [232, 322], A210: [1408, 468], A209: [1466, 560],
+  C140: [232, 265], C141: [232, 319], B123: [1383, 238], B122: [1392, 284],
+  A114: [1480, 565], A113: [1482, 612],
+  C241: [232, 250], C242: [232, 303], A210: [1452, 526], A209: [1466, 560],
   D252: [586, 452]
 };
 
 DOOR_PTS.STAGE = [1422, 420];
-DOOR_PTS.CAFETERIA = [1200, 425];       /* ground: inside the NE door of the cafeteria */
+DOOR_PTS.CLINIC = [1284, 638];          /* ground: Wing A Medical Clinic door */
+DOOR_PTS.CAFETERIA = [1200, 425];       /* ground: Wing B Cafeteria door */
+DOOR_PTS["CAFETERIA-W"] = [339, 526];   /* ground: Wing D Cafeteria outer door */
+const MULTI_DOORS = {
+  "CAFETERIA-W": [
+    [339, 526], /* outer north door (courtyard) */
+    [319, 582], /* inner south-west door (Wing D hallway) */
+    [400, 582]  /* inner south-east door (Wing D hallway, near WC) */
+  ]
+};
 DOOR_PTS["BREAK-1"] = [1005, 500];   /* first floor: open to the east inner hall */
 DOOR_PTS["BREAK-2"] = [986, 480];    /* second floor: open to the east inner hall */
 DOOR_PTS["PR-F"] = [1050, 403];   /* basement: Female prayer room door (east wall) */
@@ -1103,20 +1131,36 @@ function buildNav(fid) {
   if (fid == "G") targets["ENTRANCE"] = ENT.p;
   if (fid == "G") EXITS.filter(e => !e.main).forEach(e => { targets["E:" + e.id] = e.p; });
   (BATHS[fid] || []).forEach(b => { targets["B:" + b.id] = BATH_ALL.find(x => x.id == b.id).door; });
+  const multiTargets = {};
   FLOORS.find(f => f.id == fid).rooms.forEach(r => {
-    if (r.type != "X") targets["R:" + r.code] = doorOf(r);
+    if (r.type == "X") return;
+    if (MULTI_DOORS[r.code]) {
+      multiTargets["R:" + r.code] = {
+        center: [(r.bb[0] + r.bb[2]) / 2 | 0, (r.bb[1] + r.bb[3]) / 2 | 0],
+        doors: MULTI_DOORS[r.code]
+      };
+    } else {
+      targets["R:" + r.code] = doorOf(r);
+    }
   });
 
   const att = {}, ins = {};
-  for (const id in targets) {
-    const p = targets[id];
+  const snapTarget = (p) => {
     let best = null;
     segs.forEach((s, si) => {
       const r = nvNearest(p, s[0], s[1]), d = nvDist(p, r.pt);
       if (!best || d < best.d) best = { d, si, t: r.t, pt: r.pt };
     });
-    att[id] = { p, pt: best.pt, d: best.d };
     (ins[best.si] = ins[best.si] || []).push({ t: best.t, pt: best.pt });
+    return { p, pt: best.pt, d: best.d };
+  };
+  for (const id in targets) att[id] = snapTarget(targets[id]);
+  const multiAtt = {};
+  for (const id in multiTargets) {
+    multiAtt[id] = {
+      center: multiTargets[id].center,
+      doors: multiTargets[id].doors.map(snapTarget)
+    };
   }
 
   /* 3. build the graph (corridor pieces + short door/stair stubs) */
@@ -1135,14 +1179,27 @@ function buildNav(fid) {
     const pts = [s[0], ...(ins[si] || []).sort((x, y) => x.t - y.t).map(i => i.pt), s[1]];
     for (let i = 0; i < pts.length - 1; i++) link(nid(pts[i]), nid(pts[i + 1]));
   });
-  const at = {};
+  const at = {}, roomNodes = {};
   for (const id in att) {
     const a = att[id], n = nodes.length;
     nodes.push([a.p[0], a.p[1]]); adj.push([]);       // the door / stair itself
     link(n, nid(a.pt));
     at[id] = n;
+    if (id.startsWith("R:")) roomNodes[n] = true;
   }
-  return NAV[fid] = { nodes, adj, at };
+  for (const id in multiAtt) {
+    const m = multiAtt[id], roomNode = nodes.length;
+    nodes.push([m.center[0], m.center[1]]); adj.push([]);
+    m.doors.forEach(a => {
+      const dn = nodes.length;
+      nodes.push([a.p[0], a.p[1]]); adj.push([]);
+      link(dn, nid(a.pt));
+      link(roomNode, dn);
+    });
+    at[id] = roomNode;
+    roomNodes[roomNode] = true;
+  }
+  return NAV[fid] = { nodes, adj, at, roomNodes };
 }
 
 function walk(fid, fromId, toId) {
@@ -1155,7 +1212,10 @@ function walk(fid, fromId, toId) {
     for (let i = 0; i < n; i++) if (!done[i] && (u < 0 || d[i] < d[u])) u = i;
     if (u < 0 || d[u] == Infinity || u == t) break;
     done[u] = true;
-    for (const [v, w] of g.adj[u]) if (d[u] + w < d[v]) { d[v] = d[u] + w; prev[v] = u; }
+    for (const [v, w] of g.adj[u]) {
+      if (g.roomNodes && g.roomNodes[v] && v !== t) continue;
+      if (d[u] + w < d[v]) { d[v] = d[u] + w; prev[v] = u; }
+    }
   }
   if (d[t] == Infinity) throw new Error("not connected");
   const pts = [];
@@ -1225,7 +1285,7 @@ async function planRoute(a, b) {
   for (let j = n - 2; j > 0; j--) ks[j - 1] = best[j][ks[j]].prev;
 
   const arrow = up ? "UP ▲" : "DOWN ▼";
-  const note = j => (fl[j] == "B" || fl[j + 1] == "B") ? " Only the North-East and South-East stairs connect to the Basement." : "";
+  const note = j => (fl[j] == "B" || fl[j + 1] == "B") ? " Only the Wing A and Wing B stairs connect to the Basement." : "";
   legs.push({ floor: fl[0], pts: [a.p, ...best[0][ks[0]].r.pts], m: [[a.p, "s"], [ST[fl[0]][ks[0]], "t"]] });
   steps.push(
     [0, `From ${a.code} (${fname(a.floor)}) walk towards the ${SN[ks[0]]}.`],

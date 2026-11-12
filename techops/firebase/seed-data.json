@@ -455,6 +455,12 @@
       "Volunteer Code": "T111",
       "Team": "TechOps",
       "Role": "TechOps"
+    },
+    "R101": {
+      "Name": "Oppo Mohamed",
+      "Volunteer Code": "R101",
+      "Team": "Volunteers",
+      "Role": "pr team"
     }
   },
   "rooms": {
@@ -1322,13 +1328,41 @@
     },
     "CAFETERIA": {
       "code": "CAFETERIA",
-      "name": "Cafeteria",
+      "name": "Wing B Cafeteria",
       "floor": "G",
       "type": "Cafeteria",
       "access": "ok",
       "mode": "Participants",
       "resp": "Logistics & Catering Lead",
       "cap": 150,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
+    },
+    "CAFETERIA-W": {
+      "code": "CAFETERIA-W",
+      "name": "Wing D Cafeteria",
+      "floor": "G",
+      "type": "Cafeteria",
+      "access": "ok",
+      "mode": "Unassigned",
+      "resp": "Logistics & Catering Lead",
+      "cap": 100,
+      "chal": "",
+      "teams": [],
+      "vteam": "",
+      "vcap": 0
+    },
+    "CLINIC": {
+      "code": "CLINIC",
+      "name": "Clinic",
+      "floor": "G",
+      "type": "Clinic",
+      "access": "ok",
+      "mode": "Unassigned",
+      "resp": "Medical & Safety Team",
+      "cap": 15,
       "chal": "",
       "teams": [],
       "vteam": "",
@@ -1418,10 +1452,17 @@
       "mode": "Participants",
       "resp": "",
       "cap": 30,
-      "chal": "",
-      "teams": [],
+      "chal": "Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars",
+      "teams": [
+        "CIS PHOENIX\n",
+        "Martian Phoenix\n",
+        "Nehna w el amar geeran\n",
+        "space commanders\n",
+        "Terra2mars_egy\n",
+        "ناسا سبيس ابس جدا"
+      ],
       "vteam": "",
-      "vcap": 0
+      "vcap": 25
     },
     "D256": {
       "code": "D256",
