@@ -1096,8 +1096,20 @@
       return '<div class="card inv-sum"><div class="t">' + esc(k) + '</div><div class="m">' + it.total + " total &middot; " + own + " in hand &middot; " + it.lent + ' lent</div><div class="bar"><span class="own" style="width:' + (own / it.total * 100) + '%"></span><span class="lent" style="width:' + (it.lent / it.total * 100) + '%"></span></div></div>';
     }).join("");
 
-    var cats = uniq(d.inventory.map(function (r) { return r.category; })), holders = uniq(d.inventory.map(function (r) { return r.holder; }));
-    fillSelect("inv-cat", "All categories", cats); fillSelect("inv-holder", "Anyone holding", holders);
+    var cats = uniq(d.inventory.map(function (r) { return r.category; }));
+    var techVolunteers = (d.volunteers || d.team || []).filter(function (t) {
+      return (t.team || "").toLowerCase() === "techops";
+    });
+    var names = uniq(techVolunteers.map(function (t) { return (t.name || "").trim(); }).filter(Boolean));
+    if (!names.length) {
+      names = [
+        "Abdullah Hussein", "Ali Abdelaziz", "Ali Elsayed", "Hassan Mohamed",
+        "Kareem salem", "Lojine Wael", "Malak Mohamed", "Mohamed Gamal",
+        "Mohamed Khairy", "Naira Farhat", "Omar Mohamed", "Tasbeeh mahmoud"
+      ];
+    }
+    fillSelect("inv-cat", "All categories", cats);
+    fillSelect("inv-holder", "Anyone holding", names);
 
     var q = $("inv-search").value.toLowerCase(), cat = $("inv-cat").value, h = $("inv-holder").value, st = $("inv-status").value;
     var rows = d.inventory.filter(function (r) {
@@ -1105,14 +1117,27 @@
         (!q || (r.item + " " + r.team + " " + r.room + " " + r.holder + " " + r.id).toLowerCase().indexOf(q) >= 0);
     });
 
-    var names = (d.volunteers || d.team || []).map(function (t) { return t.name; });
     $("inv-rows").innerHTML = rows.length ? rows.map(function (r) {
       var lent = r.status === "Lent out";
+      var currentHolder = (r.holder || "").trim();
+      var rowNames = names.slice();
+      if (currentHolder && rowNames.indexOf(currentHolder) < 0) {
+        var matched = rowNames.filter(function (n) {
+          var f = n.split(" ")[0].toLowerCase();
+          var c = currentHolder.toLowerCase();
+          return f === c || (c === "karim" && f === "kareem");
+        })[0];
+        if (matched) {
+          currentHolder = matched;
+        } else {
+          rowNames.unshift(currentHolder);
+        }
+      }
       return "<tr>" +
         '<td class="td-inv-id"><span class="muted">' + esc(r.id) + "</span></td>" +
         '<td class="td-inv-item"><div><b>' + esc(r.item) + '</b><div class="muted" style="font-size:12px">' + esc(r.category) + '</div></div><span class="badge ' + (lent ? "b-power" : "b-done") + ' mobile-only-badge">' + esc(r.status) + '</span></td>' +
         '<td class="num td-inv-qty"><span class="mobile-only-lbl">Total Quantity: </span><b>' + r.qty + "</b></td>" +
-        '<td class="td-inv-holder"><span class="mobile-only-lbl">Held by: </span><select data-holder="' + esc(r.id) + '" aria-label="Holder of ' + esc(r.id) + '">' + names.map(function (n) { return "<option" + (n === r.holder ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></td>" +
+        '<td class="td-inv-holder"><span class="mobile-only-lbl">Held by: </span><select data-holder="' + esc(r.id) + '" aria-label="Holder of ' + esc(r.id) + '">' + rowNames.map(function (n) { return "<option" + (n === currentHolder ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></td>" +
         '<td class="td-inv-lent">' + (lent ? '<span class="mobile-only-lbl">Lent to: </span><b>' + esc(r.team) + '</b> <span class="muted" style="font-size:12px">(Room ' + esc(r.room) + ' &middot; ' + esc(r.floorName) + ')</span>' : '<span class="muted">—</span>') + "</td>" +
         '<td class="td-inv-status desktop-only"><span class="badge ' + (lent ? "b-power" : "b-done") + '">' + esc(r.status) + "</span></td>" +
         '<td class="td-inv-action">' + (lent ? '<button class="btn small" data-return="' + esc(r.id) + '">Mark returned</button>' : '<button class="btn small primary" data-lend="' + esc(r.id) + '">Lend out…</button>') + "</td></tr>";
