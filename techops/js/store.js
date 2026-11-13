@@ -154,6 +154,8 @@
           var xVal = colMap.x !== undefined ? row[colMap.x] : "";
           var yVal = colMap.y !== undefined ? row[colMap.y] : "";
 
+          var isVol = (use && use.toLowerCase() === "volunteers");
+          var capValNum = acap ? Number(acap) : (pcap ? Number(pcap) : 0);
           parsedRooms.push({
             code: code,
             name: use && use !== "Participants" ? use : code,
@@ -163,12 +165,14 @@
             roomNo: num,
             type: rtype,
             capacity: pcap ? Number(pcap) : 0,
-            cap: acap ? Number(acap) : (pcap ? Number(pcap) : 0),
+            cap: capValNum,
             mode: use,
             zone: use,
             assigned: use === "Unassigned" ? "" : use,
             resp: resp,
             notes: notes,
+            vteam: isVol ? notes : "",
+            vcap: isVol ? capValNum : 0,
             chal: chal,
             teams: teamsStr ? teamsStr.split(/[\n;,]/).map(function (s) { return s.trim(); }).filter(Boolean) : [],
             phones: phones,
@@ -544,7 +548,8 @@
               : (rawMode || "Unassigned");
     var rawAccess = String(r.access || "").trim().toLowerCase();
     var normAccess = (rawAccess === "no" || rawAccess === "restricted" || r.type === "X") ? "no" : "ok";
-    var vcapVal = r.vcap !== undefined && r.vcap !== "" ? Number(r.vcap) : 0;
+    var vteamVal = normMode === "Volunteers" ? (r.notes || r.vteam || "") : (r.vteam || "");
+    var vcapVal = normMode === "Volunteers" ? (capVal || (r.vcap !== undefined && r.vcap !== "" ? Number(r.vcap) : 0)) : (r.vcap !== undefined && r.vcap !== "" ? Number(r.vcap) : 0);
 
     var geo = null;
     if (D && D.FLOORS) {
@@ -579,7 +584,7 @@
       access: normAccess,
       chal: r.chal || r.challenges || "",
       teams: teamsList,
-      vteam: r.vteam || "",
+      vteam: vteamVal,
       vcap: vcapVal,
       notes: r.notes || "",
       phones: r.phones || "",
@@ -717,7 +722,7 @@
     return fetchRoomsFromSheet().then(function (roomsList) {
       var critical = (TEAM === "TechOps" || TEAM === "Logistics") ? COLS : ["reports"];
       var isSynced = critical.every(function (c) { return ready[c]; });
-      var p = (_tutorialMode || isSynced) ? Promise.resolve() : readyP;
+      var p = (_tutorialMode || isSynced) ? Promise.resolve() : Promise.race([readyP, new Promise(function(res){ setTimeout(res, 300); })]);
       return p.then(function () {
         var geo = {};
         if (D && D.ALL) D.ALL.forEach(function (g) { geo[g.code] = 1; });

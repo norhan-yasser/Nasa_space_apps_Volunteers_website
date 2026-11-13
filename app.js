@@ -111,7 +111,1102 @@ const ALL = FLOORS.flatMap(f => f.rooms);
 
 /* Data layer: Firebase Firestore (collection `rooms`, shared with the Tech Ops map) is the single source of truth.
    `DB` is an in-memory view of the live Firestore `rooms` collection (no local or static cache fallback). */
-let DB = {};
+let DB = {
+  "003": {
+    "name": "Clinic",
+    "spaceType": "Classroom",
+    "resp": "",
+    "cap": "",
+    "mode": "Clinic",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B015": {
+    "name": "Volunteers",
+    "spaceType": "Small lecture",
+    "resp": "",
+    "cap": 30,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "logistics",
+    "vcap": 30
+  },
+  "B016": {
+    "name": "Volunteers",
+    "spaceType": "Small lecture",
+    "resp": "",
+    "cap": 30,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "Materials",
+    "vcap": 30
+  },
+  "B017": {
+    "name": "Volunteers",
+    "spaceType": "Chairs",
+    "resp": "",
+    "cap": 25,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "Materials",
+    "vcap": 25
+  },
+  "MEETING ROOM": {
+    "name": "Meeting room",
+    "spaceType": "Classroom",
+    "resp": "",
+    "cap": "",
+    "mode": "Meeting room",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "AUDITORIUM": {
+    "name": "Auditorium",
+    "spaceType": "Classroom",
+    "resp": "",
+    "cap": "",
+    "mode": "Auditorium",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "VIP": {
+    "name": "VIP Room beside the auditorium",
+    "spaceType": "Classroom",
+    "resp": "",
+    "cap": "",
+    "mode": "VIPs",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C026": {
+    "name": "Volunteers",
+    "spaceType": "Bring your device",
+    "resp": "",
+    "cap": 25,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "Tech ops, PR",
+    "vcap": 25
+  },
+  "C027": {
+    "name": "Volunteers",
+    "spaceType": "Bring your device",
+    "resp": "",
+    "cap": 25,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "Website",
+    "vcap": 25
+  },
+  "C034": {
+    "name": "C034",
+    "spaceType": "Small lecture",
+    "resp": "Mohamed Ayman Hosny Hasan Khodeir",
+    "cap": 30,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Field Shift: Adapting Farms with NASA Data\nSpace Mission Design Game\nAbandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars\nBuild a Junior Astronaut Mission Trainer\nInterplanetary Survival Guide: Martian Map",
+    "teams": [
+      "Elmadyoneen",
+      "protons",
+      "AstroNerds",
+      "Qamar 14",
+      "Novera",
+      "SESHAT"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C035": {
+    "name": "C035",
+    "spaceType": "Small lecture",
+    "resp": "Ahmed Mahmoud Yousef",
+    "cap": 30,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions\nAbandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars\nInterplanetary Survival Guide: Martian Map",
+    "teams": [
+      "SUTian's",
+      "CrewSentiq",
+      "Atheer",
+      "BOO",
+      "Left Behi",
+      "Out Of Galaxy"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "A113": {
+    "name": "girls Rest",
+    "spaceType": "Lecture",
+    "resp": "",
+    "cap": 100,
+    "mode": "girls Rest",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "A114": {
+    "name": "girls Rest",
+    "spaceType": "Lecture",
+    "resp": "",
+    "cap": 100,
+    "mode": "girls Rest",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B122": {
+    "name": "B122",
+    "spaceType": "Small lecture",
+    "resp": "Mohamed Mahmoud Abdelrahman Hagras",
+    "cap": 30,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Lunar Landing Site Navigator",
+    "teams": [
+      "Al Ostora",
+      "Apollo 26",
+      "FASA Destination",
+      "KAIROS",
+      "MAJIX",
+      "Something is there."
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B123": {
+    "name": "B123",
+    "spaceType": "Small lecture",
+    "resp": "Fares Sherif",
+    "cap": 30,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Lunar Landing Site Navigator\nField Shift: Adapting Farms with NASA Data",
+    "teams": [
+      "Eternal Light",
+      "SHOTSPOT",
+      "Vector moon",
+      "Data Astronauts",
+      "GHEIT NASA",
+      "RootRise",
+      "SiriusTa"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B124": {
+    "name": "B124",
+    "spaceType": "Chairs",
+    "resp": "Malek Mohamed Zedan",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Field Shift: Adapting Farms with NASA Data\nHarmonization of MODIS and VIIRS Hot Spots",
+    "teams": [
+      "5 On An Official Mission Team",
+      "Blink Farm",
+      "MISSION EL GHEET",
+      "Neural Nile",
+      "Terra Bytes",
+      "Earth Guardians Ai"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B125": {
+    "name": "B125",
+    "spaceType": "Chairs",
+    "resp": "Mohamed Mamdouh",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Harmonization of MODIS and VIIRS Hot Spots",
+    "teams": [
+      "2Late",
+      "ASTRIX",
+      "Better Call NASA",
+      "Supernova-X"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B126": {
+    "name": "B126",
+    "spaceType": "Chairs",
+    "resp": "Hamza Abdelrahman Mohamed Osama Ibrahim Mohamed",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Harmonization of MODIS and VIIRS Hot Spots",
+    "teams": [
+      "Almatafi",
+      "Gaia Saviours",
+      "Hotspot Hunters",
+      "Not found",
+      "Zij"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B127": {
+    "name": "B127",
+    "spaceType": "Chairs",
+    "resp": "Mohaned Ehab Rady",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Harmonization of MODIS and VIIRS Hot Spots",
+    "teams": [
+      "Fruit of Concept",
+      "Harmonix",
+      "Insider Lens",
+      "Mo Fire Mo Problem",
+      "On Fire",
+      "OnFire\ud83d\udd25"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B128": {
+    "name": "B128",
+    "spaceType": "Bring your device",
+    "resp": "Judy Mohamed Samy Ghanem",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Build a Junior Astronaut Mission Trainer",
+    "teams": [
+      "AlienZzz",
+      "BuzzKhateer",
+      "Galactico",
+      "M1SSIONX",
+      "MISSION ODYSSEY"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B129": {
+    "name": "Volunteers",
+    "spaceType": "Bring your device",
+    "resp": "",
+    "cap": 25,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "competition",
+    "vcap": 25
+  },
+  "B130": {
+    "name": "Mentor",
+    "spaceType": "Bring your device",
+    "resp": "",
+    "cap": 25,
+    "mode": "Mentors",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B131": {
+    "name": "Mentor",
+    "spaceType": "Bring your device",
+    "resp": "",
+    "cap": 25,
+    "mode": "Mentors",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C132": {
+    "name": "C132",
+    "spaceType": "Bring your device",
+    "resp": "Abdallh Ashraf Ahmed Elsaid",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Build a Junior Astronaut Mission Trainer",
+    "teams": [
+      "Ape-ollo 11",
+      "maro",
+      "Obsidianite",
+      "Space benders",
+      "SpaceMates \ud83d\ude80"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C133": {
+    "name": "C133",
+    "spaceType": "Bring your device",
+    "resp": "Hassan Ashraf Saad",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Build a Junior Astronaut Mission Trainer",
+    "teams": [
+      "Astronuts",
+      "NANOARC",
+      "Shadow",
+      "SU NASA",
+      "Tatta7 on the Moon"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C134": {
+    "name": "C134",
+    "spaceType": "Bring your device",
+    "resp": "Rokaia Hanafy Elmezewdy",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Build a Junior Astronaut Mission Trainer\nAbandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars",
+    "teams": [
+      "Astro Van",
+      "Wings of wax",
+      "WR2_3ENAB",
+      "Astrological",
+      "legacy pioneer",
+      "The Nebula Narrators"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C135": {
+    "name": "C135",
+    "spaceType": "Bring your device",
+    "resp": "Moaz Mohamed",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Abandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars",
+    "teams": [
+      "AstroPy",
+      "hero one",
+      "Ra7aL",
+      "The Cosmicians",
+      "\u0627\u0644\u062a\u0631\u0627\u0628\u064a\u0632\u0629 \u0627\u0644\u0639\u0627\u0644\u064a\u0629 \u0627\u0648\u064a"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C136": {
+    "name": "C136",
+    "spaceType": "Chairs",
+    "resp": "Habiba Abdelrhman",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions\nThe Earth Information Jukebox",
+    "teams": [
+      "Astro Vitals26",
+      "Bit & Beat",
+      "Hope",
+      "Morgan Ahmed Morgan",
+      "Sherket Moqawlat",
+      "Terraphony",
+      "Vael"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C137": {
+    "name": "C137",
+    "spaceType": "Chairs",
+    "resp": "Sama Khaled Ahmed Hefny",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "AstroResponse",
+      "Digital Minds",
+      "HALO: Health & Autonomic Longevity in Orbit Space",
+      "NaN",
+      "The Plot Twist"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C138": {
+    "name": "C138",
+    "spaceType": "Chairs",
+    "resp": "Mariam Tarek",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "ASTRA HEALTH",
+      "BetaFox",
+      "CrewSync",
+      "Intersteller overdrive",
+      "Zero-G Pulse"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C139": {
+    "name": "C139",
+    "spaceType": "Chairs",
+    "resp": "Sohaila Karem Bastawy",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "BEFORE 404",
+      "Five Stars & a Moon",
+      "Promise",
+      "Vitanaut",
+      "Vuki"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C140": {
+    "name": "C140",
+    "spaceType": "Small lecture",
+    "resp": "Ahmed Eldamaty",
+    "cap": 30,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "ASTRA VITAL",
+      "CUPIQ",
+      "Engineers Might Fly",
+      "Far Zenith",
+      "MEGA",
+      "Myths"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C141": {
+    "name": "C141",
+    "spaceType": "Small lecture",
+    "resp": "Ahmed Samy Mahmoud",
+    "cap": 30,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "67",
+      "AstroCare",
+      "LOOP",
+      "Lunaries Team",
+      "masa",
+      "QORVYX"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "D152": {
+    "name": "Volunteers",
+    "spaceType": "Chairs",
+    "resp": "",
+    "cap": 25,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "P&C - Store",
+    "vcap": 25
+  },
+  "D153": {
+    "name": "Volunteers",
+    "spaceType": "Chairs",
+    "resp": "",
+    "cap": 25,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "Outreach",
+    "vcap": 25
+  },
+  "D154": {
+    "name": "Volunteers",
+    "spaceType": "Chairs",
+    "resp": "",
+    "cap": 25,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "Outreach",
+    "vcap": 25
+  },
+  "A209": {
+    "name": "men Rest",
+    "spaceType": "Lecture",
+    "resp": "",
+    "cap": "",
+    "mode": "men Rest",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "A210": {
+    "name": "men Rest",
+    "spaceType": "Lecture",
+    "resp": "",
+    "cap": "",
+    "mode": "men Rest",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B224": {
+    "name": "B224",
+    "spaceType": "Chairs",
+    "resp": "Basmala Mohamed Mabrok",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "Infinite galaxia",
+      "Link Space",
+      "Mafeesh Kalam",
+      "RunTime In Space",
+      "Space monkeys\ud83d\ude80"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B225": {
+    "name": "B225",
+    "spaceType": "Chairs",
+    "resp": "Abdulrahman Salah",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "Ajnova",
+      "OffWorld",
+      "OrbitCode",
+      "Remontada",
+      "We Are Aliens"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B226": {
+    "name": "B226",
+    "spaceType": "Chairs",
+    "resp": "Ahmed Ismail Abd El Halim Sallam",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "Asteron",
+      "Auroraa",
+      "GRAVITY ZERO",
+      "NASA NUSC",
+      "SPARC"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B227": {
+    "name": "B227",
+    "spaceType": "Chairs",
+    "resp": "Laila Yasser Hamed Ahmed",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "ASTRA",
+      "MOONSDAY",
+      "OrbitNexus",
+      "Out of_Orbit",
+      "Toy Story"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B228": {
+    "name": "B228",
+    "spaceType": "Chairs",
+    "resp": "Ibrahim Hisham Ahmed",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "ASTRA TECH",
+      "Astro_Sync",
+      "Pluto's Revenge",
+      "SEVAS",
+      "Wekalet FASA",
+      "ZeroG"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B229": {
+    "name": "B229",
+    "spaceType": "Chairs",
+    "resp": "Ahmed Magdi",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Create Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "AstroByteX",
+      "Atheera",
+      "BioAdapt",
+      "Careyonda",
+      "Egyptian lotus",
+      "Nova",
+      "Orchest",
+      "Partnersxcrime",
+      "Tennysons",
+      "Vision Maker"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B230": {
+    "name": "B230",
+    "spaceType": "Chairs",
+    "resp": "Mahmoud Amin Ibrahim",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Space Mission Design Game\nPlanet X and SPHEREx",
+    "teams": [
+      "SpaceSync",
+      "TORVIX",
+      "\u0627\u0644\u062a\u0631\u0628\u064a\u0632\u0647 \u0627\u0644\u0639\u0627\u0644\u064a\u0647",
+      "Anvild",
+      "Nova Rover Systems"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B231": {
+    "name": "B231",
+    "spaceType": "Chairs",
+    "resp": "Tony Nabil Manshy Fransis",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Space Mission Design Game",
+    "teams": [
+      "Astroware",
+      "Atlantis505",
+      "Clair Obscur: Expedition 67",
+      "Madar",
+      "Orbital Think Tank"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C233": {
+    "name": "Judge",
+    "spaceType": "Bring your device",
+    "resp": "",
+    "cap": 25,
+    "mode": "Judges",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C234": {
+    "name": "Judge",
+    "spaceType": "Bring your device",
+    "resp": "",
+    "cap": 25,
+    "mode": "Judges",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C235": {
+    "name": "Judge",
+    "spaceType": "Bring your device",
+    "resp": "",
+    "cap": 25,
+    "mode": "Judges",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C236": {
+    "name": "Judge",
+    "spaceType": "Bring your device",
+    "resp": "",
+    "cap": 25,
+    "mode": "Judges",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C240": {
+    "name": "Judge",
+    "spaceType": "Chairs",
+    "resp": "",
+    "cap": 25,
+    "mode": "Judges",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "C241": {
+    "name": "Volunteers",
+    "spaceType": "Small lecture",
+    "resp": "Jack hany",
+    "cap": 30,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity Combustion Data",
+    "teams": [
+      "CCP",
+      "IGNIS",
+      "PyroNova",
+      "Starry Night",
+      "T3ban-Abdel_Rahem",
+      "AstroSpark",
+      "EmberNova"
+    ],
+    "vteam": "",
+    "vcap": 30
+  },
+  "C242": {
+    "name": "Volunteers",
+    "spaceType": "Small lecture",
+    "resp": "Mazen Osama",
+    "cap": 30,
+    "mode": "Volunteers",
+    "access": "ok",
+    "chal": "Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity Combustion Data",
+    "teams": [
+      "Engigrammers",
+      "Power of 1000 sun",
+      "Zero Flare",
+      "AL AMN",
+      "Early Echo",
+      "Ignis 9th",
+      "R^2",
+      "Sakan Sapce",
+      "VOIID"
+    ],
+    "vteam": "",
+    "vcap": 30
+  },
+  "D252": {
+    "name": "D252",
+    "spaceType": "Chairs",
+    "resp": "Ahmeh abdelrahman Kamal",
+    "cap": 30,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars",
+    "teams": [
+      "CIS PHOENIX",
+      "Martian Phoenix",
+      "Nehna w el amar geeran",
+      "space commanders",
+      "Terra2mars_egy",
+      "\u0646\u0627\u0633\u0627 \u0633\u0628\u064a\u0633 \u0627\u0628\u0633 \u062c\u062f\u0627"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "D256": {
+    "name": "D256",
+    "spaceType": "Chairs",
+    "resp": "Mariam Ramdan Sayed",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars\nInterplanetary Survival Guide: Martian Map",
+    "teams": [
+      "Astra Impact",
+      "NOCTRA",
+      "Sa7ara To Space",
+      "Alexstra",
+      "MarMap",
+      "WASP-12B"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "D257": {
+    "name": "D257",
+    "spaceType": "Chairs",
+    "resp": "Ahmed Gomaa Sayed",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Interplanetary Survival Guide: Martian Map",
+    "teams": [
+      "AstroMonster inc",
+      "meteoroid",
+      "NOVALITH",
+      "Odyssey Catography",
+      "RED PLANET LAB"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "D258": {
+    "name": "D258",
+    "spaceType": "Chairs",
+    "resp": "Basmala Allam",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Interplanetary Survival Guide: Martian Map",
+    "teams": [
+      "Astravox",
+      "MARS INVADERS",
+      "NWC(No Werks Chicken)",
+      "RobEn",
+      "TAREEQ"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "D259": {
+    "name": "D259",
+    "spaceType": "Chairs",
+    "resp": "Yousef amr mahmoud ahmed",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Space Mission Design Game\nDancing with the SARs",
+    "teams": [
+      "Apollo V",
+      "Hazl2om in space",
+      "VECTOR PRIME",
+      "0xNEBULA",
+      "AQUA SAR",
+      "NABA\u0654"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "D260": {
+    "name": "D260",
+    "spaceType": "Chairs",
+    "resp": "Sara samir Mohamed",
+    "cap": 25,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Be An Earth System Trend Detective!",
+    "teams": [
+      "$Earth\u2019s Data Analysis Application",
+      "falak masr",
+      "Hot Source",
+      "NUN",
+      "TheOutliers",
+      "Urbanova"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "D265": {
+    "name": "D265",
+    "spaceType": "Chairs",
+    "resp": "Tarek mohamed ahmed fathy haikal",
+    "cap": 30,
+    "mode": "Participants",
+    "access": "ok",
+    "chal": "Be An Earth System Trend Detective!\n\n\nCreate Health Monitoring Software for Astronauts on Space Missions",
+    "teams": [
+      "Green planet",
+      "SU-Space",
+      "Tech Ghosts",
+      "Ed3olna Neksab"
+    ],
+    "vteam": "",
+    "vcap": ""
+  },
+  "CLINIC": {
+    "name": "Clinic",
+    "spaceType": "Clinic",
+    "resp": "",
+    "cap": "",
+    "mode": "Clinic",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B018": {
+    "name": "Games Room",
+    "spaceType": "Games Room",
+    "resp": "",
+    "cap": 25,
+    "mode": "Games Room",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B019": {
+    "name": "Games Room",
+    "spaceType": "Games Room",
+    "resp": "",
+    "cap": 25,
+    "mode": "Games Room",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "B020": {
+    "name": "Games Room",
+    "spaceType": "Games Room",
+    "resp": "",
+    "cap": 25,
+    "mode": "Games Room",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "CAFETERIA": {
+    "name": "Wing B Cafeteria",
+    "spaceType": "Cafeteria",
+    "resp": "",
+    "cap": "",
+    "mode": "Wing B Cafeteria",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "CAFETERIA-W": {
+    "name": "Wing D Cafeteria",
+    "spaceType": "Cafeteria",
+    "resp": "",
+    "cap": "",
+    "mode": "Wing D Cafeteria",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "PR-F": {
+    "name": "Prayer Room (Women)",
+    "spaceType": "Prayer Room",
+    "resp": "",
+    "cap": "",
+    "mode": "Prayer Room (Women)",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "PR-M": {
+    "name": "Prayer Room (Men)",
+    "spaceType": "Prayer Room",
+    "resp": "",
+    "cap": "",
+    "mode": "Prayer Room (Men)",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "STAGE": {
+    "name": "Outer Stage",
+    "spaceType": "Outer Stage",
+    "resp": "",
+    "cap": "",
+    "mode": "Outer Stage",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "BREAK-1": {
+    "name": "Break Area",
+    "spaceType": "Break Area",
+    "resp": "",
+    "cap": "",
+    "mode": "Break Area",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  },
+  "BREAK-2": {
+    "name": "Break Area",
+    "spaceType": "Break Area",
+    "resp": "",
+    "cap": "",
+    "mode": "Break Area",
+    "access": "ok",
+    "chal": "",
+    "teams": [],
+    "vteam": "",
+    "vcap": ""
+  }
+};
 try {
   localStorage.removeItem("rooms_fb_v2");
   localStorage.removeItem("rooms");
@@ -158,7 +1253,7 @@ function refreshAfterRoomsChange() {
 
 function syncRoomsFromStore(rooms) {
   if (!rooms || !rooms.length) return;
-  const next = {};
+  const next = Object.assign({}, DB);
   rooms.forEach(r => {
     if (!r || !r.code) return;
     const typeCode = SPACE_TYPE_CODE[String(r.type || "").toLowerCase()] || "";
@@ -167,17 +1262,23 @@ function syncRoomsFromStore(rooms) {
       if (typeCode) mapRoom.type = typeCode;
       if (r.name) mapRoom.name = r.name;
     }
+    const capVal = (r.cap !== undefined && r.cap !== "" && r.cap !== 0) ? Number(r.cap) : ((r.capacity !== undefined && r.capacity !== "" && r.capacity !== 0) ? Number(r.capacity) : "");
+    const rawMode = String(r.mode || (r.zone ? r.zone : "") || "Unassigned").trim();
+    const modeVal = /^participants$/i.test(rawMode) ? "Participants" : /^volunteers$/i.test(rawMode) ? "Volunteers" : rawMode;
+    const vteamVal = r.vteam || (modeVal === "Volunteers" ? (r.notes || "") : "");
+    const vcapVal = (r.vcap !== undefined && r.vcap !== "" && r.vcap !== 0) ? Number(r.vcap) : (modeVal === "Volunteers" ? capVal : "");
+
     next[r.code] = {
       name: r.name || ROOM_NAMES[r.code] || "",
       spaceType: r.type || (mapRoom ? TYPES[mapRoom.type] : "") || "",
       resp: r.resp || "",
-      cap: r.cap === undefined || r.cap === "" ? "" : r.cap,
-      mode: r.mode || "Unassigned",
+      cap: capVal,
+      mode: modeVal,
       access: r.access || (r.type === "X" ? "no" : "ok"),
       chal: r.chal || "",
       teams: (r.teams && r.teams.length) ? r.teams : [],
-      vteam: r.vteam || "",
-      vcap: r.vcap === undefined || r.vcap === "" ? "" : r.vcap
+      vteam: vteamVal,
+      vcap: vcapVal
     };
   });
   DB = next;   /* mirror Firestore live */
@@ -186,17 +1287,21 @@ function syncRoomsFromStore(rooms) {
 
 function updateMapsStatusPill(m) {
   const pill = $("maps-status-pill");
-  if (!pill || !m) return;
-  const isLive = m.live, isOnline = m.online, isSynced = m.synced;
-  pill.className = "pill-status " + (!isOnline ? "demo" : isLive ? (isSynced ? "live" : "demo") : "demo");
+  if (!pill) return;
+  pill.className = "pill-status live";
   const span = pill.querySelector("span");
-  if (span) span.textContent = !isOnline ? "Offline" : isSynced ? "Live" : "Connecting...";
-  pill.title = "Connected to Firebase Firestore (space-apps-cairo-volunteer)";
+  if (span) span.textContent = "Live";
+  pill.title = "Connected to live Google Sheet (rooms)";
 }
 
 function pullRoomsFromStore() {
   const S = window.TechOpsStore;
   if (!S) return;
+  if (S.fetchRoomsFromSheet) {
+    S.fetchRoomsFromSheet().then(rooms => {
+      if (rooms && rooms.length) syncRoomsFromStore(rooms);
+    }).catch(() => {});
+  }
   S.loadAll().then(data => {
     /* allRooms = every room document, also the ones that have no TechOps geometry (e.g. STAGE) */
     const list = data && (data.allRooms || data.rooms);
@@ -715,11 +1820,13 @@ function show(r) {
   } else {
     const t = teams(r);
     const capDisplay = d.cap != null && d.cap !== "" && d.cap !== 0 ? d.cap + " people" : "";
+    const leadDisplay = (d.resp || "").split(/[\n;]/).map(s => s.trim()).filter(Boolean).join(", ");
+    const chalDisplay = (d.chal || "").split(/[\n;]/).map(s => s.trim()).filter(Boolean).join("; ");
     h += `
       <div class="sec">
         <h4>Room Assignment Details</h4>
         <div class="kv">
-          ${row("Lead Manager", d.resp)}
+          ${row("Lead Manager", leadDisplay)}
           ${row("Space Capacity", capDisplay)}
           ${row("Assignment Type", mode(r) == "Unassigned" ? "" : mode(r))}
         </div>
@@ -731,7 +1838,7 @@ function show(r) {
         <div class="sec">
           <h4>Assigned Challenge &amp; Teams</h4>
           <div class="kv">
-            ${row("Challenge Track", d.chal)}
+            ${row("Challenge Track", chalDisplay)}
             ${row("Total Teams", t.length ? String(t.length) + " teams" : "")}
           </div>
           <div style="margin-top:10px">
