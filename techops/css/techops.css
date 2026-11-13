@@ -464,6 +464,60 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .panel .sub { color: var(--mut); font-size: 12.5px; margin-bottom: 12px; }
 .kv { display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px; font-size: 13px; margin: 10px 0; }
 .kv dt { color: var(--mut); }
+
+/* Room assignment & details sections */
+.sec {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm, 8px);
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+:root[data-theme="light"] .sec {
+  background: rgba(0, 0, 0, 0.02);
+}
+.sec h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--mut);
+  font-weight: 700;
+}
+.sec .kv {
+  display: grid;
+  grid-template-columns: 125px 1fr;
+  gap: 6px 10px;
+  font-size: 13px;
+  margin: 4px 0;
+}
+.sec .kv dt, .sec .kv span:nth-child(odd) {
+  color: var(--mut);
+}
+.sec .kv dd, .sec .kv span:nth-child(even) {
+  margin-inline-start: 0;
+  word-break: break-word;
+}
+.kv-val {
+  color: var(--ink-bright);
+  font-weight: 500;
+}
+.na {
+  color: var(--mut);
+  font-style: italic;
+}
+.chal-list-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 2px 0;
+}
+.chal-track-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.45;
+}
 .qr-box { background: #fff; border-radius: 8px; padding: 8px; display: inline-block; line-height: 0; }
 .qr-box svg, .qr-box img { width: 140px; height: 140px; display: block; }
 .mini-issue { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 12.5px; }
