@@ -580,7 +580,7 @@
       mode: normMode,
       zone: normMode,
       assigned: normMode === "Unassigned" ? "" : normMode,
-      resp: r.resp || r.leaders || "",
+      resp: (fl === "F" ? "martina" : (fl === "S" ? "Alii Eldeen" : "")),
       access: normAccess,
       chal: r.chal || r.challenges || "",
       teams: teamsList,

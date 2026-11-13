@@ -223,7 +223,7 @@ let DB = {
   "C034": {
     "name": "C034",
     "spaceType": "Small lecture",
-    "resp": "Mohamed Ayman Hosny Hasan Khodeir",
+    "resp": "",
     "cap": 30,
     "mode": "Participants",
     "access": "ok",
@@ -242,7 +242,7 @@ let DB = {
   "C035": {
     "name": "C035",
     "spaceType": "Small lecture",
-    "resp": "Ahmed Mahmoud Yousef",
+    "resp": "",
     "cap": 30,
     "mode": "Participants",
     "access": "ok",
@@ -261,7 +261,7 @@ let DB = {
   "A113": {
     "name": "girls Rest",
     "spaceType": "Lecture",
-    "resp": "",
+    "resp": "martina",
     "cap": 100,
     "mode": "girls Rest",
     "access": "ok",
@@ -273,7 +273,7 @@ let DB = {
   "A114": {
     "name": "girls Rest",
     "spaceType": "Lecture",
-    "resp": "",
+    "resp": "martina",
     "cap": 100,
     "mode": "girls Rest",
     "access": "ok",
@@ -285,7 +285,7 @@ let DB = {
   "B122": {
     "name": "B122",
     "spaceType": "Small lecture",
-    "resp": "Mohamed Mahmoud Abdelrahman Hagras",
+    "resp": "martina",
     "cap": 30,
     "mode": "Participants",
     "access": "ok",
@@ -304,7 +304,7 @@ let DB = {
   "B123": {
     "name": "B123",
     "spaceType": "Small lecture",
-    "resp": "Fares Sherif",
+    "resp": "martina",
     "cap": 30,
     "mode": "Participants",
     "access": "ok",
@@ -324,7 +324,7 @@ let DB = {
   "B124": {
     "name": "B124",
     "spaceType": "Chairs",
-    "resp": "Malek Mohamed Zedan",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -343,7 +343,7 @@ let DB = {
   "B125": {
     "name": "B125",
     "spaceType": "Chairs",
-    "resp": "Mohamed Mamdouh",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -360,7 +360,7 @@ let DB = {
   "B126": {
     "name": "B126",
     "spaceType": "Chairs",
-    "resp": "Hamza Abdelrahman Mohamed Osama Ibrahim Mohamed",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -378,7 +378,7 @@ let DB = {
   "B127": {
     "name": "B127",
     "spaceType": "Chairs",
-    "resp": "Mohaned Ehab Rady",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -397,7 +397,7 @@ let DB = {
   "B128": {
     "name": "B128",
     "spaceType": "Bring your device",
-    "resp": "Judy Mohamed Samy Ghanem",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -415,7 +415,7 @@ let DB = {
   "B129": {
     "name": "Volunteers",
     "spaceType": "Bring your device",
-    "resp": "",
+    "resp": "martina",
     "cap": 25,
     "mode": "Volunteers",
     "access": "ok",
@@ -427,7 +427,7 @@ let DB = {
   "B130": {
     "name": "Mentor",
     "spaceType": "Bring your device",
-    "resp": "",
+    "resp": "martina",
     "cap": 25,
     "mode": "Mentors",
     "access": "ok",
@@ -439,7 +439,7 @@ let DB = {
   "B131": {
     "name": "Mentor",
     "spaceType": "Bring your device",
-    "resp": "",
+    "resp": "martina",
     "cap": 25,
     "mode": "Mentors",
     "access": "ok",
@@ -451,7 +451,7 @@ let DB = {
   "C132": {
     "name": "C132",
     "spaceType": "Bring your device",
-    "resp": "Abdallh Ashraf Ahmed Elsaid",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -469,7 +469,7 @@ let DB = {
   "C133": {
     "name": "C133",
     "spaceType": "Bring your device",
-    "resp": "Hassan Ashraf Saad",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -487,7 +487,7 @@ let DB = {
   "C134": {
     "name": "C134",
     "spaceType": "Bring your device",
-    "resp": "Rokaia Hanafy Elmezewdy",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -506,7 +506,7 @@ let DB = {
   "C135": {
     "name": "C135",
     "spaceType": "Bring your device",
-    "resp": "Moaz Mohamed",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -524,7 +524,7 @@ let DB = {
   "C136": {
     "name": "C136",
     "spaceType": "Chairs",
-    "resp": "Habiba Abdelrhman",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -544,7 +544,7 @@ let DB = {
   "C137": {
     "name": "C137",
     "spaceType": "Chairs",
-    "resp": "Sama Khaled Ahmed Hefny",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -562,7 +562,7 @@ let DB = {
   "C138": {
     "name": "C138",
     "spaceType": "Chairs",
-    "resp": "Mariam Tarek",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -580,7 +580,7 @@ let DB = {
   "C139": {
     "name": "C139",
     "spaceType": "Chairs",
-    "resp": "Sohaila Karem Bastawy",
+    "resp": "martina",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -598,7 +598,7 @@ let DB = {
   "C140": {
     "name": "C140",
     "spaceType": "Small lecture",
-    "resp": "Ahmed Eldamaty",
+    "resp": "martina",
     "cap": 30,
     "mode": "Participants",
     "access": "ok",
@@ -617,7 +617,7 @@ let DB = {
   "C141": {
     "name": "C141",
     "spaceType": "Small lecture",
-    "resp": "Ahmed Samy Mahmoud",
+    "resp": "martina",
     "cap": 30,
     "mode": "Participants",
     "access": "ok",
@@ -636,7 +636,7 @@ let DB = {
   "D152": {
     "name": "Volunteers",
     "spaceType": "Chairs",
-    "resp": "",
+    "resp": "martina",
     "cap": 25,
     "mode": "Volunteers",
     "access": "ok",
@@ -648,7 +648,7 @@ let DB = {
   "D153": {
     "name": "Volunteers",
     "spaceType": "Chairs",
-    "resp": "",
+    "resp": "martina",
     "cap": 25,
     "mode": "Volunteers",
     "access": "ok",
@@ -660,7 +660,7 @@ let DB = {
   "D154": {
     "name": "Volunteers",
     "spaceType": "Chairs",
-    "resp": "",
+    "resp": "martina",
     "cap": 25,
     "mode": "Volunteers",
     "access": "ok",
@@ -672,7 +672,7 @@ let DB = {
   "A209": {
     "name": "men Rest",
     "spaceType": "Lecture",
-    "resp": "",
+    "resp": "Alii Eldeen",
     "cap": "",
     "mode": "men Rest",
     "access": "ok",
@@ -684,7 +684,7 @@ let DB = {
   "A210": {
     "name": "men Rest",
     "spaceType": "Lecture",
-    "resp": "",
+    "resp": "Alii Eldeen",
     "cap": "",
     "mode": "men Rest",
     "access": "ok",
@@ -696,7 +696,7 @@ let DB = {
   "B224": {
     "name": "B224",
     "spaceType": "Chairs",
-    "resp": "Basmala Mohamed Mabrok",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -714,7 +714,7 @@ let DB = {
   "B225": {
     "name": "B225",
     "spaceType": "Chairs",
-    "resp": "Abdulrahman Salah",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -732,7 +732,7 @@ let DB = {
   "B226": {
     "name": "B226",
     "spaceType": "Chairs",
-    "resp": "Ahmed Ismail Abd El Halim Sallam",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -750,7 +750,7 @@ let DB = {
   "B227": {
     "name": "B227",
     "spaceType": "Chairs",
-    "resp": "Laila Yasser Hamed Ahmed",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -768,7 +768,7 @@ let DB = {
   "B228": {
     "name": "B228",
     "spaceType": "Chairs",
-    "resp": "Ibrahim Hisham Ahmed",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -787,7 +787,7 @@ let DB = {
   "B229": {
     "name": "B229",
     "spaceType": "Chairs",
-    "resp": "Ahmed Magdi",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -810,7 +810,7 @@ let DB = {
   "B230": {
     "name": "B230",
     "spaceType": "Chairs",
-    "resp": "Mahmoud Amin Ibrahim",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -828,7 +828,7 @@ let DB = {
   "B231": {
     "name": "B231",
     "spaceType": "Chairs",
-    "resp": "Tony Nabil Manshy Fransis",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -846,7 +846,7 @@ let DB = {
   "C233": {
     "name": "Judge",
     "spaceType": "Bring your device",
-    "resp": "",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Judges",
     "access": "ok",
@@ -858,7 +858,7 @@ let DB = {
   "C234": {
     "name": "Judge",
     "spaceType": "Bring your device",
-    "resp": "",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Judges",
     "access": "ok",
@@ -870,7 +870,7 @@ let DB = {
   "C235": {
     "name": "Judge",
     "spaceType": "Bring your device",
-    "resp": "",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Judges",
     "access": "ok",
@@ -882,7 +882,7 @@ let DB = {
   "C236": {
     "name": "Judge",
     "spaceType": "Bring your device",
-    "resp": "",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Judges",
     "access": "ok",
@@ -894,7 +894,7 @@ let DB = {
   "C240": {
     "name": "Judge",
     "spaceType": "Chairs",
-    "resp": "",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Judges",
     "access": "ok",
@@ -906,7 +906,7 @@ let DB = {
   "C241": {
     "name": "Volunteers",
     "spaceType": "Small lecture",
-    "resp": "Jack hany",
+    "resp": "Alii Eldeen",
     "cap": 30,
     "mode": "Volunteers",
     "access": "ok",
@@ -926,7 +926,7 @@ let DB = {
   "C242": {
     "name": "Volunteers",
     "spaceType": "Small lecture",
-    "resp": "Mazen Osama",
+    "resp": "Alii Eldeen",
     "cap": 30,
     "mode": "Volunteers",
     "access": "ok",
@@ -948,7 +948,7 @@ let DB = {
   "D252": {
     "name": "D252",
     "spaceType": "Chairs",
-    "resp": "Ahmeh abdelrahman Kamal",
+    "resp": "Alii Eldeen",
     "cap": 30,
     "mode": "Participants",
     "access": "ok",
@@ -967,7 +967,7 @@ let DB = {
   "D256": {
     "name": "D256",
     "spaceType": "Chairs",
-    "resp": "Mariam Ramdan Sayed",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -986,7 +986,7 @@ let DB = {
   "D257": {
     "name": "D257",
     "spaceType": "Chairs",
-    "resp": "Ahmed Gomaa Sayed",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -1004,7 +1004,7 @@ let DB = {
   "D258": {
     "name": "D258",
     "spaceType": "Chairs",
-    "resp": "Basmala Allam",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -1022,7 +1022,7 @@ let DB = {
   "D259": {
     "name": "D259",
     "spaceType": "Chairs",
-    "resp": "Yousef amr mahmoud ahmed",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -1041,7 +1041,7 @@ let DB = {
   "D260": {
     "name": "D260",
     "spaceType": "Chairs",
-    "resp": "Sara samir Mohamed",
+    "resp": "Alii Eldeen",
     "cap": 25,
     "mode": "Participants",
     "access": "ok",
@@ -1060,7 +1060,7 @@ let DB = {
   "D265": {
     "name": "D265",
     "spaceType": "Chairs",
-    "resp": "Tarek mohamed ahmed fathy haikal",
+    "resp": "Alii Eldeen",
     "cap": 30,
     "mode": "Participants",
     "access": "ok",
@@ -1185,7 +1185,7 @@ let DB = {
   "BREAK-1": {
     "name": "Break Area",
     "spaceType": "Break Area",
-    "resp": "",
+    "resp": "martina",
     "cap": "",
     "mode": "Break Area",
     "access": "ok",
@@ -1197,7 +1197,7 @@ let DB = {
   "BREAK-2": {
     "name": "Break Area",
     "spaceType": "Break Area",
-    "resp": "",
+    "resp": "Alii Eldeen",
     "cap": "",
     "mode": "Break Area",
     "access": "ok",
@@ -1820,13 +1820,16 @@ function show(r) {
   } else {
     const t = teams(r);
     const capDisplay = d.cap != null && d.cap !== "" && d.cap !== 0 ? d.cap + " people" : "";
-    const leadDisplay = (d.resp || "").split(/[\n;]/).map(s => s.trim()).filter(Boolean).join(", ");
-    const chalDisplay = (d.chal || "").split(/[\n;]/).map(s => s.trim()).filter(Boolean).join("; ");
+    
+    // Floor lead: 1st floor -> martina, 2nd floor -> Alii Eldeen, others -> erased
+    const floorLead = (r.floor === "F") ? "martina" : ((r.floor === "S") ? "Alii Eldeen" : (d.resp || ""));
+    const leadLabel = (r.floor === "F" || r.floor === "S") ? "Floor Lead" : "Lead Manager";
+
     h += `
       <div class="sec">
         <h4>Room Assignment Details</h4>
         <div class="kv">
-          ${row("Lead Manager", leadDisplay)}
+          ${row(leadLabel, floorLead)}
           ${row("Space Capacity", capDisplay)}
           ${row("Assignment Type", mode(r) == "Unassigned" ? "" : mode(r))}
         </div>
@@ -1834,14 +1837,32 @@ function show(r) {
     `;
 
     if (mode(r) == "Participants") {
+      const chalList = (d.chal || "")
+        .split(/[\n;]/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      const chalHtml = chalList.length
+        ? `<div class="chal-list-box" style="display:flex;flex-direction:column;gap:6px;margin:2px 0;">` +
+            chalList.map(c => `
+              <div class="chal-track-row" style="display:flex;align-items:flex-start;gap:6px;line-height:1.45;">
+                <span style="color:var(--sel,#fb9746);font-size:13px;line-height:1.45;flex-shrink:0;">•</span>
+                <span style="color:var(--ink-bright);font-weight:500;">${esc(c)}</span>
+              </div>
+            `).join("") +
+          `</div>`
+        : `<span class="na">Not assigned</span>`;
+
       h += `
         <div class="sec">
           <h4>Assigned Challenge &amp; Teams</h4>
           <div class="kv">
-            ${row("Challenge Track", chalDisplay)}
+            <span>Challenge Track${chalList.length > 1 ? "s" : ""}</span>
+            <div class="kv-val">${chalHtml}</div>
             ${row("Total Teams", t.length ? String(t.length) + " teams" : "")}
           </div>
           <div style="margin-top:10px">
+            <div class="pill" style="margin-bottom:6px">Assigned Teams (${t.length})</div>
             ${t.length ? t.map(x => `<span class="chip">${esc(x)}</span>`).join("") : "<span class='na'>No teams assigned yet</span>"}
           </div>
         </div>
