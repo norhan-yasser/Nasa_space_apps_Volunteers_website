@@ -259,10 +259,14 @@
 
   /* Live Google Sheet CSV URL for Venue Rooms */
   var ROOMS_SHEET_URL = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.ROOMS_SHEET_URL) || "https://docs.google.com/spreadsheets/d/1DS0NdFr91kCVAOi_YTrd_suV2DnEadu_U5qTyhPJ4Iw/export?format=csv";
-  var ROOMS_CACHE_KEY = "techops_rooms_sheet_cache_v1";
+  var ROOMS_CACHE_KEY = "techops_rooms_sheet_cache_v3";
+  var ROOMS_CACHE_TIME_KEY = "techops_rooms_sheet_cache_time_v3";
+  var ROOMS_CACHE_TTL_MS = 60 * 1000; // 60s TTL so changes in Google Sheet reflect quickly
 
   /* Purge any legacy local/static cache keys so only live data is ever used */
   try {
+    sessionStorage.removeItem("techops_rooms_sheet_cache_v1");
+    sessionStorage.removeItem("techops_rooms_sheet_cache_v2");
     localStorage.removeItem("techops_local_db_v1");
     localStorage.removeItem("techops_firestore_cache_v2");
     localStorage.removeItem("rooms_fb_v2");
@@ -311,14 +315,17 @@
     }
     if (!forceRefresh) {
       try {
-        var cachedRaw = sessionStorage.getItem(ROOMS_CACHE_KEY);
-        if (cachedRaw) {
-          var parsedCached = JSON.parse(cachedRaw);
-          if (Array.isArray(parsedCached) && parsedCached.length) {
-            cache.rooms = parsedCached;
-            ready["rooms"] = true;
-            checkReady();
-            return Promise.resolve(cache.rooms);
+        var cachedTime = parseInt(sessionStorage.getItem(ROOMS_CACHE_TIME_KEY) || "0", 10);
+        if (Date.now() - cachedTime < ROOMS_CACHE_TTL_MS) {
+          var cachedRaw = sessionStorage.getItem(ROOMS_CACHE_KEY);
+          if (cachedRaw) {
+            var parsedCached = JSON.parse(cachedRaw);
+            if (Array.isArray(parsedCached) && parsedCached.length) {
+              cache.rooms = parsedCached;
+              ready["rooms"] = true;
+              checkReady();
+              return Promise.resolve(cache.rooms);
+            }
           }
         }
       } catch (e) {}
@@ -327,7 +334,8 @@
     if (roomsLoadingPromise && !forceRefresh) return roomsLoadingPromise;
 
     var url = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.ROOMS_SHEET_URL) || ROOMS_SHEET_URL;
-    roomsLoadingPromise = fetch(url)
+    var fetchUrl = url + (url.indexOf("?") === -1 ? "?" : "&") + "_t=" + Date.now();
+    roomsLoadingPromise = fetch(fetchUrl, { cache: "no-cache" })
       .then(function (res) {
         if (!res.ok) throw new Error("HTTP " + res.status + " fetching rooms sheet");
         return res.text();
@@ -412,6 +420,7 @@
         ready["rooms"] = true;
         try {
           sessionStorage.setItem(ROOMS_CACHE_KEY, JSON.stringify(parsedRooms));
+          sessionStorage.setItem(ROOMS_CACHE_TIME_KEY, String(Date.now()));
         } catch (e) {}
         checkReady();
         emit();
