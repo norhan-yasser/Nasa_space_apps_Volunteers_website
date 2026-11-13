@@ -13,6 +13,14 @@ window.TECHOPS_CONFIG = {
   /* Live Google Apps Script Web App / API URL for Help Desk Requests */
   REQUESTS_API_URL: (function () {
     try {
+      if (typeof location !== "undefined" && location.search) {
+        var q = new URLSearchParams(location.search);
+        var qApi = q.get("requests_api");
+        if (qApi) {
+          localStorage.setItem("nasa_requests_api_url", qApi);
+          return qApi;
+        }
+      }
       return localStorage.getItem("nasa_requests_api_url") || "";
     } catch (e) { return ""; }
   })() || "",

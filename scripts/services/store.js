@@ -451,16 +451,22 @@
     return roomsLoadingPromise;
   }
 
-  var REPORTS_CACHE_KEY = "techops_requests_sheet_cache_v1";
+  var REPORTS_CACHE_KEY = "techops_requests_sheet_cache_v2";
   var reportsLoadingPromise = null;
   var REQUESTS_API_URL = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.REQUESTS_API_URL) || "";
   var REQUESTS_SHEET_CSV_URL = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.REQUESTS_SHEET_CSV_URL) || "https://docs.google.com/spreadsheets/d/1DS0NdFr91kCVAOi_YTrd_suV2DnEadu_U5qTyhPJ4Iw/gviz/tq?tqx=out:csv&sheet=Requests";
 
+  /* Purge legacy cache */
+  try {
+    sessionStorage.removeItem("techops_requests_sheet_cache_v1");
+    localStorage.removeItem("techops_requests_sheet_cache_v1");
+  } catch (e) {}
+
   function sendRequestsApi(payload) {
     var apiUrl = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.REQUESTS_API_URL) || REQUESTS_API_URL;
     if (!apiUrl || apiUrl.indexOf("YOUR_DEPLOYED_APP_ID") !== -1 || apiUrl.indexOf("placeholder") !== -1) {
-      console.log("[Requests Backend] Local queue mode (configure REQUESTS_API_URL with your deployed Apps Script):", payload);
-      return Promise.resolve({ ok: true, offline: true });
+      console.warn("[Requests Backend] Missing REQUESTS_API_URL:", payload);
+      return Promise.reject(new Error("Requests backend is not connected. Please deploy the Google Apps Script Web App and provide its URL in config.js."));
     }
     return fetch(apiUrl, {
       method: "POST",
@@ -469,9 +475,11 @@
       redirect: "follow"
     }).then(function (res) {
       return res.json().catch(function () { return { ok: true }; });
-    }).catch(function (err) {
-      console.warn("[Requests Backend] Sync error (stored locally):", err);
-      return { ok: false, error: err };
+    }).then(function (data) {
+      if (data && data.error && !data.ok) {
+        throw new Error(data.error);
+      }
+      return data;
     });
   }
 
@@ -530,7 +538,7 @@
       (remoteList || []).forEach(function (rem) {
         if (!rem || !rem.id) return;
         var local = findCacheReport(rem.id);
-        if (local) {
+        if (local && local._localActionTime && (Date.now() - local._localActionTime < 30000)) {
           if (local.status === "Resolved" || local.status === "In Progress") {
             rem.status = local.status;
             rem.assigned = local.assigned || rem.assigned;
@@ -1592,7 +1600,7 @@
     } catch (e) {}
     emit();
 
-    sendRequestsApi({
+    return sendRequestsApi({
       action: "create",
       id: obj.id,
       taskId: obj.id,
@@ -1606,9 +1614,9 @@
       reporter: obj.reporter,
       wifiData: obj.wifiData,
       status: "Open"
+    }).then(function () {
+      return { id: obj.id, demo: false };
     });
-
-    return Promise.resolve({ id: obj.id, demo: false });
   }
   function addMeetup(d) {
     var obj = withFloorNames({
@@ -1716,6 +1724,7 @@
       target.claimedAt = stamp();
       target.ClaimedAt = stamp();
     }
+    target._localActionTime = Date.now();
     try {
       sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
       localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
@@ -1729,6 +1738,8 @@
       user: user.name,
       claimedBy: user.name,
       status: "In Progress"
+    }).catch(function (err) {
+      console.warn("Async claim API warning:", err);
     });
 
     return Promise.resolve({ id: id, status: "In Progress", assigned: user.name });
@@ -1789,6 +1800,7 @@
       target.ResolvedAt = stamp();
       target.assigned = target.assigned || user.name;
     }
+    target._localActionTime = Date.now();
     try {
       sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
       localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
@@ -1801,6 +1813,8 @@
       taskId: id,
       user: user.name,
       status: "Done"
+    }).catch(function (err) {
+      console.warn("Async resolve API warning:", err);
     });
 
     return Promise.resolve({ id: id, status: "Resolved", resolvedAt: stamp() });
