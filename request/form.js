@@ -56,15 +56,16 @@
   }
   fillDestinations();
 
-  function syncRoomsFromFirestore() {
+  function syncRoomsFromStore() {
     if (!Store || !Store.loadAll) return;
     Store.loadAll().then(function (data) {
-      var rooms = data && (data.rooms && data.rooms.length ? data.rooms : data.allRooms);
+      var rooms = data && (data.allRooms && data.allRooms.length ? data.allRooms : data.rooms);
       if (!rooms || !rooms.length) return;
       var byFl = { B: [], G: [], F: [], S: [] };
       rooms.forEach(function (r) {
         if (!r || !r.code || r.access === "no") return;
-        if (byFl[r.floor]) byFl[r.floor].push(r);
+        var fId = (r.floor || "G").toUpperCase();
+        if (byFl[fId]) byFl[fId].push(r);
       });
       liveRoomsByFloor = byFl;
       fillRooms();
@@ -73,8 +74,8 @@
   }
   if (Store) {
     if (Store.start) Store.start();
-    syncRoomsFromFirestore();
-    if (Store.onChange) Store.onChange(syncRoomsFromFirestore);
+    syncRoomsFromStore();
+    if (Store.onChange) Store.onChange(syncRoomsFromStore);
   }
 
   function card(name, value, icon, label, hint) {

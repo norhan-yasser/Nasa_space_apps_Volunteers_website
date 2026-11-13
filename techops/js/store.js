@@ -4,15 +4,17 @@
  *  AUTH  : Volunteers sign in with their Volunteer Code. The code is looked up directly in the Firestore
  *          `volunteers` collection ({ "Name", "Volunteer Code", "Team" }); the app reads `Team` from there
  *          to pick the workspace and enforce access control.
- *  DATA  : All collections (`rooms`, `wifi`, `volunteers`, `inventory`, `reports`, `meetups`) are streamed and mutated
- *          live from Firebase Firestore with `onSnapshot` — no local or static seed files are used.
+ *  DATA  : Dynamic collections (`wifi`, `volunteers`, `inventory`, `reports`, `meetups`) are streamed and mutated
+ *          live from Firebase Firestore with `onSnapshot`.
+ *          Venue rooms are completely detached from Firestore and streamed directly from the live Google Sheet
+ *          backend (published CSV) to preserve Firestore quota.
  */
 (function () {
   var FB = window.TECHOPS_FIREBASE || {}, D = window.TechOpsData;
   var LIVE = !!(FB.apiKey && FB.projectId);
   var SDK_PRIMARY = "https://www.gstatic.com/firebasejs/10.12.2/";
   var SDK_FALLBACK = "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/";
-  var COLS = ["rooms", "wifi", "volunteers", "inventory", "reports", "meetups"];
+  var COLS = ["wifi", "volunteers", "inventory", "reports", "meetups"];
   var KEYFIELD = { rooms: "code", wifi: "id", volunteers: "code", team: "name", inventory: "id", reports: "id", meetups: "id" };
   var NUMERIC = { capacity: 1, x: 1, y: 1, mbps: 1, latency: 1, qty: 1 };
   var FLOOR_NAMES = { B: "Basement", G: "Ground Floor", F: "First Floor", S: "Second Floor" };
@@ -39,14 +41,175 @@
   var SESSION_KEY = "techops_volunteer_code", SESSION_SEEN = "techops_session_seen", SESSION_USER = "techops_volunteer_user";
   var GRACE = Number((window.TECHOPS_CONFIG || {}).SESSION_GRACE_MS) || (24 * 60 * 60 * 1000);
 
-  /* Purge any legacy local/static cache keys so only live Firebase Firestore data is ever used */
+  /* Live Google Sheet CSV URL for Venue Rooms */
+  var ROOMS_SHEET_URL = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.ROOMS_SHEET_URL) || "https://docs.google.com/spreadsheets/d/1DS0NdFr91kCVAOi_YTrd_suV2DnEadu_U5qTyhPJ4Iw/export?format=csv";
+  var ROOMS_CACHE_KEY = "techops_rooms_sheet_cache_v1";
+
+  /* Purge any legacy local/static cache keys so only live data is ever used */
   try {
     localStorage.removeItem("techops_local_db_v1");
     localStorage.removeItem("techops_firestore_cache_v2");
     localStorage.removeItem("rooms_fb_v2");
     localStorage.removeItem("rooms");
-    localStorage.removeItem("nasa_gsheet_url");
   } catch (e) {}
+
+  /* ---------------------------------------------------------------- Google Sheet Rooms Parser & Cache */
+  function parseCsv(text) {
+    var rows = [], row = [], field = "", inQuotes = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i], next = text[i + 1];
+      if (inQuotes) {
+        if (c === '"') {
+          if (next === '"') { field += '"'; i++; }
+          else { inQuotes = false; }
+        } else { field += c; }
+      } else {
+        if (c === '"') { inQuotes = true; }
+        else if (c === ',') { row.push(field); field = ""; }
+        else if (c === '\r') { /* ignore */ }
+        else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+        else { field += c; }
+      }
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  var roomsLoadingPromise = null;
+  function fetchRoomsFromSheet(forceRefresh) {
+    if (!forceRefresh && cache.rooms && cache.rooms.length) {
+      ready["rooms"] = true;
+      checkReady();
+      return Promise.resolve(cache.rooms);
+    }
+    if (!forceRefresh) {
+      try {
+        var cachedRaw = sessionStorage.getItem(ROOMS_CACHE_KEY);
+        if (cachedRaw) {
+          var parsedCached = JSON.parse(cachedRaw);
+          if (Array.isArray(parsedCached) && parsedCached.length) {
+            cache.rooms = parsedCached;
+            ready["rooms"] = true;
+            checkReady();
+            return Promise.resolve(cache.rooms);
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (roomsLoadingPromise && !forceRefresh) return roomsLoadingPromise;
+
+    var url = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.ROOMS_SHEET_URL) || ROOMS_SHEET_URL;
+    roomsLoadingPromise = fetch(url)
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status + " fetching rooms sheet");
+        return res.text();
+      })
+      .then(function (csvText) {
+        var table = parseCsv(csvText);
+        if (!table || table.length < 2) throw new Error("Empty or invalid rooms CSV");
+        var headers = table[0].map(function (h) { return String(h || "").trim().toLowerCase(); });
+        var colMap = {};
+        headers.forEach(function (h, idx) {
+          if (h === "room code" || h === "code" || h === "room id" || h === "id") colMap.code = idx;
+          else if (h === "floor") colMap.floor = idx;
+          else if (h === "floor code") colMap.floorCode = idx;
+          else if (h === "wing") colMap.wing = idx;
+          else if (h === "room no." || h === "room no" || h === "room number" || h === "number") colMap.num = idx;
+          else if (h === "room type" || h === "space type" || h === "type") colMap.type = idx;
+          else if (h === "physical capacity" || h === "capacity") colMap.capacity = idx;
+          else if (h === "assigned capacity" || h === "cap") colMap.cap = idx;
+          else if (h === "room use / function" || h === "function" || h === "use" || h === "assignment type") colMap.use = idx;
+          else if (h === "notes") colMap.notes = idx;
+          else if (h === "team names" || h === "teams") colMap.teams = idx;
+          else if (h === "challenges" || h === "challenge") colMap.chal = idx;
+          else if (h === "team leaders" || h === "leaders" || h === "lead manager") colMap.resp = idx;
+          else if (h === "leader phones" || h === "phones") colMap.phones = idx;
+          else if (h === "x") colMap.x = idx;
+          else if (h === "y") colMap.y = idx;
+        });
+
+        var parsedRooms = [];
+        for (var r = 1; r < table.length; r++) {
+          var row = table[r];
+          if (!row || !row.length) continue;
+          var code = String(colMap.code !== undefined ? row[colMap.code] : (row[0] || "")).trim();
+          if (!code) continue;
+
+          var flName = String(colMap.floor !== undefined ? row[colMap.floor] : "").trim();
+          var flCode = String(colMap.floorCode !== undefined ? row[colMap.floorCode] : "").trim();
+          var fl = flCode || floorId(flName) || "G";
+
+          var wing = String(colMap.wing !== undefined ? row[colMap.wing] : "").trim();
+          var num = String(colMap.num !== undefined ? row[colMap.num] : "").trim();
+          var rtype = String(colMap.type !== undefined ? row[colMap.type] : "").trim();
+          var pcap = colMap.capacity !== undefined ? row[colMap.capacity] : "";
+          var acap = colMap.cap !== undefined ? row[colMap.cap] : "";
+          var use = String(colMap.use !== undefined ? row[colMap.use] : "").trim();
+          var notes = String(colMap.notes !== undefined ? row[colMap.notes] : "").trim();
+          var teamsStr = String(colMap.teams !== undefined ? row[colMap.teams] : "").trim();
+          var chal = String(colMap.chal !== undefined ? row[colMap.chal] : "").trim();
+          var resp = String(colMap.resp !== undefined ? row[colMap.resp] : "").trim();
+          var phones = String(colMap.phones !== undefined ? row[colMap.phones] : "").trim();
+          var xVal = colMap.x !== undefined ? row[colMap.x] : "";
+          var yVal = colMap.y !== undefined ? row[colMap.y] : "";
+
+          parsedRooms.push({
+            code: code,
+            name: use && use !== "Participants" ? use : code,
+            floor: fl,
+            floorName: FLOOR_NAMES[fl] || flName,
+            wing: wing,
+            roomNo: num,
+            type: rtype,
+            capacity: pcap ? Number(pcap) : 0,
+            cap: acap ? Number(acap) : (pcap ? Number(pcap) : 0),
+            mode: use,
+            zone: use,
+            assigned: use === "Unassigned" ? "" : use,
+            resp: resp,
+            notes: notes,
+            chal: chal,
+            teams: teamsStr ? teamsStr.split(/[\n;,]/).map(function (s) { return s.trim(); }).filter(Boolean) : [],
+            phones: phones,
+            x: xVal ? Number(xVal) : undefined,
+            y: yVal ? Number(yVal) : undefined
+          });
+        }
+
+        cache.rooms = parsedRooms;
+        ready["rooms"] = true;
+        try {
+          sessionStorage.setItem(ROOMS_CACHE_KEY, JSON.stringify(parsedRooms));
+        } catch (e) {}
+        checkReady();
+        emit();
+        roomsLoadingPromise = null;
+        return cache.rooms;
+      })
+      .catch(function (err) {
+        console.warn("Failed to fetch rooms from Google Sheet, falling back to seed/data:", err);
+        var fallbackRooms = (window.TechOpsSeed && window.TechOpsSeed.rooms) || [];
+        if (Array.isArray(fallbackRooms) && fallbackRooms.length) {
+          cache.rooms = fallbackRooms.slice();
+        } else if (D && D.FLOORS) {
+          var synth = [];
+          D.FLOORS.forEach(function (fl) {
+            fl.rooms.forEach(function (r) {
+              synth.push({ code: r.code, floor: fl.id, floorName: fl.name, type: "Classroom", x: r.cx, y: r.cy });
+            });
+          });
+          cache.rooms = synth;
+        }
+        ready["rooms"] = true;
+        checkReady();
+        emit();
+        roomsLoadingPromise = null;
+        return cache.rooms;
+      });
+
+    return roomsLoadingPromise;
+  }
 
   function sget(k) {
     try {
@@ -132,8 +295,8 @@
 
   function emit() { clearTimeout(emitT); emitT = setTimeout(function () { listeners.forEach(function (f) { f({ kind: "data" }); }); }, 25); }
   function checkReady() {
-    var critical = (TEAM === "TechOps" || TEAM === "Logistics") ? COLS : ["reports", "rooms"];
-    if (critical.every(function (c) { return ready[c]; })) {
+    var critical = (TEAM === "TechOps" || TEAM === "Logistics") ? COLS : ["reports"];
+    if (critical.every(function (c) { return ready[c]; }) && ready["rooms"]) {
       if (readyResolve) readyResolve();
     }
   }
@@ -251,6 +414,7 @@
   };
   fb.start = function () {
     fb.stop();
+    fetchRoomsFromSheet();
     if (!LIVE) {
       COLS.forEach(function (col) {
         if (!cache[col] || !cache[col].length) {
@@ -357,23 +521,23 @@
   function normaliseRoom(r) {
     var code = String(r.code || r._id || "").trim();
     var fl = r.floor || floorId(r.floorName || r.Floor) || "G";
-    var flName = FLOOR_NAMES[fl] || "";
+    var flName = FLOOR_NAMES[fl] || r.floorName || "";
     var rawType = String(r.type || r["Room Type"] || r.roomType || "").trim();
     var displayType = TYPE_LABEL[rawType.toLowerCase()] || rawType || "Classroom";
     var teamsList = Array.isArray(r.teams)
       ? r.teams.map(function (s) { return String(s || "").trim(); }).filter(Boolean)
-      : (r.teams ? String(r.teams).split(/[;,]/).map(function (s) { return s.trim(); }).filter(Boolean) : []);
+      : (r.teams ? String(r.teams).split(/[\n;,]/).map(function (s) { return s.trim(); }).filter(Boolean) : []);
     var capVal = r.cap !== undefined && r.cap !== ""
       ? Number(r.cap)
       : (r.capacity !== undefined && r.capacity !== "" ? Number(r.capacity) : 0);
-    var rawMode = String(r.mode || r.zone || r.assigned || "Unassigned").trim();
+    var rawMode = String(r.mode || r.zone || r.assigned || r.use || "Unassigned").trim();
     var normMode = /^participants$/i.test(rawMode)
       ? "Participants"
       : /^volunteers$/i.test(rawMode)
         ? "Volunteers"
-        : /^judges$/i.test(rawMode)
+        : /^judges?$/i.test(rawMode)
           ? "Judges"
-          : /^mentors$/i.test(rawMode)
+          : /^mentors?$/i.test(rawMode)
             ? "Mentors"
             : /^vips?$/i.test(rawMode)
               ? "VIPs"
@@ -382,23 +546,49 @@
     var normAccess = (rawAccess === "no" || rawAccess === "restricted" || r.type === "X") ? "no" : "ok";
     var vcapVal = r.vcap !== undefined && r.vcap !== "" ? Number(r.vcap) : 0;
 
+    var geo = null;
+    if (D && D.FLOORS) {
+      for (var fi = 0; fi < D.FLOORS.length; fi++) {
+        var match = D.FLOORS[fi].rooms.filter(function (gr) { return gr.code === code; })[0];
+        if (match) { geo = match; break; }
+      }
+    }
+
+    var cx = (geo && geo.cx) || (r.x ? Number(r.x) : 0) || (r.cx ? Number(r.cx) : 0);
+    var cy = (geo && geo.cy) || (r.y ? Number(r.y) : 0) || (r.cy ? Number(r.cy) : 0);
+    var pts = (geo && geo.pts) || r.pts || [];
+    var bb = (geo && geo.bb) || r.bb || null;
+
     return {
+      id: code,
+      _id: code,
       code: code,
-      name: r.name || "",
+      name: r.name || (r.use && r.use !== normMode ? r.use : code),
+      label: r.label || code,
       floor: fl,
       floorName: flName,
+      wing: r.wing || "",
+      roomNo: r.roomNo || "",
       type: displayType,
       capacity: capVal,
       cap: capVal,
       mode: normMode,
       zone: normMode,
       assigned: normMode === "Unassigned" ? "" : normMode,
-      resp: r.resp || "",
+      resp: r.resp || r.leaders || "",
       access: normAccess,
-      chal: r.chal || "",
+      chal: r.chal || r.challenges || "",
       teams: teamsList,
       vteam: r.vteam || "",
-      vcap: vcapVal
+      vcap: vcapVal,
+      notes: r.notes || "",
+      phones: r.phones || "",
+      x: cx,
+      y: cy,
+      cx: cx,
+      cy: cy,
+      pts: pts,
+      bb: bb
     };
   }
   function normaliseVolunteer(v) {
@@ -524,29 +714,31 @@
   }
   function loadAll() {
     if (!started) start();
-    var critical = (TEAM === "TechOps" || TEAM === "Logistics") ? COLS : ["reports", "rooms"];
-    var isSynced = critical.every(function (c) { return ready[c]; });
-    var p = (_tutorialMode || isSynced) ? Promise.resolve() : readyP;
-    return p.then(function () {
-      var geo = {};
-      if (D && D.ALL) D.ALL.forEach(function (g) { geo[g.code] = 1; });
-      var nowSynced = critical.every(function (c) { return ready[c]; });
-      var out = { meta: { live: LIVE, online: !lastError, synced: nowSynced, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
-      COLS.forEach(function (c) { out[c] = normalise(c, cache[c] || []); });
-      out.team = out.volunteers || [];
-      if (_tutorialMode && _tutorialReports) {
-        var tr = String(_tutorialRole || TEAM || (user && (user.role || user.team)) || "").toLowerCase();
-        out.reports = _tutorialReports.filter(function (r) {
-          if (tr.indexOf("logistics") >= 0) return r.team === "Logistics";
-          if (tr.indexOf("comp") >= 0 || tr.indexOf("dispatch") >= 0) return r.team === "Competition";
-          return r.team === "TechOps";
-        });
-      } else {
-        out.reports = (out.reports || []).filter(function (r) { return (r.team || "TechOps") === TEAM; });
-      }
-      /* allRooms = every room document in Firestore (Maps also needs STAGE, PR-F, PR-M, etc.); rooms = only the ones that have geometry */
-      out.allRooms = out.rooms.slice();
-      if (D && D.ALL) out.rooms = out.rooms.filter(function (r) { return geo[r.code]; });
+    return fetchRoomsFromSheet().then(function (roomsList) {
+      var critical = (TEAM === "TechOps" || TEAM === "Logistics") ? COLS : ["reports"];
+      var isSynced = critical.every(function (c) { return ready[c]; });
+      var p = (_tutorialMode || isSynced) ? Promise.resolve() : readyP;
+      return p.then(function () {
+        var geo = {};
+        if (D && D.ALL) D.ALL.forEach(function (g) { geo[g.code] = 1; });
+        var nowSynced = critical.every(function (c) { return ready[c]; });
+        var out = { meta: { live: LIVE, online: !lastError, synced: nowSynced, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
+        COLS.forEach(function (c) { out[c] = normalise(c, cache[c] || []); });
+        out.rooms = (roomsList || cache.rooms || []).map(normaliseRoom);
+        out.team = out.volunteers || [];
+        if (_tutorialMode && _tutorialReports) {
+          var tr = String(_tutorialRole || TEAM || (user && (user.role || user.team)) || "").toLowerCase();
+          out.reports = _tutorialReports.filter(function (r) {
+            if (tr.indexOf("logistics") >= 0) return r.team === "Logistics";
+            if (tr.indexOf("comp") >= 0 || tr.indexOf("dispatch") >= 0) return r.team === "Competition";
+            return r.team === "TechOps";
+          });
+        } else {
+          out.reports = (out.reports || []).filter(function (r) { return (r.team || "TechOps") === TEAM; });
+        }
+        /* allRooms = every room document from Google Sheet (Maps also needs STAGE, PR-F, PR-M, etc.); rooms = only the ones that have geometry */
+        out.allRooms = out.rooms.slice();
+        if (D && D.ALL) out.rooms = out.rooms.filter(function (r) { return geo[r.code]; });
       if (out.wifi) {
         var validRoomMap = {};
         (out.allRooms || []).forEach(function (r) { if (r && r.code) validRoomMap[r.code] = r; });
@@ -567,7 +759,8 @@
       }
       return out;
     });
-  }
+  });
+}
 
   /* ---------------------------------------------------------------- auth & RBAC */
   function normalizeCode(c) { return String(c || "").trim().toUpperCase().replace(/\s+/g, ""); }
@@ -1078,6 +1271,10 @@
     login: login, restore: restore, peekUser: peekUser, logout: logout, currentUser: function () { return user; }, sessionGraceMs: GRACE,
     canAccess: canAccess, teamDisplayName: teamDisplayName, workspaceFor: workspaceFor,
     start: start, loadAll: loadAll, onChange: onChange,
+    data: { get rooms() { return cache.rooms; } },
+    rooms: function () { return cache.rooms; },
+    refreshRooms: function () { return fetchRoomsFromSheet(true); },
+    fetchRoomsFromSheet: fetchRoomsFromSheet,
     recordWifiReading: recordWifiReading, addReport: addReport, addMeetup: addMeetup, update: update, updateVolunteerLocation: updateVolunteerLocation,
     setVolunteerOffline: setVolunteerOffline, setVolunteerOnline: setVolunteerOnline,
     claimReport: claimReport, resolveReport: resolveReport, handOutReport: handOutReport, resetDemo: resetDemo,
