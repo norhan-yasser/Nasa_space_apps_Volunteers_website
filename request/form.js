@@ -28,7 +28,8 @@
     if (!floorSel.value) { roomSel.innerHTML = '<option value="">First select a floor…</option>'; return; }
     var list = getFloorRooms(floorSel.value);
     roomSel.innerHTML = '<option value="">Select your room…</option>' + list.map(function (r) {
-      var lbl = r.code + (r.name ? " · " + r.name : "");
+      var hasCustom = r.name && String(r.name).trim().toUpperCase() !== String(r.code).trim().toUpperCase();
+      var lbl = r.code + (hasCustom ? " · " + r.name : "");
       return '<option value="' + esc(r.code) + '">' + esc(lbl) + "</option>";
     }).join("");
     if (curSel) roomSel.value = curSel;
@@ -39,7 +40,8 @@
     destSel.innerHTML = '<option value="">Choose a place…</option><option value="ENTRANCE|Main Entrance">Main Entrance</option>' + D.FLOORS.map(function (f) {
       var list = getFloorRooms(f.id);
       return '<optgroup label="' + esc(f.name) + '">' + list.map(function (r) {
-        var lbl = r.code + (r.name ? " (" + r.name + ")" : "");
+        var hasCustom = r.name && String(r.name).trim().toUpperCase() !== String(r.code).trim().toUpperCase();
+        var lbl = r.code + (hasCustom ? " (" + r.name + ")" : "");
         return '<option value="' + esc(r.code + "|" + f.name) + '">' + esc(lbl) + "</option>";
       }).join("") + "</optgroup>";
     }).join("");

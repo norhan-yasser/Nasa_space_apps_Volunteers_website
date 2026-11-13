@@ -287,12 +287,38 @@
       p = fetchCsvReports(csvUrl);
     }
 
-    reportsLoadingPromise = p.then(function (list) {
-      cache.reports = list;
+    reportsLoadingPromise = p.then(function (remoteList) {
+      var merged = [];
+      var seenIds = {};
+
+      (remoteList || []).forEach(function (rem) {
+        if (!rem || !rem.id) return;
+        var local = findCacheReport(rem.id);
+        if (local) {
+          if (local.status === "Resolved" || local.status === "In Progress") {
+            rem.status = local.status;
+            rem.assigned = local.assigned || rem.assigned;
+            rem.claimedBy = local.claimedBy || rem.claimedBy;
+            rem.claimedAt = local.claimedAt || rem.claimedAt;
+            rem.resolvedAt = local.resolvedAt || rem.resolvedAt;
+          }
+        }
+        seenIds[rem.id] = true;
+        merged.push(rem);
+      });
+
+      (cache.reports || []).forEach(function (loc) {
+        if (loc && loc.id && !seenIds[loc.id]) {
+          seenIds[loc.id] = true;
+          merged.unshift(loc);
+        }
+      });
+
+      cache.reports = merged;
       ready["reports"] = true;
       try {
-        sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(list));
-        localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(list));
+        sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(merged));
+        localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(merged));
       } catch (e) {}
       checkReady();
       emit();
@@ -458,8 +484,35 @@
   }
 
   function findCacheReport(id) {
-    if (!cache.reports) return null;
-    return cache.reports.filter(function (r) { return r && (r.id === id || r._id === id); })[0] || null;
+    if (!id) return null;
+    id = String(id).trim();
+    if (cache.reports && cache.reports.length) {
+      for (var i = 0; i < cache.reports.length; i++) {
+        var r = cache.reports[i];
+        if (r && (r.id === id || r._id === id || r.taskId === id || r.TaskID === id)) return r;
+      }
+    }
+    try {
+      var raw = sessionStorage.getItem(REPORTS_CACHE_KEY) || localStorage.getItem(REPORTS_CACHE_KEY);
+      if (raw) {
+        var list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          for (var j = 0; j < list.length; j++) {
+            var r2 = list[j];
+            if (r2 && (r2.id === id || r2._id === id || r2.taskId === id || r2.TaskID === id)) {
+              if (!cache.reports) cache.reports = [];
+              var exists = false;
+              for (var k = 0; k < cache.reports.length; k++) {
+                if (cache.reports[k].id === r2.id) { exists = true; break; }
+              }
+              if (!exists) cache.reports.unshift(r2);
+              return r2;
+            }
+          }
+        }
+      }
+    } catch (e) {}
+    return null;
   }
 
   /* ---------------------------------------------------------------- Firebase Firestore backend */
@@ -1267,9 +1320,12 @@
   function addReport(d) {
     var prefix = d.team === "Logistics" ? "LGR" : (d.team === "Competition" ? "CMP" : "RPT");
     var teamName = d.team === "Logistics" || d.team === "Competition" ? d.team : "TechOps";
+    var genId = newId(prefix);
     var obj = withFloorNames({
-      id: newId(prefix),
-      taskId: newId(prefix),
+      id: genId,
+      _id: genId,
+      taskId: genId,
+      TaskID: genId,
       ts: stamp(),
       timestamp: stamp(),
       floor: d.floor || "",
@@ -1385,19 +1441,46 @@
     }
 
     var target = findCacheReport(id);
-    if (target) {
+    if (!target) {
+      target = {
+        id: id,
+        _id: id,
+        taskId: id,
+        TaskID: id,
+        ts: stamp(),
+        timestamp: stamp(),
+        floor: "",
+        room: "",
+        issue: "Task " + id,
+        issueDescription: "Task " + id,
+        details: "",
+        status: "In Progress",
+        Status: "In Progress",
+        assigned: user.name,
+        claimedBy: user.name,
+        ClaimedBy: user.name,
+        claimedAt: stamp(),
+        team: TEAM,
+        teamAssigned: TEAM
+      };
+      if (!cache.reports) cache.reports = [];
+      cache.reports.unshift(target);
+    } else {
       if (target.status === "Resolved") return Promise.reject(fail("claimed", "This task is already resolved."));
       if (target.assigned && target.assigned !== user.name) return Promise.reject(fail("claimed", "Already claimed by " + target.assigned + "."));
       target.assigned = user.name;
       target.claimedBy = user.name;
+      target.ClaimedBy = user.name;
       target.status = "In Progress";
+      target.Status = "In Progress";
       target.claimedAt = stamp();
-      try {
-        sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
-        localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
-      } catch (e) {}
-      emit();
+      target.ClaimedAt = stamp();
     }
+    try {
+      sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+      localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+    } catch (e) {}
+    emit();
 
     sendRequestsApi({
       action: "claim",
@@ -1431,19 +1514,46 @@
     }
 
     var target = findCacheReport(id);
-    if (target) {
+    if (!target) {
+      target = {
+        id: id,
+        _id: id,
+        taskId: id,
+        TaskID: id,
+        ts: stamp(),
+        timestamp: stamp(),
+        floor: "",
+        room: "",
+        issue: "Task " + id,
+        issueDescription: "Task " + id,
+        details: "",
+        status: "Resolved",
+        Status: "Done",
+        assigned: user.name,
+        claimedBy: user.name,
+        ClaimedBy: user.name,
+        resolvedAt: stamp(),
+        ResolvedAt: stamp(),
+        team: TEAM,
+        teamAssigned: TEAM
+      };
+      if (!cache.reports) cache.reports = [];
+      cache.reports.unshift(target);
+    } else {
       if (target.assigned && target.assigned !== user.name && target.handedBy !== user.name) {
         return Promise.reject(fail("claimed", "Only " + (target.assigned || "the assignee") + " can resolve this task."));
       }
       target.status = "Resolved";
+      target.Status = "Done";
       target.resolvedAt = stamp();
+      target.ResolvedAt = stamp();
       target.assigned = target.assigned || user.name;
-      try {
-        sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
-        localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
-      } catch (e) {}
-      emit();
     }
+    try {
+      sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+      localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+    } catch (e) {}
+    emit();
 
     sendRequestsApi({
       action: "resolve",

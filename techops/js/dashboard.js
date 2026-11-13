@@ -203,7 +203,11 @@
   /* ------------------------------------------------------------ Issues Tab */
   var FILTERS = [["unassigned", "Unassigned"], ["mine", "My tasks"], ["Resolved", "Resolved"], ["all", "All"]];
   function isUnassigned(r) { return r.status !== "Resolved" && !r.assigned; }
-  function isMine(r) { return r.status !== "Resolved" && !!S.me && r.assigned === S.me; }
+  function isMine(r) {
+    var myName = S.me || (S.user && S.user.name) || (Store.currentUser && Store.currentUser() && Store.currentUser().name) || "";
+    if (!myName) return false;
+    return r.status !== "Resolved" && String(r.assigned || "").trim().toLowerCase() === String(myName).trim().toLowerCase();
+  }
   function matchFilter(r, f) {
     if (f === "all") return true;
     if (f === "unassigned") return isUnassigned(r);
@@ -278,9 +282,19 @@
     p.then(function () {
       TO.toast(kind === "claim" ? "Task claimed" : "Task resolved", kind === "claim" ? id + " is now In Progress and assigned to you." : id + " marked as resolved.", "ok");
       if (kind === "resolve" && TO.chimeDone) TO.chimeDone();
-    }).catch(function () {
+      if (kind === "claim") {
+        S.issueFilter = "mine";
+      } else if (kind === "resolve") {
+        S.issueFilter = "Resolved";
+      }
+    }).catch(function (err) {
+      TO.toast("Action failed", (err && err.message) || String(err), "bad");
       btn.disabled = false; btn.textContent = label;
-    }).then(function () { delete S.busy[id]; return load(); });
+    }).then(function () {
+      delete S.busy[id];
+      S.sig = "";
+      return load();
+    });
   }
 
   function gotoIssueOnMap(r) {
@@ -1241,8 +1255,9 @@
       if (window.closeMapBottomSheet) closeMapBottomSheet();
       /* Return directly to the Issues tab as requested */
       setTab("issues");
-      S.issueFilter = "unassigned";
-      renderIssues();
+      S.issueFilter = "Resolved";
+      S.sig = "";
+      return load();
     }).catch(function (err) {
       console.error('Task resolution error:', err);
       if (btn) btn.disabled = false;
