@@ -82,6 +82,17 @@
       checkReady();
       return Promise.resolve(cache.rooms);
     }
+    // If running from local filesystem (file:// protocol), cross-origin fetch is blocked by browser security
+    if (typeof location !== "undefined" && location.protocol === "file:") {
+      var seedRooms = (window.TechOpsSeed && window.TechOpsSeed.rooms) || [];
+      if (seedRooms.length) {
+        cache.rooms = seedRooms.slice();
+        ready["rooms"] = true;
+        checkReady();
+        emit();
+        return Promise.resolve(cache.rooms);
+      }
+    }
     if (!forceRefresh) {
       try {
         var cachedRaw = sessionStorage.getItem(ROOMS_CACHE_KEY);
