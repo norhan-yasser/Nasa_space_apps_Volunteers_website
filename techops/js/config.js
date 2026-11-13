@@ -21,9 +21,9 @@ window.TECHOPS_CONFIG = {
           return qApi;
         }
       }
-      return localStorage.getItem("nasa_requests_api_url") || "";
-    } catch (e) { return ""; }
-  })() || "",
+      return localStorage.getItem("nasa_requests_api_url") || "https://script.google.com/macros/s/AKfycbwXRAbX0vKZMwkbyKxEI3XOpzgD8MEgbBMdba0HhV3q3kTNLWVIxeSmoTDWu0P5hksi/exec";
+    } catch (e) { return "https://script.google.com/macros/s/AKfycbwXRAbX0vKZMwkbyKxEI3XOpzgD8MEgbBMdba0HhV3q3kTNLWVIxeSmoTDWu0P5hksi/exec"; }
+  })() || "https://script.google.com/macros/s/AKfycbwXRAbX0vKZMwkbyKxEI3XOpzgD8MEgbBMdba0HhV3q3kTNLWVIxeSmoTDWu0P5hksi/exec",
   /* Live Google Sheet CSV URL for Requests tab (anonymous public fallback for Help Desk requests) */
   REQUESTS_SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/1DS0NdFr91kCVAOi_YTrd_suV2DnEadu_U5qTyhPJ4Iw/gviz/tq?tqx=out:csv&sheet=Requests",
 
