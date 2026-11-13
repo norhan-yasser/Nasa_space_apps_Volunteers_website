@@ -255,8 +255,7 @@
       $("done-msg").textContent = remote
         ? "The " + TEAM_LABEL[team] + " has been alerted (" + issue.toLowerCase() + "). They will help you remotely, so please keep Discord open."
         : "The " + TEAM_LABEL[team] + " team has been alerted (" + issue.toLowerCase() + ", room " + room + ", " + Store.FLOOR_NAMES[floor] + "). A volunteer will come to you.";
-      var demo = $("done-demo"); demo.hidden = Store.isLive();
-      demo.textContent = "Local preview mode: Firebase is not configured yet, so this request is stored in this browser only.";
+      var demo = $("done-demo"); demo.hidden = true;
     }).catch(function (err) {
       btn.disabled = false; btn.textContent = "Send request";
       fail("Could not send the request. Please try again: " + Store.friendly(err));

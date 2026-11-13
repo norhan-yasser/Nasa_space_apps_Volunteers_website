@@ -14,7 +14,7 @@
   var LIVE = !!(FB.apiKey && FB.projectId);
   var SDK_PRIMARY = "https://www.gstatic.com/firebasejs/10.12.2/";
   var SDK_FALLBACK = "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/";
-  var COLS = ["wifi", "volunteers", "inventory", "reports", "meetups"];
+  var COLS = ["wifi", "volunteers", "inventory", "meetups"]; // "rooms" and "reports" migrated to Google Sheet
   var KEYFIELD = { rooms: "code", wifi: "id", volunteers: "code", team: "name", inventory: "id", reports: "id", meetups: "id" };
   var NUMERIC = { capacity: 1, x: 1, y: 1, mbps: 1, latency: 1, qty: 1 };
   var FLOOR_NAMES = { B: "Basement", G: "Ground Floor", F: "First Floor", S: "Second Floor" };
@@ -214,6 +214,158 @@
 
     return roomsLoadingPromise;
   }
+
+  var REPORTS_CACHE_KEY = "techops_requests_sheet_cache_v1";
+  var reportsLoadingPromise = null;
+  var REQUESTS_API_URL = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.REQUESTS_API_URL) || "";
+  var REQUESTS_SHEET_CSV_URL = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.REQUESTS_SHEET_CSV_URL) || "https://docs.google.com/spreadsheets/d/1DS0NdFr91kCVAOi_YTrd_suV2DnEadu_U5qTyhPJ4Iw/gviz/tq?tqx=out:csv&sheet=Requests";
+
+  function sendRequestsApi(payload) {
+    var apiUrl = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.REQUESTS_API_URL) || REQUESTS_API_URL;
+    if (!apiUrl || apiUrl.indexOf("YOUR_DEPLOYED_APP_ID") !== -1 || apiUrl.indexOf("placeholder") !== -1) {
+      console.log("[Requests Backend] Local queue mode (configure REQUESTS_API_URL with your deployed Apps Script):", payload);
+      return Promise.resolve({ ok: true, offline: true });
+    }
+    return fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+      redirect: "follow"
+    }).then(function (res) {
+      return res.json().catch(function () { return { ok: true }; });
+    }).catch(function (err) {
+      console.warn("[Requests Backend] Sync error (stored locally):", err);
+      return { ok: false, error: err };
+    });
+  }
+
+  function fetchReportsFromSheet(forceRefresh) {
+    if (!forceRefresh && cache.reports && cache.reports.length) {
+      ready["reports"] = true;
+      checkReady();
+      return Promise.resolve(cache.reports);
+    }
+    if (!forceRefresh) {
+      try {
+        var cachedRaw = sessionStorage.getItem(REPORTS_CACHE_KEY) || localStorage.getItem(REPORTS_CACHE_KEY);
+        if (cachedRaw) {
+          var parsedCached = JSON.parse(cachedRaw);
+          if (Array.isArray(parsedCached) && parsedCached.length) {
+            cache.reports = parsedCached;
+            ready["reports"] = true;
+            checkReady();
+            return Promise.resolve(cache.reports);
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (reportsLoadingPromise && !forceRefresh) return reportsLoadingPromise;
+
+    var apiUrl = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.REQUESTS_API_URL) || REQUESTS_API_URL;
+    var csvUrl = (window.TECHOPS_CONFIG && window.TECHOPS_CONFIG.REQUESTS_SHEET_CSV_URL) || REQUESTS_SHEET_CSV_URL;
+
+    var p;
+    if (apiUrl && apiUrl.indexOf("YOUR_DEPLOYED_APP_ID") === -1 && apiUrl.indexOf("placeholder") === -1) {
+      p = fetch(apiUrl + "?team=all&status=all")
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function (json) {
+          if (json && (json.data || json.reports)) {
+            var rawList = json.data || json.reports || [];
+            return rawList.map(normaliseReport);
+          }
+          throw new Error("Invalid API response format");
+        })
+        .catch(function (err) {
+          console.warn("API GET failed, falling back to Google Sheet Requests CSV:", err);
+          return fetchCsvReports(csvUrl);
+        });
+    } else {
+      p = fetchCsvReports(csvUrl);
+    }
+
+    reportsLoadingPromise = p.then(function (list) {
+      cache.reports = list;
+      ready["reports"] = true;
+      try {
+        sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(list));
+        localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(list));
+      } catch (e) {}
+      checkReady();
+      emit();
+      reportsLoadingPromise = null;
+      return cache.reports;
+    }).catch(function (err) {
+      console.warn("Failed to fetch reports from Sheet/API:", err);
+      ready["reports"] = true;
+      checkReady();
+      reportsLoadingPromise = null;
+      return cache.reports || [];
+    });
+
+    return reportsLoadingPromise;
+  }
+
+  function fetchCsvReports(csvUrl) {
+    return fetch(csvUrl)
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status + " fetching requests CSV");
+        return res.text();
+      })
+      .then(function (csvText) {
+        var table = parseCsv(csvText);
+        if (!table || table.length < 2) return [];
+        var headers = table[0].map(function (h) { return String(h || "").trim().toLowerCase(); });
+        var colMap = {};
+        headers.forEach(function (h, idx) {
+          if (h === "taskid" || h === "task id" || h === "id" || h === "reportid") colMap.id = idx;
+          else if (h === "timestamp" || h === "ts" || h === "time" || h === "date") colMap.ts = idx;
+          else if (h === "teamassigned" || h === "team" || h === "team assigned") colMap.team = idx;
+          else if (h === "floor") colMap.floor = idx;
+          else if (h === "room") colMap.room = idx;
+          else if (h === "issuedescription" || h === "issue" || h === "description") colMap.issue = idx;
+          else if (h === "status") colMap.status = idx;
+          else if (h === "claimedby" || h === "assigned" || h === "claimed by") colMap.claimedBy = idx;
+          else if (h === "wifidata" || h === "wifi" || h === "wifi data") colMap.wifi = idx;
+          else if (h === "details" || h === "note" || h === "notes") colMap.details = idx;
+          else if (h === "reporter") colMap.reporter = idx;
+          else if (h === "claimedat" || h === "claimed at") colMap.claimedAt = idx;
+          else if (h === "resolvedat" || h === "resolved at") colMap.resolvedAt = idx;
+          else if (h === "handedby" || h === "handed by") colMap.handedBy = idx;
+        });
+
+        var parsed = [];
+        for (var r = 1; r < table.length; r++) {
+          var row = table[r];
+          if (!row || !row.length) continue;
+          var taskId = String(colMap.id !== undefined ? row[colMap.id] : (row[0] || "")).trim();
+          if (!taskId) continue;
+
+          var item = {
+            TaskID: taskId,
+            Timestamp: colMap.ts !== undefined ? row[colMap.ts] : "",
+            TeamAssigned: colMap.team !== undefined ? row[colMap.team] : "",
+            Floor: colMap.floor !== undefined ? row[colMap.floor] : "",
+            Room: colMap.room !== undefined ? row[colMap.room] : "",
+            IssueDescription: colMap.issue !== undefined ? row[colMap.issue] : "",
+            Status: colMap.status !== undefined ? row[colMap.status] : "New",
+            ClaimedBy: colMap.claimedBy !== undefined ? row[colMap.claimedBy] : "",
+            WifiData: colMap.wifi !== undefined ? row[colMap.wifi] : "",
+            Details: colMap.details !== undefined ? row[colMap.details] : "",
+            Reporter: colMap.reporter !== undefined ? row[colMap.reporter] : "",
+            ClaimedAt: colMap.claimedAt !== undefined ? row[colMap.claimedAt] : "",
+            ResolvedAt: colMap.resolvedAt !== undefined ? row[colMap.resolvedAt] : "",
+            HandedBy: colMap.handedBy !== undefined ? row[colMap.handedBy] : ""
+          };
+          parsed.push(normaliseReport(item));
+        }
+        return parsed;
+      });
+  }
+
 
   function sget(k) {
     try {
@@ -596,6 +748,52 @@
       bb: bb
     };
   }
+  
+  function normaliseReport(raw) {
+    var id = String(raw.TaskID || raw.taskId || raw.id || raw._id || "").trim();
+    var ts = String(raw.Timestamp || raw.timestamp || raw.ts || "").trim();
+    var team = String(raw.TeamAssigned || raw.teamAssigned || raw.team || "TechOps").trim();
+    var fl = String(raw.Floor || raw.floor || "").trim();
+    var flCode = fl.length === 1 ? fl.toUpperCase() : (floorId(fl) || "");
+    var flName = FLOOR_NAMES[flCode] || fl || "";
+    var room = String(raw.Room || raw.room || "").trim();
+    var issue = String(raw.IssueDescription || raw.issueDescription || raw.issue || "").trim();
+    var statusRaw = String(raw.Status || raw.status || "New").trim();
+    var status = (/^done$|^resolved$/i.test(statusRaw)) ? "Resolved" : (/^in progress$|^claimed$/i.test(statusRaw) ? "In Progress" : "New");
+    var assigned = String(raw.ClaimedBy || raw.claimedBy || raw.assigned || "").trim();
+    var wifi = String(raw.WifiData || raw.wifiData || raw.wifi || "").trim();
+    var details = String(raw.Details || raw.details || "").trim();
+    var reporter = String(raw.Reporter || raw.reporter || "").trim();
+    var claimedAt = String(raw.ClaimedAt || raw.claimedAt || "").trim();
+    var resolvedAt = String(raw.ResolvedAt || raw.resolvedAt || "").trim();
+    var handedBy = String(raw.HandedBy || raw.handedBy || "").trim();
+
+    return {
+      id: id,
+      _id: id,
+      taskId: id,
+      ts: ts,
+      timestamp: ts,
+      team: team,
+      teamAssigned: team,
+      floor: flCode,
+      floorName: flName,
+      room: room,
+      issue: issue,
+      issueDescription: issue,
+      details: details,
+      status: status,
+      assigned: assigned,
+      claimedBy: assigned,
+      wifi: wifi,
+      wifiData: wifi,
+      reporter: reporter,
+      claimedAt: claimedAt,
+      resolvedAt: resolvedAt,
+      handedBy: handedBy
+    };
+  }
+
   function normaliseVolunteer(v) {
     var code = String(v["Volunteer Code"] || v.code || v._id || "").trim();
     var name = String(v.Name || v.name || "").trim();
@@ -706,6 +904,7 @@
 
   /* ---------------------------------------------------------------- real-time read */
   function start() {
+    setInterval(function () { if (started && !document.hidden) fetchReportsFromSheet(true); }, 7500);
     if (started) return readyP;
     started = true;
     fb.start().catch(function (e) {
@@ -719,10 +918,12 @@
   }
   function loadAll() {
     if (!started) start();
-    return fetchRoomsFromSheet().then(function (roomsList) {
-      var critical = (TEAM === "TechOps" || TEAM === "Logistics") ? COLS : ["reports"];
+    return Promise.all([fetchRoomsFromSheet(), fetchReportsFromSheet()]).then(function (results) {
+      var roomsList = results[0];
+      var reportsList = results[1];
+      var critical = (TEAM === "TechOps" || TEAM === "Logistics") ? COLS : [];
       var isSynced = critical.every(function (c) { return ready[c]; });
-      var p = (_tutorialMode || isSynced) ? Promise.resolve() : Promise.race([readyP, new Promise(function(res){ setTimeout(res, 300); })]);
+      var p = (_tutorialMode || isSynced) ? Promise.resolve() : Promise.race([readyP.catch(function () {}), new Promise(function(res){ setTimeout(res, 300); })]);
       return p.then(function () {
         var geo = {};
         if (D && D.ALL) D.ALL.forEach(function (g) { geo[g.code] = 1; });
@@ -730,6 +931,7 @@
         var out = { meta: { live: LIVE, online: !lastError, synced: nowSynced, error: lastError ? friendly(lastError) : "", fetchedAt: new Date(), user: user } };
         COLS.forEach(function (c) { out[c] = normalise(c, cache[c] || []); });
         out.rooms = (roomsList || cache.rooms || []).map(normaliseRoom);
+        out.reports = (reportsList || cache.reports || []).map(normaliseReport);
         out.team = out.volunteers || [];
         if (_tutorialMode && _tutorialReports) {
           var tr = String(_tutorialRole || TEAM || (user && (user.role || user.team)) || "").toLowerCase();
@@ -945,6 +1147,20 @@
         setVolunteerOnline(code, u.floor, u.room);
         return u;
       });
+    }).catch(function (err) {
+      var cached = peekUser();
+      if (cached && cached.code === code) {
+        user = cached;
+        setTeam(cached);
+        return user;
+      }
+      var pfx = (code[0] || "").toUpperCase();
+      var tm = pfx === "T" ? "TechOps" : (pfx === "L" ? "Logistics" : (pfx === "C" ? "Competition" : "Volunteers"));
+      var fbUser = { code: code, name: (cached && cached.name) || code, team: tm, role: tm, status: "Available" };
+      user = fbUser;
+      setTeam(fbUser);
+      saveSessionUser(code, fbUser);
+      return fbUser;
     });
   }
   function restore() {
@@ -971,6 +1187,10 @@
         return user;
       });
     }, function () {
+      if (cached) {
+        user = cached;
+        setTeam(cached);
+      }
       return cached || null;
     });
   }
@@ -1045,11 +1265,54 @@
   }
 
   function addReport(d) {
+    var prefix = d.team === "Logistics" ? "LGR" : (d.team === "Competition" ? "CMP" : "RPT");
+    var teamName = d.team === "Logistics" || d.team === "Competition" ? d.team : "TechOps";
     var obj = withFloorNames({
-      id: newId(d.team === "Logistics" ? "LGR" : d.team === "Competition" ? "CMP" : "RPT"), ts: stamp(), floor: d.floor || "", room: d.room || "", issue: clip(d.issue, 80), details: clip(d.details, 500),
-      status: "New", assigned: "", claimedAt: "", resolvedAt: "", reporter: clip(d.reporter, 60), team: d.team === "Logistics" || d.team === "Competition" ? d.team : "TechOps"
+      id: newId(prefix),
+      taskId: newId(prefix),
+      ts: stamp(),
+      timestamp: stamp(),
+      floor: d.floor || "",
+      room: d.room || "",
+      issue: clip(d.issue, 80),
+      issueDescription: clip(d.issue, 80),
+      details: clip(d.details, 500),
+      status: "New",
+      assigned: "",
+      claimedBy: "",
+      wifiData: d.wifiData || d.wifi || "",
+      claimedAt: "",
+      resolvedAt: "",
+      reporter: clip(d.reporter, 60),
+      team: teamName,
+      teamAssigned: teamName
     });
-    return backend().set("reports", obj.id, obj).then(function () { return { id: obj.id, demo: false }; });
+
+    if (!cache.reports) cache.reports = [];
+    cache.reports.unshift(obj);
+    try {
+      sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+      localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+    } catch (e) {}
+    emit();
+
+    sendRequestsApi({
+      action: "create",
+      id: obj.id,
+      taskId: obj.id,
+      team: obj.team,
+      teamAssigned: obj.team,
+      floor: obj.floor,
+      room: obj.room,
+      issue: obj.issue,
+      issueDescription: obj.issue,
+      details: obj.details,
+      reporter: obj.reporter,
+      wifiData: obj.wifiData,
+      status: "Open"
+    });
+
+    return Promise.resolve({ id: obj.id, demo: false });
   }
   function addMeetup(d) {
     var obj = withFloorNames({
@@ -1122,27 +1385,30 @@
     }
 
     var target = findCacheReport(id);
-    var backup = target ? Object.assign({}, target) : null;
     if (target) {
       if (target.status === "Resolved") return Promise.reject(fail("claimed", "This task is already resolved."));
       if (target.assigned && target.assigned !== user.name) return Promise.reject(fail("claimed", "Already claimed by " + target.assigned + "."));
       target.assigned = user.name;
+      target.claimedBy = user.name;
       target.status = "In Progress";
       target.claimedAt = stamp();
+      try {
+        sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+        localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+      } catch (e) {}
       emit();
     }
 
-    return guard(backend().mutateReport(id, function (r) {
-      if (r.status === "Resolved") throw fail("claimed", "This task is already resolved.");
-      if (r.assigned && r.assigned !== user.name) throw fail("claimed", "Already claimed by " + r.assigned + ".");
-      return { assigned: user.name, status: "In Progress", claimedAt: stamp() };
-    })).catch(function (err) {
-      if (target && backup) {
-        Object.assign(target, backup);
-        emit();
-      }
-      throw err;
+    sendRequestsApi({
+      action: "claim",
+      id: id,
+      taskId: id,
+      user: user.name,
+      claimedBy: user.name,
+      status: "In Progress"
     });
+
+    return Promise.resolve({ id: id, status: "In Progress", assigned: user.name });
   }
   /* One-click resolve: only the volunteer who claimed the task can resolve it. */
   function resolveReport(id) {
@@ -1165,7 +1431,6 @@
     }
 
     var target = findCacheReport(id);
-    var backup = target ? Object.assign({}, target) : null;
     if (target) {
       if (target.assigned && target.assigned !== user.name && target.handedBy !== user.name) {
         return Promise.reject(fail("claimed", "Only " + (target.assigned || "the assignee") + " can resolve this task."));
@@ -1173,21 +1438,22 @@
       target.status = "Resolved";
       target.resolvedAt = stamp();
       target.assigned = target.assigned || user.name;
+      try {
+        sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+        localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+      } catch (e) {}
       emit();
     }
 
-    return guard(backend().mutateReport(id, function (r) {
-      if (r.assigned && r.assigned !== user.name && r.handedBy !== user.name) {
-        throw fail("claimed", "Only " + (r.assigned || "the assignee") + " can resolve this task.");
-      }
-      return { assigned: r.assigned || user.name, status: "Resolved", resolvedAt: stamp() };
-    })).catch(function (err) {
-      if (target && backup) {
-        Object.assign(target, backup);
-        emit();
-      }
-      throw err;
+    sendRequestsApi({
+      action: "resolve",
+      id: id,
+      taskId: id,
+      user: user.name,
+      status: "Done"
     });
+
+    return Promise.resolve({ id: id, status: "Resolved", resolvedAt: stamp() });
   }
   /* Keep the session alive only while the site is actually open on screen; coming back after being away too long locks again. */
   function expireIfStale() {
@@ -1239,27 +1505,29 @@
     }
 
     var target = findCacheReport(id);
-    var backup = target ? Object.assign({}, target) : null;
     if (target) {
       if (target.status === "Resolved") return Promise.reject(fail("claimed", "This task is already resolved."));
       if (target.assigned !== user.name && target.handedBy !== user.name) return Promise.reject(fail("claimed", "Claim this request first."));
       target.assigned = member;
       target.handedBy = user.name;
       target.handedAt = stamp();
+      try {
+        sessionStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+        localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(cache.reports));
+      } catch (e) {}
       emit();
     }
 
-    return guard(backend().mutateReport(id, function (r) {
-      if (r.status === "Resolved") throw fail("claimed", "This task is already resolved.");
-      if (r.assigned !== user.name && r.handedBy !== user.name) throw fail("claimed", "Claim this request first.");
-      return { assigned: member, handedBy: user.name, handedAt: stamp() };
-    })).catch(function (err) {
-      if (target && backup) {
-        Object.assign(target, backup);
-        emit();
-      }
-      throw err;
+    sendRequestsApi({
+      action: "handout",
+      id: id,
+      taskId: id,
+      user: user.name,
+      assigned: member,
+      member: member
     });
+
+    return Promise.resolve({ id: id, assigned: member, handedBy: user.name });
   }
   function resetDemo() {
     if (!LIVE) {
@@ -1276,10 +1544,13 @@
     login: login, restore: restore, peekUser: peekUser, logout: logout, currentUser: function () { return user; }, sessionGraceMs: GRACE,
     canAccess: canAccess, teamDisplayName: teamDisplayName, workspaceFor: workspaceFor,
     start: start, loadAll: loadAll, onChange: onChange,
-    data: { get rooms() { return cache.rooms; } },
+    data: { get rooms() { return cache.rooms; }, get reports() { return cache.reports; } },
     rooms: function () { return cache.rooms; },
+    reports: function () { return cache.reports; },
     refreshRooms: function () { return fetchRoomsFromSheet(true); },
     fetchRoomsFromSheet: fetchRoomsFromSheet,
+    fetchReportsFromSheet: fetchReportsFromSheet,
+    refreshReports: function () { return fetchReportsFromSheet(true); },
     recordWifiReading: recordWifiReading, addReport: addReport, addMeetup: addMeetup, update: update, updateVolunteerLocation: updateVolunteerLocation,
     setVolunteerOffline: setVolunteerOffline, setVolunteerOnline: setVolunteerOnline,
     claimReport: claimReport, resolveReport: resolveReport, handOutReport: handOutReport, resetDemo: resetDemo,
