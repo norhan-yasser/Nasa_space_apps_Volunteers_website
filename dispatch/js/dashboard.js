@@ -15,7 +15,12 @@
   function isCompetition(r) { return r && r.team === "Competition"; }
   function whereOf(r) { return r.room ? (r.floorName || Store.FLOOR_NAMES[r.floor] || "") + " · " + r.room : ""; }
   function isUnassigned(r) { return r.status !== "Resolved" && !r.assigned; }
-  function isMine(r) { return r.status !== "Resolved" && !!S.me && (r.assigned === S.me || r.handedBy === S.me); }
+  function isMine(r) {
+    var myName = S.me || (S.user && S.user.name) || (Store.currentUser && Store.currentUser() && Store.currentUser().name) || "";
+    if (!myName) return false;
+    var normMy = String(myName).trim().toLowerCase();
+    return r.status !== "Resolved" && (String(r.assigned || "").trim().toLowerCase() === normMy || String(r.handedBy || "").trim().toLowerCase() === normMy);
+  }
   function isHanded(r) { return r.status !== "Resolved" && !!r.handedBy; }
   function matchFilter(r, f) {
     if (f === "all") return true;
@@ -222,8 +227,12 @@
     p.then(function () {
       TO.toast(kind === "claim" ? "Request claimed" : kind === "handout" ? "Handed out" : "Request done", id + (kind === "claim" ? " is yours. Hand it out to a member." : kind === "handout" ? " was handed out." : " marked as done."), "ok");
       if (kind !== "claim" && kind !== "handout" && TO.chimeDone) TO.chimeDone();
-    }).catch(function () { btn.disabled = false; btn.textContent = label; })
-      .then(function () { delete S.busy[id]; S.sig = ""; });
+      if (kind === "claim") S.issueFilter = "mine";
+      else if (kind === "resolve") S.issueFilter = "Resolved";
+    }).catch(function (err) {
+      TO.toast("Action failed", (err && err.message) || String(err), "bad");
+      btn.disabled = false; btn.textContent = label;
+    }).then(function () { delete S.busy[id]; S.sig = ""; return load(); });
   }
 
   /* ---------------------------------------------------------------- sign in & strict RBAC */

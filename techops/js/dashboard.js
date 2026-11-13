@@ -203,7 +203,11 @@
   /* ------------------------------------------------------------ Issues Tab */
   var FILTERS = [["unassigned", "Unassigned"], ["mine", "My tasks"], ["Resolved", "Resolved"], ["all", "All"]];
   function isUnassigned(r) { return r.status !== "Resolved" && !r.assigned; }
-  function isMine(r) { return r.status !== "Resolved" && !!S.me && r.assigned === S.me; }
+  function isMine(r) {
+    var myName = S.me || (S.user && S.user.name) || (Store.currentUser && Store.currentUser() && Store.currentUser().name) || "";
+    if (!myName) return false;
+    return r.status !== "Resolved" && String(r.assigned || "").trim().toLowerCase() === String(myName).trim().toLowerCase();
+  }
   function matchFilter(r, f) {
     if (f === "all") return true;
     if (f === "unassigned") return isUnassigned(r);
@@ -278,9 +282,19 @@
     p.then(function () {
       TO.toast(kind === "claim" ? "Task claimed" : "Task resolved", kind === "claim" ? id + " is now In Progress and assigned to you." : id + " marked as resolved.", "ok");
       if (kind === "resolve" && TO.chimeDone) TO.chimeDone();
-    }).catch(function () {
+      if (kind === "claim") {
+        S.issueFilter = "mine";
+      } else if (kind === "resolve") {
+        S.issueFilter = "Resolved";
+      }
+    }).catch(function (err) {
+      TO.toast("Action failed", (err && err.message) || String(err), "bad");
       btn.disabled = false; btn.textContent = label;
-    }).then(function () { delete S.busy[id]; return load(); });
+    }).then(function () {
+      delete S.busy[id];
+      S.sig = "";
+      return load();
+    });
   }
 
   function gotoIssueOnMap(r) {
@@ -506,6 +520,74 @@
     });
   }
 
+  function renderRoomAssignmentHtml(r) {
+    var floorLead = (r.floor === "F") ? "martina" : ((r.floor === "S") ? "Alii Eldeen" : (r.resp || ""));
+    var leadLabel = (r.floor === "F" || r.floor === "S") ? "Floor Lead" : "Lead Manager";
+    var capDisplay = (r.capacity != null && r.capacity !== "" && r.capacity !== 0) ? (r.capacity + " people") : "";
+    var modeDisplay = (r.mode === "Unassigned") ? "" : (r.mode || "");
+
+    var h = '<div class="sec">' +
+      '<h4>Room Assignment Details</h4>' +
+      '<dl class="kv">' +
+      '<dt>' + esc(leadLabel) + '</dt><dd class="' + (floorLead ? 'kv-val' : 'na') + '">' + (floorLead ? esc(floorLead) : 'Not assigned') + '</dd>' +
+      '<dt>Space Capacity</dt><dd class="' + (capDisplay ? 'kv-val' : 'na') + '">' + (capDisplay ? esc(capDisplay) : 'Not assigned') + '</dd>' +
+      '<dt>Assignment Type</dt><dd class="' + (modeDisplay ? 'kv-val' : 'na') + '">' + (modeDisplay ? esc(modeDisplay) : 'Not assigned') + '</dd>' +
+      '</dl>' +
+      '</div>';
+
+    if (r.mode === "Participants") {
+      var chalList = (r.chal || "")
+        .split(/[\n;]/)
+        .map(function (s) { return s.trim(); })
+        .filter(Boolean);
+
+      var chalHtml = chalList.length
+        ? '<div class="chal-list-box">' +
+            chalList.map(function (c) {
+              return '<div class="chal-track-row">' +
+                '<span style="color:var(--sel,#fb9746);font-size:13px;line-height:1.45;flex-shrink:0;">•</span>' +
+                '<span style="color:var(--ink-bright);font-weight:500;">' + esc(c) + '</span>' +
+              '</div>';
+            }).join("") +
+          '</div>'
+        : '<span class="na">Not assigned</span>';
+
+      var tList = r.teams || [];
+      var teamsChips = tList.length
+        ? tList.map(function (x) {
+            return '<span class="chip" style="margin:2px 4px 2px 0;display:inline-block;padding:2px 8px;font-size:12px;border-radius:4px;background:rgba(255,255,255,0.06);border:1px solid var(--line);color:var(--ink-bright);">' + esc(x) + '</span>';
+          }).join("")
+        : '<span class="na">No teams assigned yet</span>';
+
+      h += '<div class="sec">' +
+        '<h4>Assigned Challenge &amp; Teams</h4>' +
+        '<dl class="kv">' +
+        '<dt>Challenge Track' + (chalList.length > 1 ? 's' : '') + '</dt>' +
+        '<dd class="kv-val">' + chalHtml + '</dd>' +
+        '<dt>Total Teams</dt>' +
+        '<dd class="' + (tList.length ? 'kv-val' : 'na') + '">' + (tList.length ? (tList.length + ' teams') : 'Not assigned') + '</dd>' +
+        '</dl>' +
+        '<div style="margin-top:10px;">' +
+        '<div style="font-size:11.5px;color:var(--mut);font-weight:700;text-transform:uppercase;margin-bottom:6px;">Assigned Teams (' + tList.length + ')</div>' +
+        '<div>' + teamsChips + '</div>' +
+        '</div>' +
+        '</div>';
+    } else if (r.mode === "Volunteers") {
+      var vcapDisplay = (r.vcap != null && r.vcap !== "" && r.vcap !== 0) ? (r.vcap + " people") : "";
+      h += '<div class="sec">' +
+        '<h4>Volunteer Squad</h4>' +
+        '<dl class="kv">' +
+        '<dt>Volunteer Team</dt><dd class="' + (r.vteam ? 'kv-val' : 'na') + '">' + (r.vteam ? esc(r.vteam) : 'Not assigned') + '</dd>' +
+        '<dt>Team Capacity</dt><dd class="' + (vcapDisplay ? 'kv-val' : 'na') + '">' + (vcapDisplay ? esc(vcapDisplay) : 'Not assigned') + '</dd>' +
+        '</dl>' +
+        '</div>';
+    } else if (r.mode === "Unassigned") {
+      h += '<div class="sec"><span class="na">No participants or volunteers assigned to this room.</span></div>';
+    }
+
+    return h;
+  }
+
   function renderSide() {
     var d = S.data, side = $("side");
     var geoOnly = S.selected && !d.roomMap[S.selected] ? D.ALL.filter(function (g) { return g.code === S.selected; })[0] : null;
@@ -534,35 +616,46 @@
       return;
     }
     if (S.selected && d.roomMap[S.selected]) {
-      var r = d.roomMap[S.selected], w = wifiFor(r.code), z = D.ZONES[r.mode] || D.ZONES[r.zone] || {};
+      var r = d.roomMap[S.selected], w = wifiFor(r.code);
       var iss = d.reports.filter(function (x) { return x.room === r.code && x.floor === r.floor && x.status !== "Resolved"; });
       var url = TO.reportUrl(r.floor, r.code);
-      var teamsList = r.teams && r.teams.length ? r.teams.join(", ") : "";
 
-      side.innerHTML = '<h3>Room ' + esc(r.code) + '</h3><div class="sub"><span class="badge" style="background:' + (z.color || "#64748b") + '33;border-color:' + (z.color || "#64748b") + ';color:var(--ink-bright)">' + esc(r.mode || "Unassigned") + "</span> " + esc(r.floorName) + "</div>" +
+      var isRestricted = (r.access === "no");
+      var accessBadge = '<span class="badge" style="background:' + (isRestricted ? 'rgba(239,68,68,0.18);color:#ef4444;border-color:rgba(239,68,68,0.45)' : 'rgba(34,197,94,0.18);color:#34d399;border-color:rgba(34,197,94,0.45)') + ';font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">' + (isRestricted ? 'Restricted' : 'Accessible') + '</span>';
+
+      var html = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">' +
+        '<h3 style="margin:0;font-size:18px;font-weight:800;letter-spacing:0.5px;color:var(--ink-bright);">' + esc(r.code) + '</h3>' +
+        accessBadge +
+        '</div>' +
+        '<div class="sub" style="margin-bottom:12px;color:var(--mut);font-size:12.5px;">' + esc(r.type || r.name || "Room") + ' · ' + esc(r.floorName) + '</div>';
+
+      html += renderRoomAssignmentHtml(r);
+
+      html += '<div class="sec">' +
+        '<h4>Wi-Fi Quality</h4>' +
         '<dl class="kv">' +
-        '<dt>Space</dt><dd>' + esc(r.type) + "</dd>" +
-        '<dt>Access</dt><dd>' + (r.access === "no" ? '<span style="color:var(--bad);font-weight:700">Restricted</span>' : '<span style="color:var(--ok);font-weight:600">Accessible</span>') + "</dd>" +
-        '<dt>Lead Manager</dt><dd>' + esc(r.resp || "—") + "</dd>" +
-        '<dt>Capacity</dt><dd>' + (r.capacity ? esc(r.capacity) : "—") + "</dd>" +
-        (r.mode === "Participants" && r.chal ? "<dt>Challenge</dt><dd>" + esc(r.chal) + "</dd>" : "") +
-        (r.mode === "Participants" && teamsList ? "<dt>Teams</dt><dd>" + esc(teamsList) + "</dd>" : "") +
-        (r.mode === "Volunteers" && r.vteam ? "<dt>Squad</dt><dd>" + esc(r.vteam) + (r.vcap ? " (" + esc(r.vcap) + ")" : "") + "</dd>" : "") +
-        "<dt>Wi-Fi</dt><dd>" + (w ? '<b style="color:' + TO.speedColor(w.mbps) + '">' + w.mbps + " Mbps</b> · " + w.latency + " ms · " + TO.speedLabel(w.mbps) : "No reading") + "</dd></dl>" +
-        
-        '<div class="row" style="margin:12px 0 14px;gap:8px;flex-wrap:wrap">' +
+        '<dt>Signal</dt><dd>' + (w ? ('<b style="color:' + TO.speedColor(w.mbps) + '">' + w.mbps + ' Mbps</b> · ' + w.latency + ' ms · ' + TO.speedLabel(w.mbps)) : '<span class="na">No reading</span>') + '</dd>' +
+        '</dl>' +
+        '</div>';
+
+      html += '<div class="row" style="margin:12px 0 14px;gap:8px;flex-wrap:wrap">' +
         '<button class="btn primary small" id="side-route-here">Fastest Route Here</button>' +
         '<button class="btn small" id="side-route-from">Route From Here</button>' +
-        '</div>' +
+        '</div>';
 
-        "<b>Open issues (" + iss.length + ")</b>" + (iss.length ? iss.map(function (x) {
+      html += '<div class="sec">' +
+        '<h4>Open issues (' + iss.length + ')</h4>' +
+        (iss.length ? iss.map(function (x) {
           return '<div class="mini-issue"><span class="badge ' + TO.issueClass(x.issue) + '">' + esc(x.issue) + '</span> <span class="badge ' + TO.statusClass(x.status) + '">' + esc(x.status) + '</span><div class="muted" style="margin-top:4px">' + esc(x.details || "") + '</div>' +
             '<button type="button" class="btn ok small" data-resolve-task="' + esc(x.id) + '" style="margin-top:6px;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px">✓ Mark Done</button>' +
           '</div>';
         }).join("") : '<div class="muted" style="font-size:13px;margin-top:4px">No open issues for this room.</div>') +
-        
-        '<div style="margin-top:14px"><b>Room QR code</b><div class="muted" style="font-size:12px;margin-bottom:6px">Scan to report an issue directly from this room.</div><div class="qr-box">' + TO.qrSvg(url, 4) + '</div></div>' +
+        '</div>';
+
+      html += '<div style="margin-top:14px"><b>Room QR code</b><div class="muted" style="font-size:12px;margin-bottom:6px">Scan to report an issue directly from this room.</div><div class="qr-box">' + TO.qrSvg(url, 4) + '</div></div>' +
         '<div class="row" style="margin-top:12px"><a class="btn small" href="' + esc(url) + '" target="_blank" rel="noopener">Open form</a><a class="btn small" href="../request/poster.html">Participant QR</a><button class="btn small ghost" id="side-clear">Clear</button></div>';
+
+      side.innerHTML = html;
 
       var c = $("side-clear"); if (c) c.onclick = function () { S.selected = null; map.select(null); renderSide(); };
       var btnHere = $("side-route-here");
@@ -670,39 +763,38 @@
         });
         return;
       }
-      var z = D.ZONES[r.zone] || {};
       var w = wifiFor(r.code);
       var iss = d.reports.filter(function (x) { return x.room === r.code && x.floor === r.floor && x.status !== "Resolved"; });
-      var url = TO.reportUrl(r.floor, r.code);
 
-      zEl.textContent = r.zone;
-      zEl.style.color = z.color || "var(--accent)";
+      var isRestricted = (r.access === "no");
+      zEl.textContent = isRestricted ? "RESTRICTED" : "ACCESSIBLE";
+      zEl.style.color = isRestricted ? "#ef4444" : "#34d399";
       tEl.textContent = "Room " + r.code;
-      mEl.textContent = (r.floorName || Store.FLOOR_NAMES[r.floor]) + " · " + r.type + (r.capacity ? " (Cap. " + r.capacity + ")" : "");
+      mEl.textContent = (r.type || r.name || "Room") + " · " + (r.floorName || Store.FLOOR_NAMES[r.floor]);
 
-      var wifiCard = w
-        ? '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--card-2);padding:10px 14px;border-radius:10px;margin-bottom:12px">' +
-          '<span style="font-size:13px;font-weight:600;color:var(--mut)">Wi-Fi Quality</span>' +
-          '<span style="font-size:13.5px;font-weight:700;color:' + TO.speedColor(w.mbps) + '">' + w.mbps + ' Mbps · ' + TO.speedLabel(w.mbps) + '</span>' +
-          '</div>'
-        : '';
+      var bodyHtml = renderRoomAssignmentHtml(r);
 
-      var assignedRow = r.assigned
-        ? '<div style="font-size:13px;color:var(--mut);margin-bottom:10px">Occupant / Challenge: <b style="color:var(--ink-bright)">' + esc(r.assigned) + '</b></div>'
-        : '';
+      bodyHtml += '<div class="sec">' +
+        '<h4>Wi-Fi Quality</h4>' +
+        '<dl class="kv">' +
+        '<dt>Signal</dt><dd>' + (w ? ('<b style="color:' + TO.speedColor(w.mbps) + '">' + w.mbps + ' Mbps</b> · ' + w.latency + ' ms · ' + TO.speedLabel(w.mbps)) : '<span class="na">No reading</span>') + '</dd>' +
+        '</dl>' +
+        '</div>';
 
-      var issueCard = iss.length
-        ? '<div style="margin-bottom:12px"><b style="font-size:13px;display:block;margin-bottom:6px">Active Issues (' + iss.length + ')</b>' +
+      if (iss.length) {
+        bodyHtml += '<div class="sec"><h4>Active Issues (' + iss.length + ')</h4>' +
           iss.map(function (x) {
             return '<div style="padding:10px;background:var(--card-2);border-radius:10px;margin-bottom:8px;font-size:12.5px">' +
               '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span class="badge ' + TO.issueClass(x.issue) + '">' + esc(x.issue) + '</span><span class="muted" style="font-size:11px">' + esc(x.id) + '</span></div>' +
               '<div>' + esc(x.details || "") + '</div>' +
               '<button type="button" class="btn ok small" data-resolve-task="' + esc(x.id) + '" style="margin-top:8px;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px">✓ Mark Task as Done</button>' +
             '</div>';
-          }).join("") + '</div>'
-        : '<div class="muted" style="font-size:13px;margin-bottom:12px">No active issues reported.</div>';
+          }).join("") + '</div>';
+      } else {
+        bodyHtml += '<div class="sec"><span class="muted" style="font-size:13px">No active issues reported for this room.</span></div>';
+      }
 
-      bEl.innerHTML = wifiCard + assignedRow + issueCard;
+      bEl.innerHTML = bodyHtml;
 
       btnHere.style.display = "flex";
       btnFrom.style.display = "flex";
@@ -1241,8 +1333,9 @@
       if (window.closeMapBottomSheet) closeMapBottomSheet();
       /* Return directly to the Issues tab as requested */
       setTab("issues");
-      S.issueFilter = "unassigned";
-      renderIssues();
+      S.issueFilter = "Resolved";
+      S.sig = "";
+      return load();
     }).catch(function (err) {
       console.error('Task resolution error:', err);
       if (btn) btn.disabled = false;
@@ -1652,7 +1745,20 @@
     if (S.tab === "team") renderTeam();
   }, 30000);
 
+  var qLogin = new URLSearchParams(location.search);
+  var codeParam = (qLogin.get("code") || qLogin.get("auth") || "").trim();
   var fast = Store.peekUser ? Store.peekUser() : null;
-  if (fast) applyUser(fast);
-  else Store.restore().then(function (user) { applyUser(user); });
+  if (codeParam && (!fast || fast.code !== codeParam.toUpperCase())) {
+    Store.login(codeParam).then(function (u) {
+      if (Store.canAccess(u, "techops")) applyUser(u);
+      else applyUser(null);
+    }).catch(function () {
+      if (fast) applyUser(fast);
+      else Store.restore().then(function (user) { applyUser(user); });
+    });
+  } else if (fast) {
+    applyUser(fast);
+  } else {
+    Store.restore().then(function (user) { applyUser(user); });
+  }
 })();

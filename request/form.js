@@ -28,7 +28,8 @@
     if (!floorSel.value) { roomSel.innerHTML = '<option value="">First select a floor…</option>'; return; }
     var list = getFloorRooms(floorSel.value);
     roomSel.innerHTML = '<option value="">Select your room…</option>' + list.map(function (r) {
-      var lbl = r.code + (r.name ? " · " + r.name : "");
+      var hasCustom = r.name && String(r.name).trim().toUpperCase() !== String(r.code).trim().toUpperCase();
+      var lbl = r.code + (hasCustom ? " · " + r.name : "");
       return '<option value="' + esc(r.code) + '">' + esc(lbl) + "</option>";
     }).join("");
     if (curSel) roomSel.value = curSel;
@@ -39,7 +40,8 @@
     destSel.innerHTML = '<option value="">Choose a place…</option><option value="ENTRANCE|Main Entrance">Main Entrance</option>' + D.FLOORS.map(function (f) {
       var list = getFloorRooms(f.id);
       return '<optgroup label="' + esc(f.name) + '">' + list.map(function (r) {
-        var lbl = r.code + (r.name ? " (" + r.name + ")" : "");
+        var hasCustom = r.name && String(r.name).trim().toUpperCase() !== String(r.code).trim().toUpperCase();
+        var lbl = r.code + (hasCustom ? " (" + r.name + ")" : "");
         return '<option value="' + esc(r.code + "|" + f.name) + '">' + esc(lbl) + "</option>";
       }).join("") + "</optgroup>";
     }).join("");
@@ -56,15 +58,16 @@
   }
   fillDestinations();
 
-  function syncRoomsFromFirestore() {
+  function syncRoomsFromStore() {
     if (!Store || !Store.loadAll) return;
     Store.loadAll().then(function (data) {
-      var rooms = data && (data.rooms && data.rooms.length ? data.rooms : data.allRooms);
+      var rooms = data && (data.allRooms && data.allRooms.length ? data.allRooms : data.rooms);
       if (!rooms || !rooms.length) return;
       var byFl = { B: [], G: [], F: [], S: [] };
       rooms.forEach(function (r) {
         if (!r || !r.code || r.access === "no") return;
-        if (byFl[r.floor]) byFl[r.floor].push(r);
+        var fId = (r.floor || "G").toUpperCase();
+        if (byFl[fId]) byFl[fId].push(r);
       });
       liveRoomsByFloor = byFl;
       fillRooms();
@@ -73,8 +76,8 @@
   }
   if (Store) {
     if (Store.start) Store.start();
-    syncRoomsFromFirestore();
-    if (Store.onChange) Store.onChange(syncRoomsFromFirestore);
+    syncRoomsFromStore();
+    if (Store.onChange) Store.onChange(syncRoomsFromStore);
   }
 
   function card(name, value, icon, label, hint) {
@@ -254,8 +257,7 @@
       $("done-msg").textContent = remote
         ? "The " + TEAM_LABEL[team] + " has been alerted (" + issue.toLowerCase() + "). They will help you remotely, so please keep Discord open."
         : "The " + TEAM_LABEL[team] + " team has been alerted (" + issue.toLowerCase() + ", room " + room + ", " + Store.FLOOR_NAMES[floor] + "). A volunteer will come to you.";
-      var demo = $("done-demo"); demo.hidden = Store.isLive();
-      demo.textContent = "Local preview mode: Firebase is not configured yet, so this request is stored in this browser only.";
+      var demo = $("done-demo"); demo.hidden = true;
     }).catch(function (err) {
       btn.disabled = false; btn.textContent = "Send request";
       fail("Could not send the request. Please try again: " + Store.friendly(err));

@@ -17,7 +17,11 @@
   var FILTERS = [["unassigned", "Unclaimed"], ["mine", "My requests"], ["Resolved", "Done"], ["all", "All"]];
   var EMPTY = { unassigned: "No unclaimed requests right now.", mine: "You have no claimed requests.", Resolved: "Nothing completed yet.", all: "No requests yet." };
   function isUnassigned(r) { return r.status !== "Resolved" && !r.assigned; }
-  function isMine(r) { return r.status !== "Resolved" && !!S.me && r.assigned === S.me; }
+  function isMine(r) {
+    var myName = S.me || (S.user && S.user.name) || (Store.currentUser && Store.currentUser() && Store.currentUser().name) || "";
+    if (!myName) return false;
+    return r.status !== "Resolved" && String(r.assigned || "").trim().toLowerCase() === String(myName).trim().toLowerCase();
+  }
   function matchFilter(r, f) {
     if (f === "all") return true;
     if (f === "unassigned") return isUnassigned(r);
@@ -666,8 +670,12 @@
     (kind === "claim" ? Store.claimReport(id) : Store.resolveReport(id)).then(function () {
       TO.toast(kind === "claim" ? "Request claimed" : "Request done", kind === "claim" ? id + " is now assigned to you." : id + " marked as done.", "ok");
       if (kind === "resolve" && TO.chimeDone) TO.chimeDone();
-    }).catch(function () { btn.disabled = false; btn.textContent = label; })
-      .then(function () { delete S.busy[id]; S.sig = ""; });
+      if (kind === "claim") S.issueFilter = "mine";
+      else if (kind === "resolve") S.issueFilter = "Resolved";
+    }).catch(function (err) {
+      TO.toast("Action failed", (err && err.message) || String(err), "bad");
+      btn.disabled = false; btn.textContent = label;
+    }).then(function () { delete S.busy[id]; S.sig = ""; return load(); });
   }
 
   /* ---------------------------------------------------------------- sign in & strict RBAC */
