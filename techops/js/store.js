@@ -36,6 +36,222 @@
     "cafeteria": "Cafeteria",
     "break area": "Break Area"
   };
+
+  /* ---------------------------------------------------------------- Google Sheets (rooms) */
+  var ROOMS_SHEET_ID = "1JGfnzq4FR42E3W3xrJp79SVJRSGWB0zTzWIaiwgMiRs";
+  var ROOMS_SHEET_GID = "323613982";
+  var ROOMS_SHEET_URL = "https://docs.google.com/spreadsheets/d/" + ROOMS_SHEET_ID + "/export?format=csv&gid=" + ROOMS_SHEET_GID;
+  var ROOMS_SHEET_FALLBACK_URL = "https://docs.google.com/spreadsheets/d/" + ROOMS_SHEET_ID + "/gviz/tq?tqx=out:csv&gid=" + ROOMS_SHEET_GID + "&headers=4";
+
+  var STATIC_SPECIAL_ROOMS = [
+    { code: "STAGE", name: "Outer Stage", floor: "G", type: "Outer Stage", cap: 0, mode: "Unassigned", access: "ok", resp: "", chal: "", teams: [], vteam: "", vcap: 0 },
+    { code: "PR-F", name: "Female", floor: "G", type: "Prayer Room", cap: 0, mode: "Unassigned", access: "ok", resp: "", chal: "", teams: [], vteam: "", vcap: 0 },
+    { code: "PR-M", name: "Men", floor: "G", type: "Prayer Room", cap: 0, mode: "Unassigned", access: "ok", resp: "", chal: "", teams: [], vteam: "", vcap: 0 },
+    { code: "CAFETERIA", name: "Wing B Cafeteria", floor: "G", type: "Cafeteria", cap: 0, mode: "Unassigned", access: "ok", resp: "", chal: "", teams: [], vteam: "", vcap: 0 },
+    { code: "CAFETERIA-W", name: "Wing D Cafeteria", floor: "G", type: "Cafeteria", cap: 0, mode: "Unassigned", access: "ok", resp: "", chal: "", teams: [], vteam: "", vcap: 0 },
+    { code: "BREAK-1", name: "Break Area", floor: "F", type: "Break Area", cap: 0, mode: "Unassigned", access: "ok", resp: "", chal: "", teams: [], vteam: "", vcap: 0 },
+    { code: "BREAK-2", name: "Break Area", floor: "S", type: "Break Area", cap: 0, mode: "Unassigned", access: "ok", resp: "", chal: "", teams: [], vteam: "", vcap: 0 }
+  ];
+
+  function parseCsv(text) {
+    var rows = [];
+    var row = [];
+    var cur = "";
+    var inQuotes = false;
+    var src = String(text || "");
+    for (var i = 0; i < src.length; i++) {
+      var ch = src.charAt(i);
+      if (inQuotes) {
+        if (ch === '"') {
+          if (src.charAt(i + 1) === '"') { cur += '"'; i++; }
+          else { inQuotes = false; }
+        } else {
+          cur += ch;
+        }
+      } else {
+        if (ch === '"') {
+          inQuotes = true;
+        } else if (ch === ",") {
+          row.push(cur);
+          cur = "";
+        } else if (ch === "\r") {
+          if (src.charAt(i + 1) === "\n") i++;
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+        } else if (ch === "\n") {
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+    }
+    if (cur.length > 0 || row.length > 0) {
+      row.push(cur);
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function parseRoomsCsv(csvText) {
+    var rows = parseCsv(csvText);
+    var headerIdx = -1;
+    var cols = {};
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var lower = r.map(function (c) { return String(c || "").trim().toLowerCase(); });
+      if (lower.indexOf("floor") !== -1 && lower.indexOf("room no.") !== -1) {
+        headerIdx = i;
+        lower.forEach(function (h, idx) {
+          if (h === "floor") cols.floor = idx;
+          else if (h === "wing") cols.wing = idx;
+          else if (h === "room no.") cols.roomNo = idx;
+          else if (h === "room type") cols.roomType = idx;
+          else if (h === "physical capacity") cols.physCap = idx;
+          else if (h === "assigned capacity") cols.assignCap = idx;
+          else if (h === "room use / function") cols.use = idx;
+          else if (h === "notes") cols.notes = idx;
+          else if (h === "team names") cols.teams = idx;
+          else if (h === "challenges") cols.challenges = idx;
+          /* Intentionally omit Team Leaders & Leader Phones for privacy. */
+        });
+        break;
+      }
+    }
+    if (headerIdx === -1) return [];
+
+    var out = [];
+    var seen = {};
+    for (var j = headerIdx + 1; j < rows.length; j++) {
+      var row = rows[j];
+      var flStr = cols.floor !== undefined ? String(row[cols.floor] || "").trim() : "";
+      var fl = floorId(flStr);
+      if (!fl) continue;
+
+      var wingStr = cols.wing !== undefined ? String(row[cols.wing] || "").trim() : "";
+      var roomNo = cols.roomNo !== undefined ? String(row[cols.roomNo] || "").trim() : "";
+      var rawType = cols.roomType !== undefined ? String(row[cols.roomType] || "").trim() : "";
+      var physRaw = cols.physCap !== undefined ? String(row[cols.physCap] || "").trim() : "";
+      var assignRaw = cols.assignCap !== undefined ? String(row[cols.assignCap] || "").trim() : "";
+      var useStr = cols.use !== undefined ? String(row[cols.use] || "").trim() : "";
+      var notesStr = cols.notes !== undefined ? String(row[cols.notes] || "").trim() : "";
+      var teamsRaw = cols.teams !== undefined ? String(row[cols.teams] || "") : "";
+      var chalRaw = cols.challenges !== undefined ? String(row[cols.challenges] || "") : "";
+
+      var wingMatch = wingStr.match(/wing\s*([a-d])/i);
+      var wingLetter = wingMatch ? wingMatch[1].toUpperCase() : "";
+      var code = "";
+      if (/clinic/i.test(useStr) || /clinic/i.test(roomNo) || roomNo === "003") {
+        code = "CLINIC";
+      } else if (/^\d{3}$/.test(roomNo) && wingLetter) {
+        code = wingLetter + roomNo;
+      } else {
+        continue;
+      }
+
+      var assignCap = parseInt(assignRaw, 10);
+      var physCap = parseInt(physRaw, 10);
+      var capVal = (!isNaN(assignCap) && assignCap > 0) ? assignCap : ((!isNaN(physCap) && physCap > 0) ? physCap : 0);
+
+      var teamsList = teamsRaw
+        ? teamsRaw.split(/[\r\n;,]+/).map(function (s) { return s.trim(); }).filter(Boolean)
+        : [];
+      var chalStr = chalRaw
+        ? chalRaw.split(/[\r\n]+/).map(function (s) { return s.trim(); }).filter(Boolean).join(", ")
+        : "";
+
+      var mode = "Unassigned";
+      var name = "";
+      var type = rawType || "Classroom";
+      var vteam = "";
+      var vcap = 0;
+
+      if (code === "CLINIC") {
+        mode = "Volunteers";
+        name = "Clinic";
+        type = "Clinic";
+        vteam = notesStr || "Medical & Safety Team";
+        vcap = capVal;
+      } else if (/^participants$/i.test(useStr)) {
+        mode = "Participants";
+      } else if (/^volunteers?$/i.test(useStr)) {
+        mode = "Volunteers";
+        vteam = notesStr || "Volunteers";
+        vcap = capVal;
+      } else if (/^judges?$/i.test(useStr)) {
+        mode = "Judges";
+      } else if (/^mentors?$/i.test(useStr)) {
+        mode = "Mentors";
+      } else if (/rest/i.test(useStr)) {
+        mode = "Volunteers";
+        name = useStr.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+        vteam = name;
+        vcap = capVal;
+      } else if (/vips?/i.test(useStr)) {
+        mode = "VIPs";
+      } else if (useStr) {
+        mode = useStr;
+      }
+
+      seen[code] = true;
+      out.push({
+        _id: code,
+        code: code,
+        name: name,
+        floor: fl,
+        type: type,
+        cap: capVal,
+        capacity: capVal,
+        mode: mode,
+        zone: mode,
+        access: "ok",
+        resp: "",
+        chal: chalStr,
+        teams: teamsList,
+        vteam: vteam,
+        vcap: vcap
+      });
+    }
+
+    STATIC_SPECIAL_ROOMS.forEach(function (sr) {
+      if (!seen[sr.code]) {
+        out.push(Object.assign({ _id: sr.code }, sr));
+      }
+    });
+    return out;
+  }
+
+  function loadRoomsFromSheet() {
+    var fetchCsv = function (url) {
+      return fetch(url, { cache: "no-store" }).then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.text();
+      });
+    };
+    return fetchCsv(ROOMS_SHEET_URL).catch(function () {
+      return fetchCsv(ROOMS_SHEET_FALLBACK_URL);
+    }).then(function (csvText) {
+      var parsed = parseRoomsCsv(csvText);
+      if (!parsed.length) throw new Error("Empty rooms sheet");
+      lastError = null;
+      cache.rooms = parsed;
+      ready.rooms = true;
+      checkReady();
+      emit();
+    }).catch(function (err) {
+      lastError = err;
+      if (!cache.rooms || !cache.rooms.length) {
+        cache.rooms = STATIC_SPECIAL_ROOMS.map(function (sr) { return Object.assign({ _id: sr.code }, sr); });
+      }
+      ready.rooms = true;
+      checkReady();
+      emit();
+    });
+  }
   var SESSION_KEY = "techops_volunteer_code", SESSION_SEEN = "techops_session_seen", SESSION_USER = "techops_volunteer_user";
   var GRACE = Number((window.TECHOPS_CONFIG || {}).SESSION_GRACE_MS) || (24 * 60 * 60 * 1000);
 
@@ -253,6 +469,7 @@
     fb.stop();
     if (!LIVE) {
       COLS.forEach(function (col) {
+        if (col === "rooms") return;
         if (!cache[col] || !cache[col].length) {
           var s = window.TechOpsSeed && window.TechOpsSeed[col];
           if (s) {
@@ -263,13 +480,16 @@
         }
         ready[col] = true;
       });
+      loadRoomsFromSheet();
       checkReady();
       emit();
       return Promise.resolve();
     }
+    loadRoomsFromSheet();
     var prep = (user && user.code) ? fb.bindSession(user.code) : fb.signedIn();
     return prep.then(function () {
       COLS.forEach(function (col) {
+        if (col === "rooms") return;
         var ref = fb.db.collection(col);
         if (col === "reports") ref = ref.where("team", "==", TEAM);
         fb.unsubs.push(ref.onSnapshot(function (snap) {
@@ -284,11 +504,11 @@
     });
   };
   fb.set = function (col, id, obj) {
-    if (!LIVE) {
+    if (!LIVE || col === "rooms") {
       var arr = cache[col] = cache[col] || [];
       var found = false;
       for (var i = 0; i < arr.length; i++) {
-        if (arr[i].id === id || arr[i]._id === id) {
+        if (arr[i].id === id || arr[i]._id === id || arr[i].code === id) {
           Object.assign(arr[i], obj);
           found = true;
           break;
@@ -306,10 +526,10 @@
     });
   };
   fb.update = function (col, id, fields) {
-    if (!LIVE) {
+    if (!LIVE || col === "rooms") {
       var arr = cache[col] = cache[col] || [];
       for (var i = 0; i < arr.length; i++) {
-        if (arr[i].id === id || arr[i]._id === id) {
+        if (arr[i].id === id || arr[i]._id === id || arr[i].code === id) {
           Object.assign(arr[i], fields);
           break;
         }
