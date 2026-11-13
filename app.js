@@ -1954,12 +1954,30 @@ $("q").oninput = e => {
     res.hidden = true;
     return;
   }
+  const qLower = q.toLowerCase();
   const h = hits(q).slice(0, 12);
   res.hidden = false;
   res.innerHTML = h.length 
     ? h.map(r => {
         const d = D(r), t = teams(r);
-        const why = canView(r) ? (d.chal ? d.chal + " · " : "") + (t.length ? t.join(", ") : d.vteam || "") : "Restricted";
+        let why = "";
+        if (canView(r)) {
+          const matchingTeams = t.filter(x => x && x.toLowerCase().includes(qLower));
+          if (matchingTeams.length) {
+            why = matchingTeams.join(", ");
+          } else if (d.vteam && d.vteam.toLowerCase().includes(qLower)) {
+            why = d.vteam;
+          } else if (d.chal && d.chal.toLowerCase().includes(qLower)) {
+            const matchedChal = d.chal.split(/[\n;]/).map(s => s.trim()).filter(s => s.toLowerCase().includes(qLower))[0];
+            why = matchedChal || d.chal;
+          } else if (d.resp && d.resp.toLowerCase().includes(qLower)) {
+            why = d.resp;
+          } else {
+            why = r.name || TYPES[r.type] || "";
+          }
+        } else {
+          why = "Restricted";
+        }
         const dirBtn = canView(r) ? `<button type="button" class="res-dir-btn" data-rc="${r.code}" title="Get directions to ${r.code}">Route →</button>` : "";
         return `<div data-c="${r.code}">
           <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">
